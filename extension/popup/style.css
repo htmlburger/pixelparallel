@@ -1,0 +1,75 @@
+/* ------------------------------------------------------------ *\
+  Pixel Parallel Popup
+\* ------------------------------------------------------------ */
+
+* { padding: 0; margin: 0; outline: 0; border: 0; box-sizing: border-box; }
+
+body { font-family: Roboto, Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1; color: rgba(0,0,0,.85); overflow: hidden; font-weight: 500; min-width: 200px; }
+
+
+/* ------------------------------------------------------------ *\
+  Icons
+\* ------------------------------------------------------------ */
+
+.ico { display: inline-block; vertical-align: middle; background-repeat: no-repeat; background-size: contain; background-position: center center; }
+
+.ico-config { background-image: url(icons/ico-config.png); width: 11px; height: 11px; }
+.ico-help { background-image: url(icons/ico-help.png); width: 11px; height: 11px; }
+
+
+/* ------------------------------------------------------------ *\
+  Buttons
+\* ------------------------------------------------------------ */
+
+.btn { display: inline-block; position: relative; overflow: hidden; background: #2196f3; padding: 0 15px; border-radius: 2px; font-size: 14px; line-height: 32px; color: #fff; text-transform: uppercase; text-decoration: none; text-align: center; cursor: pointer; transition: 200ms; }
+.btn:hover { background: #2980b9; }
+
+.btn-block { display: block; width: 100%; padding-left: 0; padding-right: 0; }
+
+.btn-success { background: #abdc28; }
+.btn-success:hover { background: #9ac117; }
+
+.btn-danger { background: #f44336; }
+.btn-danger:hover { background: #e04a28; }
+
+.btn[disabled] { background: #ccc; cursor: default; }
+
+
+/* ------------------------------------------------------------ *\
+  Icon Link
+\* ------------------------------------------------------------ */
+
+.icon-link-group { margin: 0 -10px; overflow: hidden; }
+
+.icon-link { display: inline-block; color: #000; opacity: .5; padding: 10px; transition: 200ms; font-weight: 400; text-decoration: none; font-size: 13px; }
+.icon-link:nth-child(odd) { float: left; }
+.icon-link:nth-child(even) { float: right; }
+.icon-link.active,
+.icon-link:hover { opacity: 1; }
+.icon-link.active { color: #2196f3; }
+
+.icon-link .text { display: inline-block; vertical-align: middle; }
+.icon-link .ico { transition: 200ms; margin-right: 3px; }
+
+
+/* ------------------------------------------------------------ *\
+  Wrapper
+\* ------------------------------------------------------------ */
+
+.wrapper { padding: 15px 10px 10px; }
+
+.extension-triggers { margin-bottom: 10px; }
+
+.extension-unavailable-message { display: none; color: rgba(0,0,0,.5); text-align: center; font-size: 14px; }
+
+
+/* ------------------------------------------------------------ *\
+  States
+\* ------------------------------------------------------------ */
+
+.disable-trigger { display: none; }
+.extension-enabled .enable-trigger { display: none; }
+.extension-enabled .disable-trigger { display: block; }
+
+.extension-disabled-for-tab .extension-triggers { display: none; }
+.extension-disabled-for-tab .extension-unavailable-message { display: block; }

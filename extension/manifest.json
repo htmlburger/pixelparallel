@@ -1,0 +1,39 @@
+{
+  "manifest_version": 2,
+  "name": "PixelParallel",
+  "version": "1.0.4",
+
+  "description": "Frontend development and QA tool for pixel perfect designs.",
+  "icons": {
+    "16": "logo-16.png",
+    "48": "logo-48.png",
+    "128": "logo-128.png"
+  },
+
+  "browser_action": {
+    "default_icon": "logo-128.png",
+    "default_popup": "popup.html"
+  },
+
+  "background": {
+    "scripts": ["background.js"]
+  },
+
+  "options_page": "options.html",
+  "options_ui": {
+    "page": "options.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["PixelParallel.js"]
+    }
+  ],
+
+  "permissions": [
+    "storage",
+    "tabs",
+    "http://*/*",
+    "https://*/*"
+  ]
+}

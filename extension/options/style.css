@@ -1,0 +1,126 @@
+/* ------------------------------------------------------------ *\
+  Pixel Parallel Options
+\* ------------------------------------------------------------ */
+
+* { padding: 0; margin: 0; outline: 0; border: 0; box-sizing: border-box; }
+
+body { font-family: Roboto, Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1; color: rgba(0,0,0,.85); overflow: hidden; min-width: 200px; }
+
+h3 { font-weight: bold; font-size: 16px; margin-bottom: 8px; }
+
+/* ------------------------------------------------------------ *\
+  Buttons
+\* ------------------------------------------------------------ */
+
+.btn { display: inline-block; position: relative; overflow: hidden; background: #2196f3; padding: 0 25px; border-radius: 2px; font-size: 14px; line-height: 32px; color: #fff; text-transform: uppercase; text-decoration: none; text-align: center; cursor: pointer; transition: 200ms; }
+.btn:hover { background: #2980b9; }
+
+.btn-block { display: block; width: 100%; padding-left: 0; padding-right: 0; }
+
+.btn-success { background: #abdc28; }
+.btn-success:hover { background: #9ac117; }
+
+.btn-danger { background: #f44336; }
+.btn-danger:hover { background: #e04a28; }
+
+.btn[disabled] { background: #ccc; cursor: default; }
+
+.btn-file input { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0.01; cursor: pointer; }
+
+.btn-group .btn { margin: 5px 0; }
+
+
+/* ------------------------------------------------------------ *\
+  Link
+\* ------------------------------------------------------------ */
+
+.link { font-size: 14px; text-transform: uppercase; color: rgba(0,0,0,.5); text-decoration: underline; padding: 9px 0; font-weight: 600; }
+
+
+/* ------------------------------------------------------------ *\
+  Field
+\* ------------------------------------------------------------ */
+
+.field { display: block; width: 100%; border: 0 none; border-bottom: 2px solid #bdbdbd; font-family: inherit; font-size: 14px; font-weight: inherit; line-height: 34px; color: rgba(0,0,0,.85); transition: 200ms; -moz-appearance: textfield; }
+
+.field:focus { border-color: #2196f3; outline: 0 none; }
+
+
+/* ------------------------------------------------------------ *\
+  Separator
+\* ------------------------------------------------------------ */
+
+.separator { display: inline-block; vertical-align: middle; width: 22px; font-size: 12px; color: rgba(0,0,0,.5); text-align: center; }
+
+
+/* ------------------------------------------------------------ *\
+  Toggle
+\* ------------------------------------------------------------ */
+
+.toggle { display: inline-block; vertical-align: middle; cursor: pointer; padding-bottom: 1px; }
+.toggle .toggle-checkbox { position: absolute; opacity: 0; z-index: -999; }
+
+.toggle .toggle-title { display: block; margin-bottom: 10px; }
+.toggle .toggle-title a { text-decoration: underline; color: inherit; font-size: .9em; }
+
+.toggle .toggle-main,
+.toggle .toggle-handle { transition: 200ms; }
+
+.toggle .toggle-main { display: block; position: relative; width: 28px; height: 10px; border-radius: 100px; background: #898989; }
+.toggle .toggle-handle { position: absolute; top: -2px; left: 0; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.2); transform: translateX(0%); }
+
+.toggle-checked .toggle-main { background: #90caf9; }
+.toggle-checked .toggle-handle { background: #2196f3; transform: translateX(100%); }
+
+
+/* ------------------------------------------------------------ *\
+  Keyboard
+\* ------------------------------------------------------------ */
+
+.keyboard-key { display: inline-block; vertical-align: middle; width: 38px; height: 38px; background: #dfdfdf; border-radius: 5px; border: 3px solid; border-color: #efefef #efefef #bfbebf #bfbebf; font-size: 12px; color: rgba(0,0,0,.8); text-align: center; line-height: 30px; box-shadow: inset 0 0 1px #fff; }
+input.keyboard-key { border-color: #2196f3; padding: 0; }
+.keyboard-key-small { width: 24px; height: 24px; line-height: 22px; font-size: 9px; }
+
+
+/* ------------------------------------------------------------ *\
+  Wrapper
+\* ------------------------------------------------------------ */
+
+.wrapper { padding: 19px 21px 19px 17px; }
+
+
+/* ------------------------------------------------------------ *\
+  Key Bindings
+\* ------------------------------------------------------------ */
+
+.key-bindings-list { list-style: none outside none; margin-bottom: 20px; }
+.key-bindings-item { font-size: 0; }
+.key-bindings-item:after { content: ''; line-height: 0; display: table; clear: both; }
+.key-bindings-item-title { float: left; font-size: 13px; color: #000; font-weight: normal; line-height: 44px; }
+.key-bindings-item-body { float: right; width: 225px; }
+.key-bindings-item-body .base { display: inline-block; vertical-align: middle; background: #f4f4f4; padding: 3px 15px; border-left: 1px solid #d3d3d3; border-right: 1px solid #d3d3d3; }
+.key-bindings-item:first-child .key-bindings-item-title { padding-top: 9px; }
+.key-bindings-item:first-child .key-bindings-item-body .custom-key { padding-top: 9px; }
+.key-bindings-item:first-child .key-bindings-item-body .base { border-top: 1px solid #d3d3d3; padding-top: 15px; border-radius: 4px 4px 0 0; }
+.key-bindings-item:last-child .key-bindings-item-body .custom-key { padding-bottom: 9px; }
+.key-bindings-item:last-child .key-bindings-item-body .base { border-bottom: 1px solid #d3d3d3; padding-bottom: 15px;  border-radius: 0 0 4px 4px; }
+
+.key-bindings-item-body .base .toggle { margin-right: 10px; }
+
+.key-bindings-item-body .custom-key { display: inline-block; vertical-align: middle; }
+.key-bindings-item-body .custom-key .separator { width: 29px; }
+.key-bindings-item-body .form-control { width: 28px; display: inline-block; vertical-align: middle; }
+.key-bindings-item-body .form-control .field { text-align: center; }
+
+.key-bindings-item.base-disabled .base .keyboard-key,
+.key-bindings-item.base-disabled .separator { opacity: .5; }
+
+.key-bindings .bindings-info { font-size: 12px; color: rgba(0,0,0,.65); }
+
+
+/* ------------------------------------------------------------ *\
+  Config Actions
+\* ------------------------------------------------------------ */
+
+.config-actions { padding-top: 20px; }
+.config-actions .link { float: right; }
