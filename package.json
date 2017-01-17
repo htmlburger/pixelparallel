@@ -1,6 +1,6 @@
 {
   "name": "pixel-parallel",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "Frontend development and QA tool for pixel perfect designs.",
   "main": "dist/PixelParallel.js",
   "scripts": {

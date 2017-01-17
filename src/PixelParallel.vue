@@ -230,11 +230,6 @@ export default {
             });
         }
       });
-
-      Mousetrap(element || window)
-        .bind('ctrl+alt', (event) => {
-          this.$children[0].contentElement.querySelector('.paste-box').focus()
-        });
     },
     reloadBindings() {
       const defaultBindings = {

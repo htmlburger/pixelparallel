@@ -9282,10 +9282,6 @@ var db = new __WEBPACK_IMPORTED_MODULE_2__utils_db_js__["a" /* default */]();
           });
         }
       });
-
-      __WEBPACK_IMPORTED_MODULE_0_mousetrap___default()(element || window).bind('ctrl+alt', function (event) {
-        _this3.$children[0].contentElement.querySelector('.paste-box').focus();
-      });
     },
     reloadBindings: function reloadBindings() {
       var _this4 = this;
