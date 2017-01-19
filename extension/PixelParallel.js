@@ -9064,6 +9064,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 var db = new __WEBPACK_IMPORTED_MODULE_2__utils_db_js__["a" /* default */]();
 
+var mousetrap = {
+  main: new __WEBPACK_IMPORTED_MODULE_0_mousetrap___default.a(window),
+  panel: null
+};
+
 /* harmony default export */ exports["default"] = {
   name: 'pixelParallel',
   data: function data() {
@@ -9181,7 +9186,8 @@ var db = new __WEBPACK_IMPORTED_MODULE_2__utils_db_js__["a" /* default */]();
 
       this.enabled = false;
 
-      __WEBPACK_IMPORTED_MODULE_0_mousetrap___default.a.pause();
+      if (mousetrap.main) mousetrap.main.pause();
+      if (mousetrap.panel) mousetrap.panel.pause();
 
       this.$children[0].detach();
 
@@ -9194,7 +9200,8 @@ var db = new __WEBPACK_IMPORTED_MODULE_2__utils_db_js__["a" /* default */]();
 
       this.enabled = true;
 
-      __WEBPACK_IMPORTED_MODULE_0_mousetrap___default.a.unpause();
+      if (mousetrap.main) mousetrap.main.unpause();
+      if (mousetrap.panel) mousetrap.panel.unpause();
 
       document.body.appendChild(this.$el);
 
@@ -9212,74 +9219,95 @@ var db = new __WEBPACK_IMPORTED_MODULE_2__utils_db_js__["a" /* default */]();
 
       this.disable();
     },
-    bindBindings: function bindBindings(bindings, element) {
+    bindKeyboard: function bindKeyboard(bindings, element) {
       var _this3 = this;
 
-      Object.keys(bindings).forEach(function (key) {
-        var keyString = bindings[key].base ? 'ctrl+alt+' + bindings[key].key : bindings[key].key;
-        var keyStringWithShift = bindings[key].base ? 'ctrl+alt+shift+' + bindings[key].key : 'shift+' + bindings[key].key;
+      var instance = __WEBPACK_IMPORTED_MODULE_0_mousetrap___default()(element || window);
 
-        __WEBPACK_IMPORTED_MODULE_0_mousetrap___default()(element || window).bind(keyString, function (event) {
-          event.preventDefault();
+      if (mousetrap.main) {
+        console.log('reset');
+        mousetrap.main.reset();
+      }
 
-          switch (key) {
-            case 'minimize':
-              _this3.config.minimized = !_this3.config.minimized;
-              break;
+      if (mousetrap.panel) {
+        console.log('reset');
+        mousetrap.panel.reset();
+      }
 
-            case 'toggle':
-              _this3.config.visible = !_this3.config.visible;
-              break;
+      setTimeout(function () {
+        Object.keys(bindings).forEach(function (key) {
+          console.log(key);
+          var keyString = bindings[key].base ? 'ctrl+alt+' + bindings[key].key : bindings[key].key;
+          var keyStringWithShift = bindings[key].base ? 'ctrl+alt+shift+' + bindings[key].key : 'shift+' + bindings[key].key;
 
-            case 'lock':
-              _this3.config.image.lock = !_this3.config.image.lock;
-              break;
-
-            case 'resetPosition':
-              _this3.config.image.top = 0;
-              _this3.config.image.left = 0;
-              break;
-
-            case 'left':
-              _this3.config.image.left -= 1;
-              break;
-
-            case 'right':
-              _this3.config.image.left += 1;
-              break;
-
-            case 'up':
-              _this3.config.image.top -= 1;
-              break;
-
-            case 'down':
-              _this3.config.image.top += 1;
-              break;
-          }
-        });
-
-        if (key === 'left' || key === 'right' || key === 'up' || key === 'down') {
-          __WEBPACK_IMPORTED_MODULE_0_mousetrap___default()(element || window).bind(keyStringWithShift, function (event) {
+          instance.bind(keyString, function (event) {
             event.preventDefault();
 
             switch (key) {
+              case 'minimize':
+                _this3.config.minimized = !_this3.config.minimized;
+                break;
+
+              case 'toggle':
+                _this3.config.visible = !_this3.config.visible;
+                break;
+
+              case 'lock':
+                _this3.config.image.lock = !_this3.config.image.lock;
+                break;
+
+              case 'resetPosition':
+                _this3.config.image.top = 0;
+                _this3.config.image.left = 0;
+                break;
+
               case 'left':
-                _this3.config.image.left -= 10;
+                _this3.config.image.left -= 1;
                 break;
 
               case 'right':
-                _this3.config.image.left += 10;
+                _this3.config.image.left += 1;
                 break;
 
               case 'up':
-                _this3.config.image.top -= 10;
+                _this3.config.image.top -= 1;
                 break;
 
               case 'down':
-                _this3.config.image.top += 10;
+                _this3.config.image.top += 1;
                 break;
             }
           });
+
+          if (key === 'left' || key === 'right' || key === 'up' || key === 'down') {
+            instance.bind(keyStringWithShift, function (event) {
+              event.preventDefault();
+
+              switch (key) {
+                case 'left':
+                  _this3.config.image.left -= 10;
+                  break;
+
+                case 'right':
+                  _this3.config.image.left += 10;
+                  break;
+
+                case 'up':
+                  _this3.config.image.top -= 10;
+                  break;
+
+                case 'down':
+                  _this3.config.image.top += 10;
+                  break;
+              }
+            });
+          }
+        });
+
+        if (element) {
+          mousetrap.panel = instance;
+        } else {
+          mousetrap.main = instance;
         }
       });
     },
@@ -9321,16 +9349,28 @@ var db = new __WEBPACK_IMPORTED_MODULE_2__utils_db_js__["a" /* default */]();
         }
       };
 
-      __WEBPACK_IMPORTED_MODULE_0_mousetrap___default.a.reset();
+      if (mousetrap.main) {
+        mousetrap.main.reset();
+      }
+
+      if (mousetrap.panel) {
+        mousetrap.panel.reset();
+      }
 
       if ('chrome' in window && 'storage' in chrome && 'sync' in chrome.storage) {
         chrome.storage.sync.get(defaultBindings, function (bindings) {
-          _this4.bindBindings(bindings);
-          _this4.bindBindings(bindings, _this4.$children[0].isolatorElement.contentWindow);
+          _this4.bindKeyboard(bindings);
+
+          if (_this4.$children[0].isolatorElement.contentWindow) {
+            _this4.bindKeyboard(bindings, _this4.$children[0].isolatorElement.contentWindow);
+          }
         });
       } else {
-        this.bindBindings(defaultBindings);
-        this.bindBindings(defaultBindings, this.$children[0].isolatorElement.contentWindow);
+        this.bindKeyboard(defaultBindings);
+
+        if (this.$children[0].isolatorElement.contentWindow) {
+          this.bindKeyboard(defaultBindings, this.$children[0].isolatorElement.contentWindow);
+        }
       }
     }
   },
@@ -9904,6 +9944,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
     };
   },
   mounted: function mounted() {
+    var _this = this;
+
     this.isolatorElement = this.$el.querySelector('.pixelParallel-panel-isolator');
     this.contentElement = this.$el.querySelector('.pixelParallel-panel-content');
     this.styleElement = document.createElement('style');
@@ -9913,6 +9955,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
     this.styleElement.textContent += __WEBPACK_IMPORTED_MODULE_2__styles_panel_js__["a" /* default */];
 
     this.attach();
+
+    // Fix Firefox issue
+    this.isolatorElement.addEventListener('load', function () {
+      _this.attach();
+    });
   },
 
 

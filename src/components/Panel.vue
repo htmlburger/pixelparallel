@@ -184,6 +184,11 @@ export default {
     this.styleElement.textContent += panelStyles;
 
     this.attach();
+
+    // Fix Firefox issue
+    this.isolatorElement.addEventListener('load', () => {
+      this.attach();
+    });
   },
 
   methods: {

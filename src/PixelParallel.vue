@@ -17,6 +17,11 @@ import Overlay from './components/Overlay.vue';
 
 const db = new DB();
 
+const mousetrap = {
+  main: new Mousetrap(window),
+  panel: null
+};
+
 export default {
   name: 'pixelParallel',
   data () {
@@ -129,7 +134,8 @@ export default {
 
       this.enabled = false;
 
-      Mousetrap.pause();
+      if (mousetrap.main) mousetrap.main.pause();
+      if (mousetrap.panel) mousetrap.panel.pause();
 
       this.$children[0].detach();
 
@@ -142,7 +148,8 @@ export default {
 
       this.enabled = true;
 
-      Mousetrap.unpause();
+      if (mousetrap.main) mousetrap.main.unpause();
+      if (mousetrap.panel) mousetrap.panel.unpause();
 
       document.body.appendChild(this.$el);
 
@@ -160,75 +167,94 @@ export default {
 
       this.disable();
     },
-    bindBindings(bindings, element) {
-      Object.keys(bindings).forEach((key) => {
-        const keyString = bindings[key].base ? `ctrl+alt+${bindings[key].key}` : bindings[key].key;
-        const keyStringWithShift = bindings[key].base ? `ctrl+alt+shift+${bindings[key].key}` : `shift+${bindings[key].key}`;
+    bindKeyboard(bindings, element) {
+      const instance = Mousetrap(element || window);
 
-        Mousetrap(element || window)
-          .bind(keyString, (event) => {
-            event.preventDefault();
+      if (mousetrap.main) {
+        mousetrap.main.reset();
+      }
 
-            switch (key) {
-              case 'minimize':
-                this.config.minimized = !this.config.minimized;
-                break;
+      if (mousetrap.panel) {
+        mousetrap.panel.reset();
+      }
 
-              case 'toggle':
-                this.config.visible = !this.config.visible;
-                break;
+      setTimeout(() => {
+        Object.keys(bindings).forEach((key) => {
+          const keyString = bindings[key].base ? `ctrl+alt+${bindings[key].key}` : bindings[key].key;
+          const keyStringWithShift = bindings[key].base ? `ctrl+alt+shift+${bindings[key].key}` : `shift+${bindings[key].key}`;
 
-              case 'lock':
-                this.config.image.lock = !this.config.image.lock;
-                break;
-
-              case 'resetPosition':
-                this.config.image.top = 0;
-                this.config.image.left = 0;
-                break;
-
-              case 'left':
-                this.config.image.left -= 1;
-                break;
-
-              case 'right':
-                this.config.image.left += 1;
-                break;
-
-              case 'up':
-                this.config.image.top -= 1;
-                break;
-
-              case 'down':
-                this.config.image.top += 1;
-                break;
-            }
-          });
-
-        if (key === 'left' || key === 'right' || key === 'up' || key === 'down') {
-          Mousetrap(element || window)
-            .bind(keyStringWithShift, (event) => {
+          instance
+            .bind(keyString, (event) => {
               event.preventDefault();
 
               switch (key) {
+                case 'minimize':
+                  this.config.minimized = !this.config.minimized;
+                  break;
+
+                case 'toggle':
+                  this.config.visible = !this.config.visible;
+                  break;
+
+                case 'lock':
+                  this.config.image.lock = !this.config.image.lock;
+                  break;
+
+                case 'resetPosition':
+                  this.config.image.top = 0;
+                  this.config.image.left = 0;
+                  break;
+
                 case 'left':
-                  this.config.image.left -= 10;
+                  this.config.image.left -= 1;
                   break;
 
                 case 'right':
-                  this.config.image.left += 10;
+                  this.config.image.left += 1;
                   break;
 
                 case 'up':
-                  this.config.image.top -= 10;
+                  this.config.image.top -= 1;
                   break;
 
                 case 'down':
-                  this.config.image.top += 10;
+                  this.config.image.top += 1;
                   break;
               }
             });
+
+          if (key === 'left' || key === 'right' || key === 'up' || key === 'down') {
+            instance
+              .bind(keyStringWithShift, (event) => {
+                event.preventDefault();
+
+                switch (key) {
+                  case 'left':
+                    this.config.image.left -= 10;
+                    break;
+
+                  case 'right':
+                    this.config.image.left += 10;
+                    break;
+
+                  case 'up':
+                    this.config.image.top -= 10;
+                    break;
+
+                  case 'down':
+                    this.config.image.top += 10;
+                    break;
+                }
+              });
+          }
+        });
+
+        if (element) {
+          mousetrap.panel = instance;
+        } else {
+          mousetrap.main = instance;
         }
+        
       });
     },
     reloadBindings() {
@@ -267,16 +293,28 @@ export default {
         }
       };
 
-      Mousetrap.reset();
+      if (mousetrap.main) {
+        mousetrap.main.reset();
+      }
+
+      if (mousetrap.panel) {
+        mousetrap.panel.reset();
+      }
 
       if ('chrome' in window && 'storage' in chrome && 'sync' in chrome.storage) {
         chrome.storage.sync.get(defaultBindings, (bindings) => {
-          this.bindBindings(bindings);
-          this.bindBindings(bindings, this.$children[0].isolatorElement.contentWindow);
+          this.bindKeyboard(bindings);
+
+          if (this.$children[0].isolatorElement.contentWindow) {
+            this.bindKeyboard(bindings, this.$children[0].isolatorElement.contentWindow);
+          }
         });
       } else {
-        this.bindBindings(defaultBindings);
-        this.bindBindings(defaultBindings, this.$children[0].isolatorElement.contentWindow);
+        this.bindKeyboard(defaultBindings);
+
+        if (this.$children[0].isolatorElement.contentWindow) {
+          this.bindKeyboard(defaultBindings, this.$children[0].isolatorElement.contentWindow);
+        }
       }
     }
   },
