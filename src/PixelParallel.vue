@@ -57,6 +57,16 @@ export default {
           difference: false,
           lock: false,
           enabled: true
+        },
+        position: {
+          x: {
+            name: 'right',
+            value: .5
+          },
+          y: {
+            name: 'bottom',
+            value: 1
+          }
         }
       },
       image: {

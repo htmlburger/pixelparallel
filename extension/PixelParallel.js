@@ -470,31 +470,6 @@ function mergeDeep(target, source) {
 
 /***/ },
 /* 3 */
-/***/ function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() { return this; })();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ },
-/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -525,18 +500,24 @@ function draggableElement(element, settings) {
     top: 0
   };
 
-  var mouseUpHandler = function mouseUpHandler() {
+  var mouseUpHandler = function mouseUpHandler(event) {
     elementDraggable = false;
     document.removeEventListener('mouseup', mouseUpHandler);
     document.removeEventListener('mousemove', mouseMoveHandler);
 
     if ('onDragEnd' in settings) {
-      settings.onDragEnd(elementMargin);
+      settings.onDragEnd(elementMargin, event);
     };
   };
 
   var mouseMoveHandler = function mouseMoveHandler(event) {
     if (elementDraggable) {
+
+      if ('onDragMove' in settings) {
+        settings.onDragMove(event);
+
+        return;
+      };
 
       if (settings.y) {
         elementMargin.top = event.pageY - startPosition.top + elementInitialMargin.top;
@@ -553,6 +534,10 @@ function draggableElement(element, settings) {
   var mouseDownHandler = function mouseDownHandler(event) {
     event.preventDefault();
     elementDraggable = true;
+
+    if ('onDragStart' in settings) {
+      settings.onDragStart(event);
+    };
 
     if (settings.y) {
       startPosition.top = event.pageY;
@@ -572,6 +557,31 @@ function draggableElement(element, settings) {
 
   element.addEventListener('mousedown', mouseDownHandler);
 }
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() { return this; })();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
 
 /***/ },
 /* 5 */
@@ -648,7 +658,7 @@ function immediate(task) {
   }
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ },
 /* 6 */
@@ -9002,7 +9012,7 @@ Vue$3.compile = compileToFunctions;
 
 module.exports = Vue$3;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ },
 /* 8 */
@@ -9104,6 +9114,16 @@ var mousetrap = {
           difference: false,
           lock: false,
           enabled: true
+        },
+        position: {
+          x: {
+            name: 'right',
+            value: .5
+          },
+          y: {
+            name: 'bottom',
+            value: 1
+          }
         }
       },
       image: {
@@ -9225,18 +9245,15 @@ var mousetrap = {
       var instance = __WEBPACK_IMPORTED_MODULE_0_mousetrap___default()(element || window);
 
       if (mousetrap.main) {
-        console.log('reset');
         mousetrap.main.reset();
       }
 
       if (mousetrap.panel) {
-        console.log('reset');
         mousetrap.panel.reset();
       }
 
       setTimeout(function () {
         Object.keys(bindings).forEach(function (key) {
-          console.log(key);
           var keyString = bindings[key].base ? 'ctrl+alt+' + bindings[key].key : bindings[key].key;
           var keyStringWithShift = bindings[key].base ? 'ctrl+alt+shift+' + bindings[key].key : 'shift+' + bindings[key].key;
 
@@ -9643,7 +9660,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__directives_draggable_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__directives_draggable_js__ = __webpack_require__(3);
 Object.defineProperty(exports, "__esModule", { value: true });
 //
 //
@@ -9718,7 +9735,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__directives_draggable_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__directives_draggable_js__ = __webpack_require__(3);
 Object.defineProperty(exports, "__esModule", { value: true });
 //
 //
@@ -9767,6 +9784,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Droparea_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__Droparea_vue__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__PasteBox_vue__ = __webpack_require__(49);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__PasteBox_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__PasteBox_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__directives_draggable_js__ = __webpack_require__(3);
 Object.defineProperty(exports, "__esModule", { value: true });
 //
 //
@@ -9921,6 +9939,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
 
 
 
@@ -9930,6 +9951,26 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 
 
+
+
+var dragPositions = {
+  start: {
+    x: 0,
+    y: 0
+  },
+  element: {
+    x: 0,
+    y: 0
+  },
+  last: {
+    x: 0,
+    y: 0
+  },
+  max: {
+    x: 0,
+    y: 0
+  }
+};
 
 /* harmony default export */ exports["default"] = {
   name: 'panel',
@@ -9940,7 +9981,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
     return {
       contentElement: null,
       styleElement: null,
-      isolatorElement: null
+      isolatorElement: null,
+      dragging: false
     };
   },
   mounted: function mounted() {
@@ -9964,6 +10006,74 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 
   methods: {
+    handleDragEnd: function handleDragEnd(newPosition, event) {
+      var elementBoundingRect = this.$el.getBoundingClientRect();
+      var windowSize = {
+        x: window.innerWidth,
+        y: window.innerHeight
+      };
+
+      var propNameX = null;
+      var propNameY = null;
+      var propValX = 0;
+      var propValY = 0;
+
+      if (dragPositions.last.x < windowSize.x / 2) {
+        propNameX = 'left';
+
+        propValX = dragPositions.last.x / window.innerWidth * 100;
+      } else {
+        propNameX = 'right';
+
+        this.$el.style.left = 'auto';
+        propValX = (windowSize.x - dragPositions.last.x - elementBoundingRect.width) / window.innerWidth * 100;
+      }
+
+      if (dragPositions.last.y < windowSize.y / 2) {
+        propNameY = 'top';
+
+        propValY = dragPositions.last.y / window.innerHeight * 100;
+      } else {
+        propNameY = 'bottom';
+
+        this.$el.style.top = 'auto';
+        propValY = (windowSize.y - dragPositions.last.y - elementBoundingRect.height) / window.innerHeight * 100;
+      }
+
+      this.$el.style.transform = 'none';
+      this.$el.style[propNameX] = propValX + '%';
+      this.$el.style[propNameY] = propValY + '%';
+
+      this.config.position.x.name = propNameX;
+      this.config.position.x.value = propValX;
+      this.config.position.y.name = propNameY;
+      this.config.position.y.value = propValY;
+
+      this.dragging = false;
+    },
+    handleDragMove: function handleDragMove(event) {
+      dragPositions.last.x = Math.min(dragPositions.max.x, Math.max(0, dragPositions.element.x + event.screenX - dragPositions.start.x));
+      dragPositions.last.y = Math.min(dragPositions.max.y, Math.max(0, dragPositions.element.y + event.screenY - dragPositions.start.y));
+
+      this.$el.style.transform = 'translate(' + dragPositions.last.x + 'px, ' + dragPositions.last.y + 'px)';
+    },
+    handleDragStart: function handleDragStart(event) {
+      var elementBoundingRect = this.$el.getBoundingClientRect();
+      dragPositions.start.x = event.screenX;
+      dragPositions.start.y = event.screenY;
+      dragPositions.element.x = elementBoundingRect.left;
+      dragPositions.element.y = elementBoundingRect.top;
+      dragPositions.max.x = window.innerWidth - elementBoundingRect.width;
+      dragPositions.max.y = window.innerHeight - elementBoundingRect.height;
+
+      this.$el.style.left = '0px';
+      this.$el.style.top = '0px';
+      this.$el.style.transform = 'translate(' + dragPositions.element.x + 'px, ' + dragPositions.element.y + 'px)';
+      this.$el.style.right = 'auto';
+      this.$el.style.bottom = 'auto';
+
+      this.dragging = true;
+    },
     setCurrentPane: function setCurrentPane(paneKey) {
       this.config.currentPane = paneKey;
     },
@@ -9988,7 +10098,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
       this.$children[0].setIsolatorDoc(this.isolatorElement.contentDocument);
     }
   },
+  computed: {
+    panelInlineStyles: function panelInlineStyles() {
+      var styleObject = {};
 
+      styleObject[this.config.position.x.name] = this.config.position.x.value + '%';
+      styleObject[this.config.position.y.name] = this.config.position.y.value + '%';
+      styleObject.opacity = 1;
+
+      return styleObject;
+    }
+  },
+  directives: {
+    draggable: __WEBPACK_IMPORTED_MODULE_8__directives_draggable_js__["a" /* default */]
+  },
   components: {
     Toggle: __WEBPACK_IMPORTED_MODULE_3__Toggle_vue___default.a,
     Number: __WEBPACK_IMPORTED_MODULE_4__Number_vue___default.a,
@@ -10315,7 +10438,7 @@ exports = module.exports = __webpack_require__(0)();
 
 
 // module
-exports.push([module.i, ".pixelParallel-panel[data-v-208daeb5]{position:fixed;right:10px;bottom:10px;z-index:2147483647;width:375px;height:265px;transform:translate(0);background:#fff;transition:.2s ease-out}.pixelParallel-panel-inner[data-v-208daeb5]{position:relative;overflow:hidden;height:100%;border:1px solid #dddedf;box-shadow:0 2px 10px rgba(0,0,0,.1);box-sizing:border-box}.pixelParallel-panel-isolator[data-v-208daeb5]{border:0;width:100%;height:100%;overflow:hidden;position:relative}.pixelParallel-panel-minimized[data-v-208daeb5]{width:112px;height:50px;transition:.2s ease-out .15s}@media (max-width:395px){.pixelParallel-panel[data-v-208daeb5]{right:0;bottom:0;width:320px}.pixelParallel-panel-minimized[data-v-208daeb5]{width:112px}}", ""]);
+exports.push([module.i, ".pixelParallel-panel[data-v-208daeb5]{position:fixed;right:10px;bottom:10px;z-index:2147483647;width:375px;height:265px;transform:translate(0);background:#fff;transition:width .2s ease-out,height .2s ease-out;will-change:top,left,width,height,transform;opacity:0}.pixelParallel-panel-inner[data-v-208daeb5]{position:relative;overflow:hidden;height:100%;border:1px solid #dddedf;box-shadow:0 2px 10px rgba(0,0,0,.1);box-sizing:border-box}.pixelParallel-panel-handle[data-v-208daeb5]{position:absolute;top:-10px;right:-10px;z-index:3;width:20px;height:20px;background:red;transform:rotate(45deg);background:linear-gradient(0deg,transparent,transparent 50%,#ccc 0,#ccc);background-size:100% 2px;cursor:move}.pixelParallel-panel-isolator[data-v-208daeb5]{border:0;width:100%;height:100%;overflow:hidden;position:relative}.pixelParallel-panel-dragging .pixelParallel-panel-inner[data-v-208daeb5]{pointer-events:none}.pixelParallel-panel-minimized[data-v-208daeb5]{width:112px;height:50px;transition:width .2s ease-out .15s,height .2s ease-out .15s}@media (max-width:395px){.pixelParallel-panel[data-v-208daeb5]{right:0;bottom:0;width:320px}.pixelParallel-panel-minimized[data-v-208daeb5]{width:112px}}", ""]);
 
 // exports
 
@@ -23299,7 +23422,7 @@ PouchDB.plugin(IDBPouch)
 // aggressive bundle.
 
 module.exports = PouchDB;
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ },
 /* 37 */
@@ -25037,12 +25160,28 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
 
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
   return _c('div', {
+    directives: [{
+      name: "draggable",
+      rawName: "v-draggable",
+      value: ({
+        x: true,
+        y: true,
+        onDragEnd: _vm.handleDragEnd,
+        onDragMove: _vm.handleDragMove,
+        onDragStart: _vm.handleDragStart
+      }),
+      expression: "{x: true, y: true, onDragEnd: handleDragEnd, onDragMove: handleDragMove, onDragStart: handleDragStart}"
+    }],
     class: ['pixelParallel-panel', {
-      'pixelParallel-panel-minimized': _vm.config.minimized
-    }]
+      'pixelParallel-panel-minimized': _vm.config.minimized,
+      'pixelParallel-panel-dragging': this.dragging
+    }],
+    style: (_vm.panelInlineStyles)
   }, [_c('div', {
     staticClass: "pixelParallel-panel-inner"
-  }, [_c('iframe', {
+  }, [_c('div', {
+    staticClass: "pixelParallel-panel-handle"
+  }), _vm._v(" "), _c('iframe', {
     staticClass: "pixelParallel-panel-isolator",
     attrs: {
       "frameborder": "0"

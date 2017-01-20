@@ -1,6 +1,9 @@
 <template>
-  <div :class="['pixelParallel-panel', {'pixelParallel-panel-minimized': config.minimized}]">
+  <div :class="['pixelParallel-panel', {'pixelParallel-panel-minimized': config.minimized, 'pixelParallel-panel-dragging': this.dragging}]" v-draggable="{x: true, y: true, onDragEnd: handleDragEnd, onDragMove: handleDragMove, onDragStart: handleDragStart}" :style="panelInlineStyles">
+
     <div class="pixelParallel-panel-inner">
+      <div class="pixelParallel-panel-handle"></div><!-- /.pixelParallel-panel-handle -->
+
       <iframe class="pixelParallel-panel-isolator" frameborder="0"></iframe>
 
       <div :class="['pixelParallel-panel-content', {'pixelParallel-panel-content-minimized': config.minimized}]">
@@ -152,14 +155,35 @@
 </template>
 
 <script>
-import panelFonts from './../styles/panel-fonts.js';
-import panelIcons from './../styles/panel-icons.js';
-import panelStyles from './../styles/panel.js';
+import panelFonts from '../styles/panel-fonts.js';
+import panelIcons from '../styles/panel-icons.js';
+import panelStyles from '../styles/panel.js';
 import Toggle from './Toggle.vue';
 import Number from './Number.vue';
 import UploadButton from './UploadButton.vue';
 import Droparea from './Droparea.vue';
 import PasteBox from './PasteBox.vue';
+import draggableDirective from '../directives/draggable.js';
+
+
+const dragPositions = {
+  start: {
+    x: 0,
+    y: 0
+  },
+  element: {
+    x: 0,
+    y: 0
+  },
+  last: {
+    x: 0,
+    y: 0
+  },
+  max: {
+    x: 0,
+    y: 0
+  }
+};
 
 export default {
   name: 'panel',
@@ -170,7 +194,8 @@ export default {
     return {
       contentElement: null,
       styleElement: null,
-      isolatorElement: null
+      isolatorElement: null,
+      dragging: false
     }
   },
 
@@ -192,6 +217,74 @@ export default {
   },
 
   methods: {
+    handleDragEnd (newPosition, event) {
+      const elementBoundingRect = this.$el.getBoundingClientRect();
+      const windowSize = {
+        x: window.innerWidth,
+        y: window.innerHeight
+      };
+
+      let propNameX = null;
+      let propNameY = null;
+      let propValX = 0;
+      let propValY = 0;
+
+      if (dragPositions.last.x < windowSize.x / 2) {
+        propNameX = 'left';
+
+        propValX = dragPositions.last.x / window.innerWidth * 100;
+      } else {
+        propNameX = 'right';
+
+        this.$el.style.left = 'auto';
+        propValX = (windowSize.x - dragPositions.last.x - elementBoundingRect.width) / window.innerWidth * 100;
+      }
+
+      if (dragPositions.last.y < windowSize.y / 2) {
+        propNameY = 'top';
+
+        propValY = dragPositions.last.y / window.innerHeight * 100;
+      } else {
+        propNameY = 'bottom';
+
+        this.$el.style.top = 'auto';
+        propValY = (windowSize.y - dragPositions.last.y - elementBoundingRect.height) / window.innerHeight * 100;
+      }
+
+      this.$el.style.transform = 'none';
+      this.$el.style[propNameX] = propValX + '%';
+      this.$el.style[propNameY] = propValY + '%';
+
+      this.config.position.x.name = propNameX;
+      this.config.position.x.value = propValX;
+      this.config.position.y.name = propNameY;
+      this.config.position.y.value = propValY;
+
+      this.dragging = false;
+    },
+    handleDragMove (event) {
+      dragPositions.last.x = Math.min(dragPositions.max.x, Math.max(0, (dragPositions.element.x + event.screenX - dragPositions.start.x)));
+      dragPositions.last.y = Math.min(dragPositions.max.y, Math.max(0, (dragPositions.element.y + event.screenY - dragPositions.start.y)));
+
+      this.$el.style.transform = `translate(${dragPositions.last.x}px, ${dragPositions.last.y}px)`;
+    },
+    handleDragStart (event) {
+      const elementBoundingRect = this.$el.getBoundingClientRect();
+      dragPositions.start.x = event.screenX;
+      dragPositions.start.y = event.screenY;
+      dragPositions.element.x = elementBoundingRect.left;
+      dragPositions.element.y = elementBoundingRect.top;
+      dragPositions.max.x = window.innerWidth - elementBoundingRect.width;
+      dragPositions.max.y = window.innerHeight - elementBoundingRect.height;
+
+      this.$el.style.left = '0px';
+      this.$el.style.top = '0px';
+      this.$el.style.transform = `translate(${dragPositions.element.x}px, ${dragPositions.element.y}px)`;
+      this.$el.style.right = 'auto';
+      this.$el.style.bottom = 'auto';
+
+      this.dragging = true;
+    },
     setCurrentPane(paneKey) {
       this.config.currentPane = paneKey;
     },
@@ -216,7 +309,20 @@ export default {
       this.$children[0].setIsolatorDoc(this.isolatorElement.contentDocument);
     }
   },
+  computed: {
+    panelInlineStyles () {
+      const styleObject = {};
 
+      styleObject[this.config.position.x.name] = this.config.position.x.value + '%';
+      styleObject[this.config.position.y.name] = this.config.position.y.value + '%';
+      styleObject.opacity = 1;
+
+      return styleObject;
+    }
+  },
+  directives: {
+    draggable: draggableDirective
+  },
   components: {
     Toggle,
     Number,
@@ -228,11 +334,16 @@ export default {
 </script>
 
 <style scoped>
-  .pixelParallel-panel { position: fixed; right: 10px; bottom: 10px; z-index: 2147483647; width: 375px; height: 265px; transform: translate(0%, 0); background: #fff; transition: 200ms ease-out; }
+  .pixelParallel-panel { position: fixed; right: 10px; bottom: 10px; z-index: 2147483647; width: 375px; height: 265px; transform: translate(0%, 0); background: #fff; transition: width 200ms ease-out, height 200ms ease-out; will-change: top, left, width, height, transform; opacity: 0; }
+
   .pixelParallel-panel-inner { position: relative; overflow: hidden; height: 100%; border: 1px solid #dddedf; box-shadow: 0 2px 10px rgba(0,0,0,.1); box-sizing: border-box; }
+
+  .pixelParallel-panel-handle { position: absolute; top: -10px; right: -10px; z-index: 3; width: 20px; height: 20px; background: red; transform: rotate(45deg); background: linear-gradient(to top, transparent, transparent 50%, #ccc 50%, #ccc); background-size: 100% 2px; cursor: move; }
+
   .pixelParallel-panel-isolator { border: 0; width: 100%; height: 100%; overflow: hidden; position: relative; }
 
-  .pixelParallel-panel-minimized { width: 112px; height: 50px; transition: 200ms 150ms ease-out; }
+  .pixelParallel-panel-dragging .pixelParallel-panel-inner { pointer-events: none; }
+  .pixelParallel-panel-minimized { width: 112px; height: 50px; transition: width 200ms 150ms ease-out, height 200ms 150ms ease-out; }
 
   @media (max-width: 395px) {
     .pixelParallel-panel { right: 0; bottom: 0; width: 320px; }

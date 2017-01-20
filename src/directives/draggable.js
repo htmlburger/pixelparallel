@@ -26,18 +26,24 @@ function draggableElement(element, settings) {
     top: 0
   };
 
-  const mouseUpHandler = function() {
+  const mouseUpHandler = function(event) {
     elementDraggable = false;
     document.removeEventListener('mouseup', mouseUpHandler);
     document.removeEventListener('mousemove', mouseMoveHandler);
 
     if('onDragEnd' in settings) {
-      settings.onDragEnd(elementMargin);
+      settings.onDragEnd(elementMargin, event);
     };
   };
 
   const mouseMoveHandler = function(event) {
     if (elementDraggable) {
+
+      if('onDragMove' in settings) {
+        settings.onDragMove(event);
+
+        return;
+      };
 
       if (settings.y) {
         elementMargin.top = (event.pageY - startPosition.top) + elementInitialMargin.top;
@@ -55,6 +61,10 @@ function draggableElement(element, settings) {
   const mouseDownHandler = function(event) {
     event.preventDefault();
     elementDraggable = true;
+
+      if('onDragStart' in settings) {
+        settings.onDragStart(event);
+      };
 
 
     if (settings.y) {

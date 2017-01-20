@@ -8,7 +8,7 @@
 
 <script>
 
-import draggableDirective from './../directives/draggable.js';
+import draggableDirective from '../directives/draggable.js';
 
 export default {
   name: 'overlayImage',
