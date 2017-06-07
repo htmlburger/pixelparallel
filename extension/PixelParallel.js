@@ -1,41 +1,41 @@
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
-
+/******/
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-
+/******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
+/******/ 		if(installedModules[moduleId]) {
 /******/ 			return installedModules[moduleId].exports;
-
+/******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
 /******/ 			l: false,
 /******/ 			exports: {}
 /******/ 		};
-
+/******/
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-
+/******/
 /******/ 		// Flag the module as loaded
 /******/ 		module.l = true;
-
+/******/
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-
-
+/******/
+/******/
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
-
+/******/
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-
+/******/
 /******/ 	// identity function for calling harmony imports with the correct context
 /******/ 	__webpack_require__.i = function(value) { return value; };
-
+/******/
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
@@ -46,7 +46,7 @@
 /******/ 			});
 /******/ 		}
 /******/ 	};
-
+/******/
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
 /******/ 	__webpack_require__.n = function(module) {
 /******/ 		var getter = module && module.__esModule ?
@@ -55,20 +55,73 @@
 /******/ 		__webpack_require__.d(getter, 'a', getter);
 /******/ 		return getter;
 /******/ 	};
-
+/******/
 /******/ 	// Object.prototype.hasOwnProperty.call
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-
+/******/
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "/dist/";
-
+/******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 70);
+/******/ 	return __webpack_require__(__webpack_require__.s = 21);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
+
+module.exports = function normalizeComponent (
+  rawScriptExports,
+  compiledTemplate,
+  scopeId,
+  cssModules
+) {
+  var esModule
+  var scriptExports = rawScriptExports = rawScriptExports || {}
+
+  // ES6 modules interop
+  var type = typeof rawScriptExports.default
+  if (type === 'object' || type === 'function') {
+    esModule = rawScriptExports
+    scriptExports = rawScriptExports.default
+  }
+
+  // Vue.extend constructor export interop
+  var options = typeof scriptExports === 'function'
+    ? scriptExports.options
+    : scriptExports
+
+  // render functions
+  if (compiledTemplate) {
+    options.render = compiledTemplate.render
+    options.staticRenderFns = compiledTemplate.staticRenderFns
+  }
+
+  // scopedId
+  if (scopeId) {
+    options._scopeId = scopeId
+  }
+
+  // inject cssModules
+  if (cssModules) {
+    var computed = options.computed || (options.computed = {})
+    Object.keys(cssModules).forEach(function (key) {
+      var module = cssModules[key]
+      computed[key] = function () { return module }
+    })
+  }
+
+  return {
+    esModule: esModule,
+    exports: scriptExports,
+    options: options
+  }
+}
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports) {
 
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
@@ -122,231 +175,230 @@ module.exports = function() {
 };
 
 
-/***/ },
-/* 1 */
-/***/ function(module, exports) {
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
 
 /*
-	MIT License http://www.opensource.org/licenses/mit-license.php
-	Author Tobias Koppers @sokra
+  MIT License http://www.opensource.org/licenses/mit-license.php
+  Author Tobias Koppers @sokra
+  Modified by Evan You @yyx990803
 */
-var stylesInDom = {},
-	memoize = function(fn) {
-		var memo;
-		return function () {
-			if (typeof memo === "undefined") memo = fn.apply(this, arguments);
-			return memo;
-		};
-	},
-	isOldIE = memoize(function() {
-		return /msie [6-9]\b/.test(window.navigator.userAgent.toLowerCase());
-	}),
-	getHeadElement = memoize(function () {
-		return document.head || document.getElementsByTagName("head")[0];
-	}),
-	singletonElement = null,
-	singletonCounter = 0,
-	styleElementsInsertedAtTop = [];
 
-module.exports = function(list, options) {
-	if(typeof DEBUG !== "undefined" && DEBUG) {
-		if(typeof document !== "object") throw new Error("The style-loader cannot be used in a non-browser environment");
-	}
+var hasDocument = typeof document !== 'undefined'
 
-	options = options || {};
-	// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
-	// tags it will allow on a page
-	if (typeof options.singleton === "undefined") options.singleton = isOldIE();
-
-	// By default, add <style> tags to the bottom of <head>.
-	if (typeof options.insertAt === "undefined") options.insertAt = "bottom";
-
-	var styles = listToStyles(list);
-	addStylesToDom(styles, options);
-
-	return function update(newList) {
-		var mayRemove = [];
-		for(var i = 0; i < styles.length; i++) {
-			var item = styles[i];
-			var domStyle = stylesInDom[item.id];
-			domStyle.refs--;
-			mayRemove.push(domStyle);
-		}
-		if(newList) {
-			var newStyles = listToStyles(newList);
-			addStylesToDom(newStyles, options);
-		}
-		for(var i = 0; i < mayRemove.length; i++) {
-			var domStyle = mayRemove[i];
-			if(domStyle.refs === 0) {
-				for(var j = 0; j < domStyle.parts.length; j++)
-					domStyle.parts[j]();
-				delete stylesInDom[domStyle.id];
-			}
-		}
-	};
+if (typeof DEBUG !== 'undefined' && DEBUG) {
+  if (!hasDocument) {
+    throw new Error(
+    'vue-style-loader cannot be used in a non-browser environment. ' +
+    "Use { target: 'node' } in your Webpack config to indicate a server-rendering environment."
+  ) }
 }
 
-function addStylesToDom(styles, options) {
-	for(var i = 0; i < styles.length; i++) {
-		var item = styles[i];
-		var domStyle = stylesInDom[item.id];
-		if(domStyle) {
-			domStyle.refs++;
-			for(var j = 0; j < domStyle.parts.length; j++) {
-				domStyle.parts[j](item.parts[j]);
-			}
-			for(; j < item.parts.length; j++) {
-				domStyle.parts.push(addStyle(item.parts[j], options));
-			}
-		} else {
-			var parts = [];
-			for(var j = 0; j < item.parts.length; j++) {
-				parts.push(addStyle(item.parts[j], options));
-			}
-			stylesInDom[item.id] = {id: item.id, refs: 1, parts: parts};
-		}
-	}
+var listToStyles = __webpack_require__(70)
+
+/*
+type StyleObject = {
+  id: number;
+  parts: Array<StyleObjectPart>
 }
 
-function listToStyles(list) {
-	var styles = [];
-	var newStyles = {};
-	for(var i = 0; i < list.length; i++) {
-		var item = list[i];
-		var id = item[0];
-		var css = item[1];
-		var media = item[2];
-		var sourceMap = item[3];
-		var part = {css: css, media: media, sourceMap: sourceMap};
-		if(!newStyles[id])
-			styles.push(newStyles[id] = {id: id, parts: [part]});
-		else
-			newStyles[id].parts.push(part);
-	}
-	return styles;
+type StyleObjectPart = {
+  css: string;
+  media: string;
+  sourceMap: ?string
+}
+*/
+
+var stylesInDom = {/*
+  [id: number]: {
+    id: number,
+    refs: number,
+    parts: Array<(obj?: StyleObjectPart) => void>
+  }
+*/}
+
+var head = hasDocument && (document.head || document.getElementsByTagName('head')[0])
+var singletonElement = null
+var singletonCounter = 0
+var isProduction = false
+var noop = function () {}
+
+// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
+// tags it will allow on a page
+var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\b/.test(navigator.userAgent.toLowerCase())
+
+module.exports = function (parentId, list, _isProduction) {
+  isProduction = _isProduction
+
+  var styles = listToStyles(parentId, list)
+  addStylesToDom(styles)
+
+  return function update (newList) {
+    var mayRemove = []
+    for (var i = 0; i < styles.length; i++) {
+      var item = styles[i]
+      var domStyle = stylesInDom[item.id]
+      domStyle.refs--
+      mayRemove.push(domStyle)
+    }
+    if (newList) {
+      styles = listToStyles(parentId, newList)
+      addStylesToDom(styles)
+    } else {
+      styles = []
+    }
+    for (var i = 0; i < mayRemove.length; i++) {
+      var domStyle = mayRemove[i]
+      if (domStyle.refs === 0) {
+        for (var j = 0; j < domStyle.parts.length; j++) {
+          domStyle.parts[j]()
+        }
+        delete stylesInDom[domStyle.id]
+      }
+    }
+  }
 }
 
-function insertStyleElement(options, styleElement) {
-	var head = getHeadElement();
-	var lastStyleElementInsertedAtTop = styleElementsInsertedAtTop[styleElementsInsertedAtTop.length - 1];
-	if (options.insertAt === "top") {
-		if(!lastStyleElementInsertedAtTop) {
-			head.insertBefore(styleElement, head.firstChild);
-		} else if(lastStyleElementInsertedAtTop.nextSibling) {
-			head.insertBefore(styleElement, lastStyleElementInsertedAtTop.nextSibling);
-		} else {
-			head.appendChild(styleElement);
-		}
-		styleElementsInsertedAtTop.push(styleElement);
-	} else if (options.insertAt === "bottom") {
-		head.appendChild(styleElement);
-	} else {
-		throw new Error("Invalid value for parameter 'insertAt'. Must be 'top' or 'bottom'.");
-	}
+function addStylesToDom (styles /* Array<StyleObject> */) {
+  for (var i = 0; i < styles.length; i++) {
+    var item = styles[i]
+    var domStyle = stylesInDom[item.id]
+    if (domStyle) {
+      domStyle.refs++
+      for (var j = 0; j < domStyle.parts.length; j++) {
+        domStyle.parts[j](item.parts[j])
+      }
+      for (; j < item.parts.length; j++) {
+        domStyle.parts.push(addStyle(item.parts[j]))
+      }
+      if (domStyle.parts.length > item.parts.length) {
+        domStyle.parts.length = item.parts.length
+      }
+    } else {
+      var parts = []
+      for (var j = 0; j < item.parts.length; j++) {
+        parts.push(addStyle(item.parts[j]))
+      }
+      stylesInDom[item.id] = { id: item.id, refs: 1, parts: parts }
+    }
+  }
 }
 
-function removeStyleElement(styleElement) {
-	styleElement.parentNode.removeChild(styleElement);
-	var idx = styleElementsInsertedAtTop.indexOf(styleElement);
-	if(idx >= 0) {
-		styleElementsInsertedAtTop.splice(idx, 1);
-	}
+function createStyleElement () {
+  var styleElement = document.createElement('style')
+  styleElement.type = 'text/css'
+  head.appendChild(styleElement)
+  return styleElement
 }
 
-function createStyleElement(options) {
-	var styleElement = document.createElement("style");
-	styleElement.type = "text/css";
-	insertStyleElement(options, styleElement);
-	return styleElement;
-}
+function addStyle (obj /* StyleObjectPart */) {
+  var update, remove
+  var styleElement = document.querySelector('style[data-vue-ssr-id~="' + obj.id + '"]')
 
-function addStyle(obj, options) {
-	var styleElement, update, remove;
+  if (styleElement) {
+    if (isProduction) {
+      // has SSR styles and in production mode.
+      // simply do nothing.
+      return noop
+    } else {
+      // has SSR styles but in dev mode.
+      // for some reason Chrome can't handle source map in server-rendered
+      // style tags - source maps in <style> only works if the style tag is
+      // created and inserted dynamically. So we remove the server rendered
+      // styles and inject new ones.
+      styleElement.parentNode.removeChild(styleElement)
+    }
+  }
 
-	if (options.singleton) {
-		var styleIndex = singletonCounter++;
-		styleElement = singletonElement || (singletonElement = createStyleElement(options));
-		update = applyToSingletonTag.bind(null, styleElement, styleIndex, false);
-		remove = applyToSingletonTag.bind(null, styleElement, styleIndex, true);
-	} else {
-		styleElement = createStyleElement(options);
-		update = applyToTag.bind(null, styleElement);
-		remove = function() {
-			removeStyleElement(styleElement);
-		};
-	}
+  if (isOldIE) {
+    // use singleton mode for IE9.
+    var styleIndex = singletonCounter++
+    styleElement = singletonElement || (singletonElement = createStyleElement())
+    update = applyToSingletonTag.bind(null, styleElement, styleIndex, false)
+    remove = applyToSingletonTag.bind(null, styleElement, styleIndex, true)
+  } else {
+    // use multi-style-tag mode in all other cases
+    styleElement = createStyleElement()
+    update = applyToTag.bind(null, styleElement)
+    remove = function () {
+      styleElement.parentNode.removeChild(styleElement)
+    }
+  }
 
-	update(obj);
+  update(obj)
 
-	return function updateStyle(newObj) {
-		if(newObj) {
-			if(newObj.css === obj.css && newObj.media === obj.media && newObj.sourceMap === obj.sourceMap)
-				return;
-			update(obj = newObj);
-		} else {
-			remove();
-		}
-	};
+  return function updateStyle (newObj /* StyleObjectPart */) {
+    if (newObj) {
+      if (newObj.css === obj.css &&
+          newObj.media === obj.media &&
+          newObj.sourceMap === obj.sourceMap) {
+        return
+      }
+      update(obj = newObj)
+    } else {
+      remove()
+    }
+  }
 }
 
 var replaceText = (function () {
-	var textStore = [];
+  var textStore = []
 
-	return function (index, replacement) {
-		textStore[index] = replacement;
-		return textStore.filter(Boolean).join('\n');
-	};
-})();
+  return function (index, replacement) {
+    textStore[index] = replacement
+    return textStore.filter(Boolean).join('\n')
+  }
+})()
 
-function applyToSingletonTag(styleElement, index, remove, obj) {
-	var css = remove ? "" : obj.css;
+function applyToSingletonTag (styleElement, index, remove, obj) {
+  var css = remove ? '' : obj.css
 
-	if (styleElement.styleSheet) {
-		styleElement.styleSheet.cssText = replaceText(index, css);
-	} else {
-		var cssNode = document.createTextNode(css);
-		var childNodes = styleElement.childNodes;
-		if (childNodes[index]) styleElement.removeChild(childNodes[index]);
-		if (childNodes.length) {
-			styleElement.insertBefore(cssNode, childNodes[index]);
-		} else {
-			styleElement.appendChild(cssNode);
-		}
-	}
+  if (styleElement.styleSheet) {
+    styleElement.styleSheet.cssText = replaceText(index, css)
+  } else {
+    var cssNode = document.createTextNode(css)
+    var childNodes = styleElement.childNodes
+    if (childNodes[index]) styleElement.removeChild(childNodes[index])
+    if (childNodes.length) {
+      styleElement.insertBefore(cssNode, childNodes[index])
+    } else {
+      styleElement.appendChild(cssNode)
+    }
+  }
 }
 
-function applyToTag(styleElement, obj) {
-	var css = obj.css;
-	var media = obj.media;
-	var sourceMap = obj.sourceMap;
+function applyToTag (styleElement, obj) {
+  var css = obj.css
+  var media = obj.media
+  var sourceMap = obj.sourceMap
 
-	if (media) {
-		styleElement.setAttribute("media", media);
-	}
+  if (media) {
+    styleElement.setAttribute('media', media)
+  }
 
-	if (sourceMap) {
-		// https://developer.chrome.com/devtools/docs/javascript-debugging
-		// this makes source maps inside style tags work properly in Chrome
-		css += '\n/*# sourceURL=' + sourceMap.sources[0] + ' */';
-		// http://stackoverflow.com/a/26603875
-		css += "\n/*# sourceMappingURL=data:application/json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + " */";
-	}
+  if (sourceMap) {
+    // https://developer.chrome.com/devtools/docs/javascript-debugging
+    // this makes source maps inside style tags work properly in Chrome
+    css += '\n/*# sourceURL=' + sourceMap.sources[0] + ' */'
+    // http://stackoverflow.com/a/26603875
+    css += '\n/*# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + ' */'
+  }
 
-	if (styleElement.styleSheet) {
-		styleElement.styleSheet.cssText = css;
-	} else {
-		while(styleElement.firstChild) {
-			styleElement.removeChild(styleElement.firstChild);
-		}
-		styleElement.appendChild(document.createTextNode(css));
-	}
+  if (styleElement.styleSheet) {
+    styleElement.styleSheet.cssText = css
+  } else {
+    while (styleElement.firstChild) {
+      styleElement.removeChild(styleElement.firstChild)
+    }
+    styleElement.appendChild(document.createTextNode(css))
+  }
 }
 
 
-/***/ },
-/* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -378,41 +430,33 @@ function getImageFromPasteEvent(event) {
 
   return new Promise(function (resolve, reject) {
     if (!event.clipboardData.items) {
-      (function () {
-        var waitInterval = setInterval(function () {
-          if (_this.event.target.children.length > 0) {
-            clearInterval(waitInterval);
+      var waitInterval = setInterval(function () {
+        if (_this.event.target.children.length > 0) {
+          clearInterval(waitInterval);
 
-            resolve({
-              base64string: _this.event.target.children[0].src,
-              type: getFileTypeFromBase64string(_this.event.target.children[0].src)
-            });
+          resolve({
+            base64string: _this.event.target.children[0].src,
+            type: getFileTypeFromBase64string(_this.event.target.children[0].src)
+          });
 
-            _this.event.target.innerHTML = '';
-          }
-        }, 1);
-      })();
+          _this.event.target.innerHTML = '';
+        }
+      }, 1);
     } else {
       Array.from(event.clipboardData.items).some(function (item) {
         if (item.kind === 'file' && (item.type === 'image/png' || item.type === 'image/jpeg')) {
-          var _ret2 = function () {
-            var file = item.getAsFile();
+          var file = item.getAsFile();
 
-            var imageType = item.type;
+          var imageType = item.type;
 
-            getBase64FromFile(file).then(function (result) {
-              resolve({
-                base64string: result,
-                type: imageType
-              });
+          getBase64FromFile(file).then(function (result) {
+            resolve({
+              base64string: result,
+              type: imageType
             });
+          });
 
-            return {
-              v: true
-            };
-          }();
-
-          if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
+          return true;
         }
       });
     }
@@ -462,22 +506,22 @@ function mergeDeep(target, source) {
   return target;
 }
 
-/* harmony default export */ exports["a"] = {
+/* harmony default export */ __webpack_exports__["a"] = ({
   getImageFromPasteEvent: getImageFromPasteEvent,
   getImageFromInputEvent: getImageFromInputEvent,
   mergeDeep: mergeDeep
-};
+});
 
-/***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 4 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony default export */ exports["a"] = {
+/* harmony default export */ __webpack_exports__["a"] = ({
   inserted: function inserted(el, bindings) {
     draggableElement(el, bindings.value);
   }
-};
+});
 
 /**
  * Enables draggable functionality to an element
@@ -558,14 +602,16 @@ function draggableElement(element, settings) {
   element.addEventListener('mousedown', mouseDownHandler);
 }
 
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
 
 var g;
 
 // This works in non-strict mode
-g = (function() { return this; })();
+g = (function() {
+	return this;
+})();
 
 try {
 	// This works if eval is allowed (see CSP)
@@ -583,12 +629,12 @@ try {
 module.exports = g;
 
 
-/***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(global) {'use strict';
+/* WEBPACK VAR INJECTION */(function(global) {
 var Mutation = global.MutationObserver || global.WebKitMutationObserver;
 
 var scheduleDrain;
@@ -658,58 +704,95 @@ function immediate(task) {
   }
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
-/***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
 
-var __vue_exports__, __vue_options__
-var __vue_styles__ = {}
 
 /* styles */
 __webpack_require__(64)
 
-/* script */
-__vue_exports__ = __webpack_require__(9)
+var Component = __webpack_require__(0)(
+  /* script */
+  __webpack_require__(10),
+  /* template */
+  __webpack_require__(53),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
 
-/* template */
-var __vue_template__ = __webpack_require__(54)
-__vue_options__ = __vue_exports__ = __vue_exports__ || {}
-if (
-  typeof __vue_exports__.default === "object" ||
-  typeof __vue_exports__.default === "function"
-) {
-__vue_options__ = __vue_exports__ = __vue_exports__.default
-}
-if (typeof __vue_options__ === "function") {
-  __vue_options__ = __vue_options__.options
-}
-
-__vue_options__.render = __vue_template__.render
-__vue_options__.staticRenderFns = __vue_template__.staticRenderFns
-
-module.exports = __vue_exports__
+module.exports = Component.exports
 
 
-/***/ },
-/* 7 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {/*!
- * Vue.js v2.1.6
- * (c) 2014-2016 Evan You
+ * Vue.js v2.3.3
+ * (c) 2014-2017 Evan You
  * Released under the MIT License.
  */
-'use strict';
+
 
 /*  */
+
+// these helpers produces better vm code in JS engines due to their
+// explicitness and function inlining
+function isUndef (v) {
+  return v === undefined || v === null
+}
+
+function isDef (v) {
+  return v !== undefined && v !== null
+}
+
+function isTrue (v) {
+  return v === true
+}
+
+function isFalse (v) {
+  return v === false
+}
+/**
+ * Check if value is primitive
+ */
+function isPrimitive (value) {
+  return typeof value === 'string' || typeof value === 'number'
+}
+
+/**
+ * Quick object check - this is primarily used to tell
+ * Objects from primitive values when we know the value
+ * is a JSON-compliant type.
+ */
+function isObject (obj) {
+  return obj !== null && typeof obj === 'object'
+}
+
+var _toString = Object.prototype.toString;
+
+/**
+ * Strict object type check. Only returns true
+ * for plain JavaScript objects.
+ */
+function isPlainObject (obj) {
+  return _toString.call(obj) === '[object Object]'
+}
+
+function isRegExp (v) {
+  return _toString.call(v) === '[object RegExp]'
+}
 
 /**
  * Convert a value to a string that is actually rendered.
  */
-function _toString (val) {
+function toString (val) {
   return val == null
     ? ''
     : typeof val === 'object'
@@ -722,8 +805,8 @@ function _toString (val) {
  * If the conversion fails, return original string.
  */
 function toNumber (val) {
-  var n = parseFloat(val, 10);
-  return (n || n === 0) ? n : val
+  var n = parseFloat(val);
+  return isNaN(n) ? val : n
 }
 
 /**
@@ -752,7 +835,7 @@ var isBuiltInTag = makeMap('slot,component', true);
 /**
  * Remove an item from an array
  */
-function remove$1 (arr, item) {
+function remove (arr, item) {
   if (arr.length) {
     var index = arr.indexOf(item);
     if (index > -1) {
@@ -770,25 +853,18 @@ function hasOwn (obj, key) {
 }
 
 /**
- * Check if value is primitive
- */
-function isPrimitive (value) {
-  return typeof value === 'string' || typeof value === 'number'
-}
-
-/**
  * Create a cached version of a pure function.
  */
 function cached (fn) {
   var cache = Object.create(null);
-  return function cachedFn (str) {
+  return (function cachedFn (str) {
     var hit = cache[str];
     return hit || (cache[str] = fn(str))
-  }
+  })
 }
 
 /**
- * Camelize a hyphen-delmited string.
+ * Camelize a hyphen-delimited string.
  */
 var camelizeRE = /-(\w)/g;
 var camelize = cached(function (str) {
@@ -816,7 +892,7 @@ var hyphenate = cached(function (str) {
 /**
  * Simple bind, faster than native
  */
-function bind$1 (fn, ctx) {
+function bind (fn, ctx) {
   function boundFn (a) {
     var l = arguments.length;
     return l
@@ -851,25 +927,6 @@ function extend (to, _from) {
     to[key] = _from[key];
   }
   return to
-}
-
-/**
- * Quick object check - this is primarily used to tell
- * Objects from primitive values when we know the value
- * is a JSON-compliant type.
- */
-function isObject (obj) {
-  return obj !== null && typeof obj === 'object'
-}
-
-/**
- * Strict object type check. Only returns true
- * for plain JavaScript objects.
- */
-var toString = Object.prototype.toString;
-var OBJECT_STRING = '[object Object]';
-function isPlainObject (obj) {
-  return toString.call(obj) === OBJECT_STRING
 }
 
 /**
@@ -914,13 +971,20 @@ function genStaticKeys (modules) {
  * if they are plain objects, do they have the same shape?
  */
 function looseEqual (a, b) {
-  /* eslint-disable eqeqeq */
-  return a == b || (
-    isObject(a) && isObject(b)
-      ? JSON.stringify(a) === JSON.stringify(b)
-      : false
-  )
-  /* eslint-enable eqeqeq */
+  var isObjectA = isObject(a);
+  var isObjectB = isObject(b);
+  if (isObjectA && isObjectB) {
+    try {
+      return JSON.stringify(a) === JSON.stringify(b)
+    } catch (e) {
+      // possible circular reference
+      return a === b
+    }
+  } else if (!isObjectA && !isObjectB) {
+    return String(a) === String(b)
+  } else {
+    return false
+  }
 }
 
 function looseIndexOf (arr, val) {
@@ -930,9 +994,43 @@ function looseIndexOf (arr, val) {
   return -1
 }
 
+/**
+ * Ensure a function is called only once.
+ */
+function once (fn) {
+  var called = false;
+  return function () {
+    if (!called) {
+      called = true;
+      fn.apply(this, arguments);
+    }
+  }
+}
+
+var SSR_ATTR = 'data-server-rendered';
+
+var ASSET_TYPES = [
+  'component',
+  'directive',
+  'filter'
+];
+
+var LIFECYCLE_HOOKS = [
+  'beforeCreate',
+  'created',
+  'beforeMount',
+  'mounted',
+  'beforeUpdate',
+  'updated',
+  'beforeDestroy',
+  'destroyed',
+  'activated',
+  'deactivated'
+];
+
 /*  */
 
-var config = {
+var config = ({
   /**
    * Option merge strategies (used in core/util/options)
    */
@@ -944,9 +1042,19 @@ var config = {
   silent: false,
 
   /**
+   * Show production mode tip message on boot?
+   */
+  productionTip: "production" !== 'production',
+
+  /**
    * Whether to enable devtools
    */
   devtools: "production" !== 'production',
+
+  /**
+   * Whether to record perf
+   */
+  performance: false,
 
   /**
    * Error handler for watcher errors
@@ -956,7 +1064,7 @@ var config = {
   /**
    * Ignore certain custom elements
    */
-  ignoredElements: null,
+  ignoredElements: [],
 
   /**
    * Custom user key aliases for v-on
@@ -968,6 +1076,12 @@ var config = {
    * component. This is platform-dependent and may be overwritten.
    */
   isReservedTag: no,
+
+  /**
+   * Check if an attribute is reserved so that it cannot be used as a component
+   * prop. This is platform-dependent and may be overwritten.
+   */
+  isReservedAttr: no,
 
   /**
    * Check if a tag is an unknown element.
@@ -992,37 +1106,14 @@ var config = {
   mustUseProp: no,
 
   /**
-   * List of asset types that a component can own.
+   * Exposed for legacy reasons
    */
-  _assetTypes: [
-    'component',
-    'directive',
-    'filter'
-  ],
-
-  /**
-   * List of lifecycle hooks.
-   */
-  _lifecycleHooks: [
-    'beforeCreate',
-    'created',
-    'beforeMount',
-    'mounted',
-    'beforeUpdate',
-    'updated',
-    'beforeDestroy',
-    'destroyed',
-    'activated',
-    'deactivated'
-  ],
-
-  /**
-   * Max circular updates allowed in a scheduler flush cycle.
-   */
-  _maxUpdateCount: 100
-};
+  _lifecycleHooks: LIFECYCLE_HOOKS
+});
 
 /*  */
+
+var emptyObject = Object.freeze({});
 
 /**
  * Check if a string starts with $ or _
@@ -1051,14 +1142,124 @@ var bailRE = /[^\w.$]/;
 function parsePath (path) {
   if (bailRE.test(path)) {
     return
-  } else {
-    var segments = path.split('.');
-    return function (obj) {
-      for (var i = 0; i < segments.length; i++) {
-        if (!obj) { return }
-        obj = obj[segments[i]];
+  }
+  var segments = path.split('.');
+  return function (obj) {
+    for (var i = 0; i < segments.length; i++) {
+      if (!obj) { return }
+      obj = obj[segments[i]];
+    }
+    return obj
+  }
+}
+
+/*  */
+
+var warn = noop;
+var tip = noop;
+var formatComponentName = (null); // work around flow check
+
+if (false) {
+  var hasConsole = typeof console !== 'undefined';
+  var classifyRE = /(?:^|[-_])(\w)/g;
+  var classify = function (str) { return str
+    .replace(classifyRE, function (c) { return c.toUpperCase(); })
+    .replace(/[-_]/g, ''); };
+
+  warn = function (msg, vm) {
+    if (hasConsole && (!config.silent)) {
+      console.error("[Vue warn]: " + msg + (
+        vm ? generateComponentTrace(vm) : ''
+      ));
+    }
+  };
+
+  tip = function (msg, vm) {
+    if (hasConsole && (!config.silent)) {
+      console.warn("[Vue tip]: " + msg + (
+        vm ? generateComponentTrace(vm) : ''
+      ));
+    }
+  };
+
+  formatComponentName = function (vm, includeFile) {
+    if (vm.$root === vm) {
+      return '<Root>'
+    }
+    var name = typeof vm === 'string'
+      ? vm
+      : typeof vm === 'function' && vm.options
+        ? vm.options.name
+        : vm._isVue
+          ? vm.$options.name || vm.$options._componentTag
+          : vm.name;
+
+    var file = vm._isVue && vm.$options.__file;
+    if (!name && file) {
+      var match = file.match(/([^/\\]+)\.vue$/);
+      name = match && match[1];
+    }
+
+    return (
+      (name ? ("<" + (classify(name)) + ">") : "<Anonymous>") +
+      (file && includeFile !== false ? (" at " + file) : '')
+    )
+  };
+
+  var repeat = function (str, n) {
+    var res = '';
+    while (n) {
+      if (n % 2 === 1) { res += str; }
+      if (n > 1) { str += str; }
+      n >>= 1;
+    }
+    return res
+  };
+
+  var generateComponentTrace = function (vm) {
+    if (vm._isVue && vm.$parent) {
+      var tree = [];
+      var currentRecursiveSequence = 0;
+      while (vm) {
+        if (tree.length > 0) {
+          var last = tree[tree.length - 1];
+          if (last.constructor === vm.constructor) {
+            currentRecursiveSequence++;
+            vm = vm.$parent;
+            continue
+          } else if (currentRecursiveSequence > 0) {
+            tree[tree.length - 1] = [last, currentRecursiveSequence];
+            currentRecursiveSequence = 0;
+          }
+        }
+        tree.push(vm);
+        vm = vm.$parent;
       }
-      return obj
+      return '\n\nfound in\n\n' + tree
+        .map(function (vm, i) { return ("" + (i === 0 ? '---> ' : repeat(' ', 5 + i * 2)) + (Array.isArray(vm)
+            ? ((formatComponentName(vm[0])) + "... (" + (vm[1]) + " recursive calls)")
+            : formatComponentName(vm))); })
+        .join('\n')
+    } else {
+      return ("\n\n(found in " + (formatComponentName(vm)) + ")")
+    }
+  };
+}
+
+/*  */
+
+function handleError (err, vm, info) {
+  if (config.errorHandler) {
+    config.errorHandler.call(null, err, vm, info);
+  } else {
+    if (false) {
+      warn(("Error in " + info + ": \"" + (err.toString()) + "\""), vm);
+    }
+    /* istanbul ignore else */
+    if (inBrowser && typeof console !== 'undefined') {
+      console.error(err);
+    } else {
+      throw err
     }
   }
 }
@@ -1077,6 +1278,21 @@ var isIE9 = UA && UA.indexOf('msie 9.0') > 0;
 var isEdge = UA && UA.indexOf('edge/') > 0;
 var isAndroid = UA && UA.indexOf('android') > 0;
 var isIOS = UA && /iphone|ipad|ipod|ios/.test(UA);
+var isChrome = UA && /chrome\/\d+/.test(UA) && !isEdge;
+
+var supportsPassive = false;
+if (inBrowser) {
+  try {
+    var opts = {};
+    Object.defineProperty(opts, 'passive', ({
+      get: function get () {
+        /* istanbul ignore next */
+        supportsPassive = true;
+      }
+    } )); // https://github.com/facebook/flow/issues/285
+    window.addEventListener('test-passive', null, opts);
+  } catch (e) {}
+}
 
 // this needs to be lazy-evaled because vue may be required before
 // vue-server-renderer can set VUE_ENV
@@ -1100,8 +1316,12 @@ var devtools = inBrowser && window.__VUE_DEVTOOLS_GLOBAL_HOOK__;
 
 /* istanbul ignore next */
 function isNative (Ctor) {
-  return /native code/.test(Ctor.toString())
+  return typeof Ctor === 'function' && /native code/.test(Ctor.toString())
 }
+
+var hasSymbol =
+  typeof Symbol !== 'undefined' && isNative(Symbol) &&
+  typeof Reflect !== 'undefined' && isNative(Reflect.ownKeys);
 
 /**
  * Defer a task to execute it asynchronously.
@@ -1167,15 +1387,22 @@ var nextTick = (function () {
   return function queueNextTick (cb, ctx) {
     var _resolve;
     callbacks.push(function () {
-      if (cb) { cb.call(ctx); }
-      if (_resolve) { _resolve(ctx); }
+      if (cb) {
+        try {
+          cb.call(ctx);
+        } catch (e) {
+          handleError(e, ctx, 'nextTick');
+        }
+      } else if (_resolve) {
+        _resolve(ctx);
+      }
     });
     if (!pending) {
       pending = true;
       timerFunc();
     }
     if (!cb && typeof Promise !== 'undefined') {
-      return new Promise(function (resolve) {
+      return new Promise(function (resolve, reject) {
         _resolve = resolve;
       })
     }
@@ -1207,52 +1434,17 @@ if (typeof Set !== 'undefined' && isNative(Set)) {
   }());
 }
 
-var warn = noop;
-var formatComponentName;
-
-if (false) {
-  var hasConsole = typeof console !== 'undefined';
-
-  warn = function (msg, vm) {
-    if (hasConsole && (!config.silent)) {
-      console.error("[Vue warn]: " + msg + " " + (
-        vm ? formatLocation(formatComponentName(vm)) : ''
-      ));
-    }
-  };
-
-  formatComponentName = function (vm) {
-    if (vm.$root === vm) {
-      return 'root instance'
-    }
-    var name = vm._isVue
-      ? vm.$options.name || vm.$options._componentTag
-      : vm.name;
-    return (
-      (name ? ("component <" + name + ">") : "anonymous component") +
-      (vm._isVue && vm.$options.__file ? (" at " + (vm.$options.__file)) : '')
-    )
-  };
-
-  var formatLocation = function (str) {
-    if (str === 'anonymous component') {
-      str += " - use the \"name\" option for better debugging messages.";
-    }
-    return ("\n(found in " + str + ")")
-  };
-}
-
 /*  */
 
 
-var uid$1 = 0;
+var uid = 0;
 
 /**
  * A dep is an observable that can have multiple
  * directives subscribing to it.
  */
 var Dep = function Dep () {
-  this.id = uid$1++;
+  this.id = uid++;
   this.subs = [];
 };
 
@@ -1261,7 +1453,7 @@ Dep.prototype.addSub = function addSub (sub) {
 };
 
 Dep.prototype.removeSub = function removeSub (sub) {
-  remove$1(this.subs, sub);
+  remove(this.subs, sub);
 };
 
 Dep.prototype.depend = function depend () {
@@ -1271,7 +1463,7 @@ Dep.prototype.depend = function depend () {
 };
 
 Dep.prototype.notify = function notify () {
-  // stablize the subscriber list first
+  // stabilize the subscriber list first
   var subs = this.subs.slice();
   for (var i = 0, l = subs.length; i < l; i++) {
     subs[i].update();
@@ -1429,7 +1621,7 @@ function copyAugment (target, src, keys) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
-function observe (value) {
+function observe (value, asRootData) {
   if (!isObject(value)) {
     return
   }
@@ -1444,6 +1636,9 @@ function observe (value) {
     !value._isVue
   ) {
     ob = new Observer(value);
+  }
+  if (asRootData && ob) {
+    ob.vmCount++;
   }
   return ob
 }
@@ -1511,27 +1706,27 @@ function defineReactive$$1 (
  * triggers change notification if the property doesn't
  * already exist.
  */
-function set$1 (obj, key, val) {
-  if (Array.isArray(obj)) {
-    obj.length = Math.max(obj.length, key);
-    obj.splice(key, 1, val);
+function set (target, key, val) {
+  if (Array.isArray(target) && typeof key === 'number') {
+    target.length = Math.max(target.length, key);
+    target.splice(key, 1, val);
     return val
   }
-  if (hasOwn(obj, key)) {
-    obj[key] = val;
-    return
+  if (hasOwn(target, key)) {
+    target[key] = val;
+    return val
   }
-  var ob = obj.__ob__;
-  if (obj._isVue || (ob && ob.vmCount)) {
+  var ob = (target ).__ob__;
+  if (target._isVue || (ob && ob.vmCount)) {
     "production" !== 'production' && warn(
       'Avoid adding reactive properties to a Vue instance or its root $data ' +
       'at runtime - declare it upfront in the data option.'
     );
-    return
+    return val
   }
   if (!ob) {
-    obj[key] = val;
-    return
+    target[key] = val;
+    return val
   }
   defineReactive$$1(ob.value, key, val);
   ob.dep.notify();
@@ -1541,19 +1736,23 @@ function set$1 (obj, key, val) {
 /**
  * Delete a property and trigger change if necessary.
  */
-function del (obj, key) {
-  var ob = obj.__ob__;
-  if (obj._isVue || (ob && ob.vmCount)) {
+function del (target, key) {
+  if (Array.isArray(target) && typeof key === 'number') {
+    target.splice(key, 1);
+    return
+  }
+  var ob = (target ).__ob__;
+  if (target._isVue || (ob && ob.vmCount)) {
     "production" !== 'production' && warn(
       'Avoid deleting properties on a Vue instance or its root $data ' +
       '- just set it to null.'
     );
     return
   }
-  if (!hasOwn(obj, key)) {
+  if (!hasOwn(target, key)) {
     return
   }
-  delete obj[key];
+  delete target[key];
   if (!ob) {
     return
   }
@@ -1610,7 +1809,7 @@ function mergeData (to, from) {
     toVal = to[key];
     fromVal = from[key];
     if (!hasOwn(to, key)) {
-      set$1(to, key, fromVal);
+      set(to, key, fromVal);
     } else if (isPlainObject(toVal) && isPlainObject(fromVal)) {
       mergeData(toVal, fromVal);
     }
@@ -1673,7 +1872,7 @@ strats.data = function (
 };
 
 /**
- * Hooks and param attributes are merged as arrays.
+ * Hooks and props are merged as arrays.
  */
 function mergeHook (
   parentVal,
@@ -1688,7 +1887,7 @@ function mergeHook (
     : parentVal
 }
 
-config._lifecycleHooks.forEach(function (hook) {
+LIFECYCLE_HOOKS.forEach(function (hook) {
   strats[hook] = mergeHook;
 });
 
@@ -1706,7 +1905,7 @@ function mergeAssets (parentVal, childVal) {
     : res
 }
 
-config._assetTypes.forEach(function (type) {
+ASSET_TYPES.forEach(function (type) {
   strats[type + 's'] = mergeAssets;
 });
 
@@ -1718,7 +1917,7 @@ config._assetTypes.forEach(function (type) {
  */
 strats.watch = function (parentVal, childVal) {
   /* istanbul ignore if */
-  if (!childVal) { return parentVal }
+  if (!childVal) { return Object.create(parentVal || null) }
   if (!parentVal) { return childVal }
   var ret = {};
   extend(ret, parentVal);
@@ -1741,7 +1940,7 @@ strats.watch = function (parentVal, childVal) {
 strats.props =
 strats.methods =
 strats.computed = function (parentVal, childVal) {
-  if (!childVal) { return parentVal }
+  if (!childVal) { return Object.create(parentVal || null) }
   if (!parentVal) { return childVal }
   var ret = Object.create(null);
   extend(ret, parentVal);
@@ -1832,21 +2031,20 @@ function mergeOptions (
   if (false) {
     checkComponents(child);
   }
+
+  if (typeof child === 'function') {
+    child = child.options;
+  }
+
   normalizeProps(child);
   normalizeDirectives(child);
   var extendsFrom = child.extends;
   if (extendsFrom) {
-    parent = typeof extendsFrom === 'function'
-      ? mergeOptions(parent, extendsFrom.options, vm)
-      : mergeOptions(parent, extendsFrom, vm);
+    parent = mergeOptions(parent, extendsFrom, vm);
   }
   if (child.mixins) {
     for (var i = 0, l = child.mixins.length; i < l; i++) {
-      var mixin = child.mixins[i];
-      if (mixin.prototype instanceof Vue$3) {
-        mixin = mixin.options;
-      }
-      parent = mergeOptions(parent, mixin, vm);
+      parent = mergeOptions(parent, child.mixins[i], vm);
     }
   }
   var options = {};
@@ -1911,10 +2109,10 @@ function validateProp (
   var absent = !hasOwn(propsData, key);
   var value = propsData[key];
   // handle boolean props
-  if (isBooleanType(prop.type)) {
+  if (isType(Boolean, prop.type)) {
     if (absent && !hasOwn(prop, 'default')) {
       value = false;
-    } else if (value === '' || value === hyphenate(key)) {
+    } else if (!isType(String, prop.type) && (value === '' || value === hyphenate(key))) {
       value = true;
     }
   }
@@ -1944,8 +2142,8 @@ function getPropDefaultValue (vm, prop, key) {
   }
   var def = prop.default;
   // warn against non-factory defaults for Object & Array
-  if (isObject(def)) {
-    "production" !== 'production' && warn(
+  if (false) {
+    warn(
       'Invalid default value for prop "' + key + '": ' +
       'Props with type Object/Array must use a factory function ' +
       'to return the default value.',
@@ -1956,11 +2154,13 @@ function getPropDefaultValue (vm, prop, key) {
   // return previous default value to avoid unnecessary watcher trigger
   if (vm && vm.$options.propsData &&
     vm.$options.propsData[key] === undefined &&
-    vm[key] !== undefined) {
-    return vm[key]
+    vm._props[key] !== undefined
+  ) {
+    return vm._props[key]
   }
   // call factory function for non-Function types
-  return typeof def === 'function' && prop.type !== Function
+  // a value is Function if its prototype is function even across different execution context
+  return typeof def === 'function' && getType(prop.type) !== 'Function'
     ? def.call(vm)
     : def
 }
@@ -1994,7 +2194,7 @@ function assertProp (
     }
     for (var i = 0; i < type.length && !valid; i++) {
       var assertedType = assertType(value, type[i]);
-      expectedTypes.push(assertedType.expectedType);
+      expectedTypes.push(assertedType.expectedType || '');
       valid = assertedType.valid;
     }
   }
@@ -2018,20 +2218,13 @@ function assertProp (
   }
 }
 
-/**
- * Assert the type of a value
- */
+var simpleCheckRE = /^(String|Number|Boolean|Function|Symbol)$/;
+
 function assertType (value, type) {
   var valid;
   var expectedType = getType(type);
-  if (expectedType === 'String') {
-    valid = typeof value === (expectedType = 'string');
-  } else if (expectedType === 'Number') {
-    valid = typeof value === (expectedType = 'number');
-  } else if (expectedType === 'Boolean') {
-    valid = typeof value === (expectedType = 'boolean');
-  } else if (expectedType === 'Function') {
-    valid = typeof value === (expectedType = 'function');
+  if (simpleCheckRE.test(expectedType)) {
+    valid = typeof value === expectedType.toLowerCase();
   } else if (expectedType === 'Object') {
     valid = isPlainObject(value);
   } else if (expectedType === 'Array') {
@@ -2052,15 +2245,15 @@ function assertType (value, type) {
  */
 function getType (fn) {
   var match = fn && fn.toString().match(/^\s*function (\w+)/);
-  return match && match[1]
+  return match ? match[1] : ''
 }
 
-function isBooleanType (fn) {
+function isType (type, fn) {
   if (!Array.isArray(fn)) {
-    return getType(fn) === 'Boolean'
+    return getType(fn) === getType(type)
   }
   for (var i = 0, len = fn.length; i < len; i++) {
-    if (getType(fn[i]) === 'Boolean') {
+    if (getType(fn[i]) === getType(type)) {
       return true
     }
   }
@@ -2068,54 +2261,30 @@ function isBooleanType (fn) {
   return false
 }
 
+/*  */
 
+var mark;
+var measure;
 
-var util = Object.freeze({
-	defineReactive: defineReactive$$1,
-	_toString: _toString,
-	toNumber: toNumber,
-	makeMap: makeMap,
-	isBuiltInTag: isBuiltInTag,
-	remove: remove$1,
-	hasOwn: hasOwn,
-	isPrimitive: isPrimitive,
-	cached: cached,
-	camelize: camelize,
-	capitalize: capitalize,
-	hyphenate: hyphenate,
-	bind: bind$1,
-	toArray: toArray,
-	extend: extend,
-	isObject: isObject,
-	isPlainObject: isPlainObject,
-	toObject: toObject,
-	noop: noop,
-	no: no,
-	identity: identity,
-	genStaticKeys: genStaticKeys,
-	looseEqual: looseEqual,
-	looseIndexOf: looseIndexOf,
-	isReserved: isReserved,
-	def: def,
-	parsePath: parsePath,
-	hasProto: hasProto,
-	inBrowser: inBrowser,
-	UA: UA,
-	isIE: isIE,
-	isIE9: isIE9,
-	isEdge: isEdge,
-	isAndroid: isAndroid,
-	isIOS: isIOS,
-	isServerRendering: isServerRendering,
-	devtools: devtools,
-	nextTick: nextTick,
-	get _Set () { return _Set; },
-	mergeOptions: mergeOptions,
-	resolveAsset: resolveAsset,
-	get warn () { return warn; },
-	get formatComponentName () { return formatComponentName; },
-	validateProp: validateProp
-});
+if (false) {
+  var perf = inBrowser && window.performance;
+  /* istanbul ignore if */
+  if (
+    perf &&
+    perf.mark &&
+    perf.measure &&
+    perf.clearMarks &&
+    perf.clearMeasures
+  ) {
+    mark = function (tag) { return perf.mark(tag); };
+    measure = function (name, startTag, endTag) {
+      perf.measure(name, startTag, endTag);
+      perf.clearMarks(startTag);
+      perf.clearMarks(endTag);
+      perf.clearMeasures(name);
+    };
+  }
+}
 
 /* not type checking this file because flow doesn't play well with Proxy */
 
@@ -2193,9 +2362,953 @@ if (false) {
 
 /*  */
 
+var VNode = function VNode (
+  tag,
+  data,
+  children,
+  text,
+  elm,
+  context,
+  componentOptions
+) {
+  this.tag = tag;
+  this.data = data;
+  this.children = children;
+  this.text = text;
+  this.elm = elm;
+  this.ns = undefined;
+  this.context = context;
+  this.functionalContext = undefined;
+  this.key = data && data.key;
+  this.componentOptions = componentOptions;
+  this.componentInstance = undefined;
+  this.parent = undefined;
+  this.raw = false;
+  this.isStatic = false;
+  this.isRootInsert = true;
+  this.isComment = false;
+  this.isCloned = false;
+  this.isOnce = false;
+};
+
+var prototypeAccessors = { child: {} };
+
+// DEPRECATED: alias for componentInstance for backwards compat.
+/* istanbul ignore next */
+prototypeAccessors.child.get = function () {
+  return this.componentInstance
+};
+
+Object.defineProperties( VNode.prototype, prototypeAccessors );
+
+var createEmptyVNode = function () {
+  var node = new VNode();
+  node.text = '';
+  node.isComment = true;
+  return node
+};
+
+function createTextVNode (val) {
+  return new VNode(undefined, undefined, undefined, String(val))
+}
+
+// optimized shallow clone
+// used for static nodes and slot nodes because they may be reused across
+// multiple renders, cloning them avoids errors when DOM manipulations rely
+// on their elm reference.
+function cloneVNode (vnode) {
+  var cloned = new VNode(
+    vnode.tag,
+    vnode.data,
+    vnode.children,
+    vnode.text,
+    vnode.elm,
+    vnode.context,
+    vnode.componentOptions
+  );
+  cloned.ns = vnode.ns;
+  cloned.isStatic = vnode.isStatic;
+  cloned.key = vnode.key;
+  cloned.isComment = vnode.isComment;
+  cloned.isCloned = true;
+  return cloned
+}
+
+function cloneVNodes (vnodes) {
+  var len = vnodes.length;
+  var res = new Array(len);
+  for (var i = 0; i < len; i++) {
+    res[i] = cloneVNode(vnodes[i]);
+  }
+  return res
+}
+
+/*  */
+
+var normalizeEvent = cached(function (name) {
+  var passive = name.charAt(0) === '&';
+  name = passive ? name.slice(1) : name;
+  var once$$1 = name.charAt(0) === '~'; // Prefixed last, checked first
+  name = once$$1 ? name.slice(1) : name;
+  var capture = name.charAt(0) === '!';
+  name = capture ? name.slice(1) : name;
+  return {
+    name: name,
+    once: once$$1,
+    capture: capture,
+    passive: passive
+  }
+});
+
+function createFnInvoker (fns) {
+  function invoker () {
+    var arguments$1 = arguments;
+
+    var fns = invoker.fns;
+    if (Array.isArray(fns)) {
+      for (var i = 0; i < fns.length; i++) {
+        fns[i].apply(null, arguments$1);
+      }
+    } else {
+      // return handler return value for single handlers
+      return fns.apply(null, arguments)
+    }
+  }
+  invoker.fns = fns;
+  return invoker
+}
+
+function updateListeners (
+  on,
+  oldOn,
+  add,
+  remove$$1,
+  vm
+) {
+  var name, cur, old, event;
+  for (name in on) {
+    cur = on[name];
+    old = oldOn[name];
+    event = normalizeEvent(name);
+    if (isUndef(cur)) {
+      "production" !== 'production' && warn(
+        "Invalid handler for event \"" + (event.name) + "\": got " + String(cur),
+        vm
+      );
+    } else if (isUndef(old)) {
+      if (isUndef(cur.fns)) {
+        cur = on[name] = createFnInvoker(cur);
+      }
+      add(event.name, cur, event.once, event.capture, event.passive);
+    } else if (cur !== old) {
+      old.fns = cur;
+      on[name] = old;
+    }
+  }
+  for (name in oldOn) {
+    if (isUndef(on[name])) {
+      event = normalizeEvent(name);
+      remove$$1(event.name, oldOn[name], event.capture);
+    }
+  }
+}
+
+/*  */
+
+function mergeVNodeHook (def, hookKey, hook) {
+  var invoker;
+  var oldHook = def[hookKey];
+
+  function wrappedHook () {
+    hook.apply(this, arguments);
+    // important: remove merged hook to ensure it's called only once
+    // and prevent memory leak
+    remove(invoker.fns, wrappedHook);
+  }
+
+  if (isUndef(oldHook)) {
+    // no existing hook
+    invoker = createFnInvoker([wrappedHook]);
+  } else {
+    /* istanbul ignore if */
+    if (isDef(oldHook.fns) && isTrue(oldHook.merged)) {
+      // already a merged invoker
+      invoker = oldHook;
+      invoker.fns.push(wrappedHook);
+    } else {
+      // existing plain hook
+      invoker = createFnInvoker([oldHook, wrappedHook]);
+    }
+  }
+
+  invoker.merged = true;
+  def[hookKey] = invoker;
+}
+
+/*  */
+
+function extractPropsFromVNodeData (
+  data,
+  Ctor,
+  tag
+) {
+  // we are only extracting raw values here.
+  // validation and default values are handled in the child
+  // component itself.
+  var propOptions = Ctor.options.props;
+  if (isUndef(propOptions)) {
+    return
+  }
+  var res = {};
+  var attrs = data.attrs;
+  var props = data.props;
+  if (isDef(attrs) || isDef(props)) {
+    for (var key in propOptions) {
+      var altKey = hyphenate(key);
+      if (false) {
+        var keyInLowerCase = key.toLowerCase();
+        if (
+          key !== keyInLowerCase &&
+          attrs && hasOwn(attrs, keyInLowerCase)
+        ) {
+          tip(
+            "Prop \"" + keyInLowerCase + "\" is passed to component " +
+            (formatComponentName(tag || Ctor)) + ", but the declared prop name is" +
+            " \"" + key + "\". " +
+            "Note that HTML attributes are case-insensitive and camelCased " +
+            "props need to use their kebab-case equivalents when using in-DOM " +
+            "templates. You should probably use \"" + altKey + "\" instead of \"" + key + "\"."
+          );
+        }
+      }
+      checkProp(res, props, key, altKey, true) ||
+      checkProp(res, attrs, key, altKey, false);
+    }
+  }
+  return res
+}
+
+function checkProp (
+  res,
+  hash,
+  key,
+  altKey,
+  preserve
+) {
+  if (isDef(hash)) {
+    if (hasOwn(hash, key)) {
+      res[key] = hash[key];
+      if (!preserve) {
+        delete hash[key];
+      }
+      return true
+    } else if (hasOwn(hash, altKey)) {
+      res[key] = hash[altKey];
+      if (!preserve) {
+        delete hash[altKey];
+      }
+      return true
+    }
+  }
+  return false
+}
+
+/*  */
+
+// The template compiler attempts to minimize the need for normalization by
+// statically analyzing the template at compile time.
+//
+// For plain HTML markup, normalization can be completely skipped because the
+// generated render function is guaranteed to return Array<VNode>. There are
+// two cases where extra normalization is needed:
+
+// 1. When the children contains components - because a functional component
+// may return an Array instead of a single root. In this case, just a simple
+// normalization is needed - if any child is an Array, we flatten the whole
+// thing with Array.prototype.concat. It is guaranteed to be only 1-level deep
+// because functional components already normalize their own children.
+function simpleNormalizeChildren (children) {
+  for (var i = 0; i < children.length; i++) {
+    if (Array.isArray(children[i])) {
+      return Array.prototype.concat.apply([], children)
+    }
+  }
+  return children
+}
+
+// 2. When the children contains constructs that always generated nested Arrays,
+// e.g. <template>, <slot>, v-for, or when the children is provided by user
+// with hand-written render functions / JSX. In such cases a full normalization
+// is needed to cater to all possible types of children values.
+function normalizeChildren (children) {
+  return isPrimitive(children)
+    ? [createTextVNode(children)]
+    : Array.isArray(children)
+      ? normalizeArrayChildren(children)
+      : undefined
+}
+
+function isTextNode (node) {
+  return isDef(node) && isDef(node.text) && isFalse(node.isComment)
+}
+
+function normalizeArrayChildren (children, nestedIndex) {
+  var res = [];
+  var i, c, last;
+  for (i = 0; i < children.length; i++) {
+    c = children[i];
+    if (isUndef(c) || typeof c === 'boolean') { continue }
+    last = res[res.length - 1];
+    //  nested
+    if (Array.isArray(c)) {
+      res.push.apply(res, normalizeArrayChildren(c, ((nestedIndex || '') + "_" + i)));
+    } else if (isPrimitive(c)) {
+      if (isTextNode(last)) {
+        // merge adjacent text nodes
+        // this is necessary for SSR hydration because text nodes are
+        // essentially merged when rendered to HTML strings
+        (last).text += String(c);
+      } else if (c !== '') {
+        // convert primitive to vnode
+        res.push(createTextVNode(c));
+      }
+    } else {
+      if (isTextNode(c) && isTextNode(last)) {
+        // merge adjacent text nodes
+        res[res.length - 1] = createTextVNode(last.text + c.text);
+      } else {
+        // default key for nested array children (likely generated by v-for)
+        if (isTrue(children._isVList) &&
+          isDef(c.tag) &&
+          isUndef(c.key) &&
+          isDef(nestedIndex)) {
+          c.key = "__vlist" + nestedIndex + "_" + i + "__";
+        }
+        res.push(c);
+      }
+    }
+  }
+  return res
+}
+
+/*  */
+
+function ensureCtor (comp, base) {
+  return isObject(comp)
+    ? base.extend(comp)
+    : comp
+}
+
+function resolveAsyncComponent (
+  factory,
+  baseCtor,
+  context
+) {
+  if (isTrue(factory.error) && isDef(factory.errorComp)) {
+    return factory.errorComp
+  }
+
+  if (isDef(factory.resolved)) {
+    return factory.resolved
+  }
+
+  if (isTrue(factory.loading) && isDef(factory.loadingComp)) {
+    return factory.loadingComp
+  }
+
+  if (isDef(factory.contexts)) {
+    // already pending
+    factory.contexts.push(context);
+  } else {
+    var contexts = factory.contexts = [context];
+    var sync = true;
+
+    var forceRender = function () {
+      for (var i = 0, l = contexts.length; i < l; i++) {
+        contexts[i].$forceUpdate();
+      }
+    };
+
+    var resolve = once(function (res) {
+      // cache resolved
+      factory.resolved = ensureCtor(res, baseCtor);
+      // invoke callbacks only if this is not a synchronous resolve
+      // (async resolves are shimmed as synchronous during SSR)
+      if (!sync) {
+        forceRender();
+      }
+    });
+
+    var reject = once(function (reason) {
+      "production" !== 'production' && warn(
+        "Failed to resolve async component: " + (String(factory)) +
+        (reason ? ("\nReason: " + reason) : '')
+      );
+      if (isDef(factory.errorComp)) {
+        factory.error = true;
+        forceRender();
+      }
+    });
+
+    var res = factory(resolve, reject);
+
+    if (isObject(res)) {
+      if (typeof res.then === 'function') {
+        // () => Promise
+        if (isUndef(factory.resolved)) {
+          res.then(resolve, reject);
+        }
+      } else if (isDef(res.component) && typeof res.component.then === 'function') {
+        res.component.then(resolve, reject);
+
+        if (isDef(res.error)) {
+          factory.errorComp = ensureCtor(res.error, baseCtor);
+        }
+
+        if (isDef(res.loading)) {
+          factory.loadingComp = ensureCtor(res.loading, baseCtor);
+          if (res.delay === 0) {
+            factory.loading = true;
+          } else {
+            setTimeout(function () {
+              if (isUndef(factory.resolved) && isUndef(factory.error)) {
+                factory.loading = true;
+                forceRender();
+              }
+            }, res.delay || 200);
+          }
+        }
+
+        if (isDef(res.timeout)) {
+          setTimeout(function () {
+            if (isUndef(factory.resolved)) {
+              reject(
+                 false
+                  ? ("timeout (" + (res.timeout) + "ms)")
+                  : null
+              );
+            }
+          }, res.timeout);
+        }
+      }
+    }
+
+    sync = false;
+    // return in case resolved synchronously
+    return factory.loading
+      ? factory.loadingComp
+      : factory.resolved
+  }
+}
+
+/*  */
+
+function getFirstComponentChild (children) {
+  if (Array.isArray(children)) {
+    for (var i = 0; i < children.length; i++) {
+      var c = children[i];
+      if (isDef(c) && isDef(c.componentOptions)) {
+        return c
+      }
+    }
+  }
+}
+
+/*  */
+
+/*  */
+
+function initEvents (vm) {
+  vm._events = Object.create(null);
+  vm._hasHookEvent = false;
+  // init parent attached events
+  var listeners = vm.$options._parentListeners;
+  if (listeners) {
+    updateComponentListeners(vm, listeners);
+  }
+}
+
+var target;
+
+function add (event, fn, once$$1) {
+  if (once$$1) {
+    target.$once(event, fn);
+  } else {
+    target.$on(event, fn);
+  }
+}
+
+function remove$1 (event, fn) {
+  target.$off(event, fn);
+}
+
+function updateComponentListeners (
+  vm,
+  listeners,
+  oldListeners
+) {
+  target = vm;
+  updateListeners(listeners, oldListeners || {}, add, remove$1, vm);
+}
+
+function eventsMixin (Vue) {
+  var hookRE = /^hook:/;
+  Vue.prototype.$on = function (event, fn) {
+    var this$1 = this;
+
+    var vm = this;
+    if (Array.isArray(event)) {
+      for (var i = 0, l = event.length; i < l; i++) {
+        this$1.$on(event[i], fn);
+      }
+    } else {
+      (vm._events[event] || (vm._events[event] = [])).push(fn);
+      // optimize hook:event cost by using a boolean flag marked at registration
+      // instead of a hash lookup
+      if (hookRE.test(event)) {
+        vm._hasHookEvent = true;
+      }
+    }
+    return vm
+  };
+
+  Vue.prototype.$once = function (event, fn) {
+    var vm = this;
+    function on () {
+      vm.$off(event, on);
+      fn.apply(vm, arguments);
+    }
+    on.fn = fn;
+    vm.$on(event, on);
+    return vm
+  };
+
+  Vue.prototype.$off = function (event, fn) {
+    var this$1 = this;
+
+    var vm = this;
+    // all
+    if (!arguments.length) {
+      vm._events = Object.create(null);
+      return vm
+    }
+    // array of events
+    if (Array.isArray(event)) {
+      for (var i$1 = 0, l = event.length; i$1 < l; i$1++) {
+        this$1.$off(event[i$1], fn);
+      }
+      return vm
+    }
+    // specific event
+    var cbs = vm._events[event];
+    if (!cbs) {
+      return vm
+    }
+    if (arguments.length === 1) {
+      vm._events[event] = null;
+      return vm
+    }
+    // specific handler
+    var cb;
+    var i = cbs.length;
+    while (i--) {
+      cb = cbs[i];
+      if (cb === fn || cb.fn === fn) {
+        cbs.splice(i, 1);
+        break
+      }
+    }
+    return vm
+  };
+
+  Vue.prototype.$emit = function (event) {
+    var vm = this;
+    if (false) {
+      var lowerCaseEvent = event.toLowerCase();
+      if (lowerCaseEvent !== event && vm._events[lowerCaseEvent]) {
+        tip(
+          "Event \"" + lowerCaseEvent + "\" is emitted in component " +
+          (formatComponentName(vm)) + " but the handler is registered for \"" + event + "\". " +
+          "Note that HTML attributes are case-insensitive and you cannot use " +
+          "v-on to listen to camelCase events when using in-DOM templates. " +
+          "You should probably use \"" + (hyphenate(event)) + "\" instead of \"" + event + "\"."
+        );
+      }
+    }
+    var cbs = vm._events[event];
+    if (cbs) {
+      cbs = cbs.length > 1 ? toArray(cbs) : cbs;
+      var args = toArray(arguments, 1);
+      for (var i = 0, l = cbs.length; i < l; i++) {
+        cbs[i].apply(vm, args);
+      }
+    }
+    return vm
+  };
+}
+
+/*  */
+
+/**
+ * Runtime helper for resolving raw children VNodes into a slot object.
+ */
+function resolveSlots (
+  children,
+  context
+) {
+  var slots = {};
+  if (!children) {
+    return slots
+  }
+  var defaultSlot = [];
+  for (var i = 0, l = children.length; i < l; i++) {
+    var child = children[i];
+    // named slots should only be respected if the vnode was rendered in the
+    // same context.
+    if ((child.context === context || child.functionalContext === context) &&
+      child.data && child.data.slot != null
+    ) {
+      var name = child.data.slot;
+      var slot = (slots[name] || (slots[name] = []));
+      if (child.tag === 'template') {
+        slot.push.apply(slot, child.children);
+      } else {
+        slot.push(child);
+      }
+    } else {
+      defaultSlot.push(child);
+    }
+  }
+  // ignore whitespace
+  if (!defaultSlot.every(isWhitespace)) {
+    slots.default = defaultSlot;
+  }
+  return slots
+}
+
+function isWhitespace (node) {
+  return node.isComment || node.text === ' '
+}
+
+function resolveScopedSlots (
+  fns, // see flow/vnode
+  res
+) {
+  res = res || {};
+  for (var i = 0; i < fns.length; i++) {
+    if (Array.isArray(fns[i])) {
+      resolveScopedSlots(fns[i], res);
+    } else {
+      res[fns[i].key] = fns[i].fn;
+    }
+  }
+  return res
+}
+
+/*  */
+
+var activeInstance = null;
+
+function initLifecycle (vm) {
+  var options = vm.$options;
+
+  // locate first non-abstract parent
+  var parent = options.parent;
+  if (parent && !options.abstract) {
+    while (parent.$options.abstract && parent.$parent) {
+      parent = parent.$parent;
+    }
+    parent.$children.push(vm);
+  }
+
+  vm.$parent = parent;
+  vm.$root = parent ? parent.$root : vm;
+
+  vm.$children = [];
+  vm.$refs = {};
+
+  vm._watcher = null;
+  vm._inactive = null;
+  vm._directInactive = false;
+  vm._isMounted = false;
+  vm._isDestroyed = false;
+  vm._isBeingDestroyed = false;
+}
+
+function lifecycleMixin (Vue) {
+  Vue.prototype._update = function (vnode, hydrating) {
+    var vm = this;
+    if (vm._isMounted) {
+      callHook(vm, 'beforeUpdate');
+    }
+    var prevEl = vm.$el;
+    var prevVnode = vm._vnode;
+    var prevActiveInstance = activeInstance;
+    activeInstance = vm;
+    vm._vnode = vnode;
+    // Vue.prototype.__patch__ is injected in entry points
+    // based on the rendering backend used.
+    if (!prevVnode) {
+      // initial render
+      vm.$el = vm.__patch__(
+        vm.$el, vnode, hydrating, false /* removeOnly */,
+        vm.$options._parentElm,
+        vm.$options._refElm
+      );
+    } else {
+      // updates
+      vm.$el = vm.__patch__(prevVnode, vnode);
+    }
+    activeInstance = prevActiveInstance;
+    // update __vue__ reference
+    if (prevEl) {
+      prevEl.__vue__ = null;
+    }
+    if (vm.$el) {
+      vm.$el.__vue__ = vm;
+    }
+    // if parent is an HOC, update its $el as well
+    if (vm.$vnode && vm.$parent && vm.$vnode === vm.$parent._vnode) {
+      vm.$parent.$el = vm.$el;
+    }
+    // updated hook is called by the scheduler to ensure that children are
+    // updated in a parent's updated hook.
+  };
+
+  Vue.prototype.$forceUpdate = function () {
+    var vm = this;
+    if (vm._watcher) {
+      vm._watcher.update();
+    }
+  };
+
+  Vue.prototype.$destroy = function () {
+    var vm = this;
+    if (vm._isBeingDestroyed) {
+      return
+    }
+    callHook(vm, 'beforeDestroy');
+    vm._isBeingDestroyed = true;
+    // remove self from parent
+    var parent = vm.$parent;
+    if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
+      remove(parent.$children, vm);
+    }
+    // teardown watchers
+    if (vm._watcher) {
+      vm._watcher.teardown();
+    }
+    var i = vm._watchers.length;
+    while (i--) {
+      vm._watchers[i].teardown();
+    }
+    // remove reference from data ob
+    // frozen object may not have observer.
+    if (vm._data.__ob__) {
+      vm._data.__ob__.vmCount--;
+    }
+    // call the last hook...
+    vm._isDestroyed = true;
+    // invoke destroy hooks on current rendered tree
+    vm.__patch__(vm._vnode, null);
+    // fire destroyed hook
+    callHook(vm, 'destroyed');
+    // turn off all instance listeners.
+    vm.$off();
+    // remove __vue__ reference
+    if (vm.$el) {
+      vm.$el.__vue__ = null;
+    }
+    // remove reference to DOM nodes (prevents leak)
+    vm.$options._parentElm = vm.$options._refElm = null;
+  };
+}
+
+function mountComponent (
+  vm,
+  el,
+  hydrating
+) {
+  vm.$el = el;
+  if (!vm.$options.render) {
+    vm.$options.render = createEmptyVNode;
+    if (false) {
+      /* istanbul ignore if */
+      if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
+        vm.$options.el || el) {
+        warn(
+          'You are using the runtime-only build of Vue where the template ' +
+          'compiler is not available. Either pre-compile the templates into ' +
+          'render functions, or use the compiler-included build.',
+          vm
+        );
+      } else {
+        warn(
+          'Failed to mount component: template or render function not defined.',
+          vm
+        );
+      }
+    }
+  }
+  callHook(vm, 'beforeMount');
+
+  var updateComponent;
+  /* istanbul ignore if */
+  if (false) {
+    updateComponent = function () {
+      var name = vm._name;
+      var id = vm._uid;
+      var startTag = "vue-perf-start:" + id;
+      var endTag = "vue-perf-end:" + id;
+
+      mark(startTag);
+      var vnode = vm._render();
+      mark(endTag);
+      measure((name + " render"), startTag, endTag);
+
+      mark(startTag);
+      vm._update(vnode, hydrating);
+      mark(endTag);
+      measure((name + " patch"), startTag, endTag);
+    };
+  } else {
+    updateComponent = function () {
+      vm._update(vm._render(), hydrating);
+    };
+  }
+
+  vm._watcher = new Watcher(vm, updateComponent, noop);
+  hydrating = false;
+
+  // manually mounted instance, call mounted on self
+  // mounted is called for render-created child components in its inserted hook
+  if (vm.$vnode == null) {
+    vm._isMounted = true;
+    callHook(vm, 'mounted');
+  }
+  return vm
+}
+
+function updateChildComponent (
+  vm,
+  propsData,
+  listeners,
+  parentVnode,
+  renderChildren
+) {
+  // determine whether component has slot children
+  // we need to do this before overwriting $options._renderChildren
+  var hasChildren = !!(
+    renderChildren ||               // has new static slots
+    vm.$options._renderChildren ||  // has old static slots
+    parentVnode.data.scopedSlots || // has new scoped slots
+    vm.$scopedSlots !== emptyObject // has old scoped slots
+  );
+
+  vm.$options._parentVnode = parentVnode;
+  vm.$vnode = parentVnode; // update vm's placeholder node without re-render
+  if (vm._vnode) { // update child tree's parent
+    vm._vnode.parent = parentVnode;
+  }
+  vm.$options._renderChildren = renderChildren;
+
+  // update props
+  if (propsData && vm.$options.props) {
+    observerState.shouldConvert = false;
+    if (false) {
+      observerState.isSettingProps = true;
+    }
+    var props = vm._props;
+    var propKeys = vm.$options._propKeys || [];
+    for (var i = 0; i < propKeys.length; i++) {
+      var key = propKeys[i];
+      props[key] = validateProp(key, vm.$options.props, propsData, vm);
+    }
+    observerState.shouldConvert = true;
+    if (false) {
+      observerState.isSettingProps = false;
+    }
+    // keep a copy of raw propsData
+    vm.$options.propsData = propsData;
+  }
+  // update listeners
+  if (listeners) {
+    var oldListeners = vm.$options._parentListeners;
+    vm.$options._parentListeners = listeners;
+    updateComponentListeners(vm, listeners, oldListeners);
+  }
+  // resolve slots + force update if has children
+  if (hasChildren) {
+    vm.$slots = resolveSlots(renderChildren, parentVnode.context);
+    vm.$forceUpdate();
+  }
+}
+
+function isInInactiveTree (vm) {
+  while (vm && (vm = vm.$parent)) {
+    if (vm._inactive) { return true }
+  }
+  return false
+}
+
+function activateChildComponent (vm, direct) {
+  if (direct) {
+    vm._directInactive = false;
+    if (isInInactiveTree(vm)) {
+      return
+    }
+  } else if (vm._directInactive) {
+    return
+  }
+  if (vm._inactive || vm._inactive === null) {
+    vm._inactive = false;
+    for (var i = 0; i < vm.$children.length; i++) {
+      activateChildComponent(vm.$children[i]);
+    }
+    callHook(vm, 'activated');
+  }
+}
+
+function deactivateChildComponent (vm, direct) {
+  if (direct) {
+    vm._directInactive = true;
+    if (isInInactiveTree(vm)) {
+      return
+    }
+  }
+  if (!vm._inactive) {
+    vm._inactive = true;
+    for (var i = 0; i < vm.$children.length; i++) {
+      deactivateChildComponent(vm.$children[i]);
+    }
+    callHook(vm, 'deactivated');
+  }
+}
+
+function callHook (vm, hook) {
+  var handlers = vm.$options[hook];
+  if (handlers) {
+    for (var i = 0, j = handlers.length; i < j; i++) {
+      try {
+        handlers[i].call(vm);
+      } catch (e) {
+        handleError(e, vm, (hook + " hook"));
+      }
+    }
+  }
+  if (vm._hasHookEvent) {
+    vm.$emit('hook:' + hook);
+  }
+}
+
+/*  */
+
+
+var MAX_UPDATE_COUNT = 100;
 
 var queue = [];
-var has$1 = {};
+var activatedChildren = [];
+var has = {};
 var circular = {};
 var waiting = false;
 var flushing = false;
@@ -2205,8 +3318,8 @@ var index = 0;
  * Reset the scheduler's state.
  */
 function resetSchedulerState () {
-  queue.length = 0;
-  has$1 = {};
+  index = queue.length = activatedChildren.length = 0;
+  has = {};
   if (false) {
     circular = {};
   }
@@ -2218,6 +3331,7 @@ function resetSchedulerState () {
  */
 function flushSchedulerQueue () {
   flushing = true;
+  var watcher, id;
 
   // Sort queue before flush.
   // This ensures that:
@@ -2232,14 +3346,14 @@ function flushSchedulerQueue () {
   // do not cache length because more watchers might be pushed
   // as we run existing watchers
   for (index = 0; index < queue.length; index++) {
-    var watcher = queue[index];
-    var id = watcher.id;
-    has$1[id] = null;
+    watcher = queue[index];
+    id = watcher.id;
+    has[id] = null;
     watcher.run();
     // in dev build, check and stop circular updates.
     if (false) {
       circular[id] = (circular[id] || 0) + 1;
-      if (circular[id] > config._maxUpdateCount) {
+      if (circular[id] > MAX_UPDATE_COUNT) {
         warn(
           'You may have an infinite update loop ' + (
             watcher.user
@@ -2253,13 +3367,50 @@ function flushSchedulerQueue () {
     }
   }
 
+  // keep copies of post queues before resetting state
+  var activatedQueue = activatedChildren.slice();
+  var updatedQueue = queue.slice();
+
+  resetSchedulerState();
+
+  // call component updated and activated hooks
+  callActivatedHooks(activatedQueue);
+  callUpdateHooks(updatedQueue);
+
   // devtool hook
   /* istanbul ignore if */
   if (devtools && config.devtools) {
     devtools.emit('flush');
   }
+}
 
-  resetSchedulerState();
+function callUpdateHooks (queue) {
+  var i = queue.length;
+  while (i--) {
+    var watcher = queue[i];
+    var vm = watcher.vm;
+    if (vm._watcher === watcher && vm._isMounted) {
+      callHook(vm, 'updated');
+    }
+  }
+}
+
+/**
+ * Queue a kept-alive component that was activated during patch.
+ * The queue will be processed after the entire tree has been patched.
+ */
+function queueActivatedComponent (vm) {
+  // setting _inactive to false here so that a render function can
+  // rely on checking whether it's in an inactive tree (e.g. router-view)
+  vm._inactive = false;
+  activatedChildren.push(vm);
+}
+
+function callActivatedHooks (queue) {
+  for (var i = 0; i < queue.length; i++) {
+    queue[i]._inactive = true;
+    activateChildComponent(queue[i], true /* true */);
+  }
 }
 
 /**
@@ -2269,18 +3420,18 @@ function flushSchedulerQueue () {
  */
 function queueWatcher (watcher) {
   var id = watcher.id;
-  if (has$1[id] == null) {
-    has$1[id] = true;
+  if (has[id] == null) {
+    has[id] = true;
     if (!flushing) {
       queue.push(watcher);
     } else {
       // if already flushing, splice the watcher based on its id
       // if already past its id, it will be run next immediately.
       var i = queue.length - 1;
-      while (i >= 0 && queue[i].id > watcher.id) {
+      while (i > index && queue[i].id > watcher.id) {
         i--;
       }
-      queue.splice(Math.max(i, index) + 1, 0, watcher);
+      queue.splice(i + 1, 0, watcher);
     }
     // queue the flush
     if (!waiting) {
@@ -2305,16 +3456,17 @@ var Watcher = function Watcher (
   cb,
   options
 ) {
-  if ( options === void 0 ) options = {};
-
   this.vm = vm;
   vm._watchers.push(this);
   // options
-  this.deep = !!options.deep;
-  this.user = !!options.user;
-  this.lazy = !!options.lazy;
-  this.sync = !!options.sync;
-  this.expression = expOrFn.toString();
+  if (options) {
+    this.deep = !!options.deep;
+    this.user = !!options.user;
+    this.lazy = !!options.lazy;
+    this.sync = !!options.sync;
+  } else {
+    this.deep = this.user = this.lazy = this.sync = false;
+  }
   this.cb = cb;
   this.id = ++uid$2; // uid for batching
   this.active = true;
@@ -2323,6 +3475,9 @@ var Watcher = function Watcher (
   this.newDeps = [];
   this.depIds = new _Set();
   this.newDepIds = new _Set();
+  this.expression =  false
+    ? expOrFn.toString()
+    : '';
   // parse expression for getter
   if (typeof expOrFn === 'function') {
     this.getter = expOrFn;
@@ -2348,7 +3503,17 @@ var Watcher = function Watcher (
  */
 Watcher.prototype.get = function get () {
   pushTarget(this);
-  var value = this.getter.call(this.vm, this.vm);
+  var value;
+  var vm = this.vm;
+  if (this.user) {
+    try {
+      value = this.getter.call(vm, vm);
+    } catch (e) {
+      handleError(e, vm, ("getter for watcher \"" + (this.expression) + "\""));
+    }
+  } else {
+    value = this.getter.call(vm, vm);
+  }
   // "touch" every property so they are all tracked as
   // dependencies for deep watching
   if (this.deep) {
@@ -2418,8 +3583,8 @@ Watcher.prototype.update = function update () {
 Watcher.prototype.run = function run () {
   if (this.active) {
     var value = this.get();
-      if (
-        value !== this.value ||
+    if (
+      value !== this.value ||
       // Deep watchers and watchers on Object/Arrays should fire even
       // when the value is the same, because the value may
       // have mutated.
@@ -2433,16 +3598,7 @@ Watcher.prototype.run = function run () {
         try {
           this.cb.call(this.vm, value, oldValue);
         } catch (e) {
-          /* istanbul ignore else */
-          if (config.errorHandler) {
-            config.errorHandler.call(null, e, this.vm);
-          } else {
-            "production" !== 'production' && warn(
-              ("Error in watcher \"" + (this.expression) + "\""),
-              this.vm
-            );
-            throw e
-          }
+          handleError(e, this.vm, ("callback for watcher \"" + (this.expression) + "\""));
         }
       } else {
         this.cb.call(this.vm, value, oldValue);
@@ -2481,10 +3637,9 @@ Watcher.prototype.teardown = function teardown () {
   if (this.active) {
     // remove self from vm's watcher list
     // this is a somewhat expensive operation so we skip it
-    // if the vm is being destroyed or is performing a v-for
-    // re-render (the watcher list is then filtered by v-for).
-    if (!this.vm._isBeingDestroyed && !this.vm._vForRemoving) {
-      remove$1(this.vm._watchers, this);
+    // if the vm is being destroyed.
+    if (!this.vm._isBeingDestroyed) {
+      remove(this.vm._watchers, this);
     }
     var i = this.deps.length;
     while (i--) {
@@ -2530,60 +3685,93 @@ function _traverse (val, seen) {
 
 /*  */
 
-function initState (vm) {
-  vm._watchers = [];
-  initProps(vm);
-  initMethods(vm);
-  initData(vm);
-  initComputed(vm);
-  initWatch(vm);
+var sharedPropertyDefinition = {
+  enumerable: true,
+  configurable: true,
+  get: noop,
+  set: noop
+};
+
+function proxy (target, sourceKey, key) {
+  sharedPropertyDefinition.get = function proxyGetter () {
+    return this[sourceKey][key]
+  };
+  sharedPropertyDefinition.set = function proxySetter (val) {
+    this[sourceKey][key] = val;
+  };
+  Object.defineProperty(target, key, sharedPropertyDefinition);
 }
 
-var isReservedProp = { key: 1, ref: 1, slot: 1 };
+function initState (vm) {
+  vm._watchers = [];
+  var opts = vm.$options;
+  if (opts.props) { initProps(vm, opts.props); }
+  if (opts.methods) { initMethods(vm, opts.methods); }
+  if (opts.data) {
+    initData(vm);
+  } else {
+    observe(vm._data = {}, true /* asRootData */);
+  }
+  if (opts.computed) { initComputed(vm, opts.computed); }
+  if (opts.watch) { initWatch(vm, opts.watch); }
+}
 
-function initProps (vm) {
-  var props = vm.$options.props;
-  if (props) {
-    var propsData = vm.$options.propsData || {};
-    var keys = vm.$options._propKeys = Object.keys(props);
-    var isRoot = !vm.$parent;
-    // root instance props should be converted
-    observerState.shouldConvert = isRoot;
-    var loop = function ( i ) {
-      var key = keys[i];
-      /* istanbul ignore else */
-      if (false) {
-        if (isReservedProp[key]) {
+var isReservedProp = {
+  key: 1,
+  ref: 1,
+  slot: 1
+};
+
+function initProps (vm, propsOptions) {
+  var propsData = vm.$options.propsData || {};
+  var props = vm._props = {};
+  // cache prop keys so that future props updates can iterate using Array
+  // instead of dynamic object key enumeration.
+  var keys = vm.$options._propKeys = [];
+  var isRoot = !vm.$parent;
+  // root instance props should be converted
+  observerState.shouldConvert = isRoot;
+  var loop = function ( key ) {
+    keys.push(key);
+    var value = validateProp(key, propsOptions, propsData, vm);
+    /* istanbul ignore else */
+    if (false) {
+      if (isReservedProp[key] || config.isReservedAttr(key)) {
+        warn(
+          ("\"" + key + "\" is a reserved attribute and cannot be used as component prop."),
+          vm
+        );
+      }
+      defineReactive$$1(props, key, value, function () {
+        if (vm.$parent && !observerState.isSettingProps) {
           warn(
-            ("\"" + key + "\" is a reserved attribute and cannot be used as component prop."),
+            "Avoid mutating a prop directly since the value will be " +
+            "overwritten whenever the parent component re-renders. " +
+            "Instead, use a data or computed property based on the prop's " +
+            "value. Prop being mutated: \"" + key + "\"",
             vm
           );
         }
-        defineReactive$$1(vm, key, validateProp(key, props, propsData, vm), function () {
-          if (vm.$parent && !observerState.isSettingProps) {
-            warn(
-              "Avoid mutating a prop directly since the value will be " +
-              "overwritten whenever the parent component re-renders. " +
-              "Instead, use a data or computed property based on the prop's " +
-              "value. Prop being mutated: \"" + key + "\"",
-              vm
-            );
-          }
-        });
-      } else {
-        defineReactive$$1(vm, key, validateProp(key, props, propsData, vm));
-      }
-    };
+      });
+    } else {
+      defineReactive$$1(props, key, value);
+    }
+    // static props are already proxied on the component's prototype
+    // during Vue.extend(). We only need to proxy props defined at
+    // instantiation here.
+    if (!(key in vm)) {
+      proxy(vm, "_props", key);
+    }
+  };
 
-    for (var i = 0; i < keys.length; i++) loop( i );
-    observerState.shouldConvert = true;
-  }
+  for (var key in propsOptions) loop( key );
+  observerState.shouldConvert = true;
 }
 
 function initData (vm) {
   var data = vm.$options.data;
   data = vm._data = typeof data === 'function'
-    ? data.call(vm)
+    ? getData(data, vm)
     : data || {};
   if (!isPlainObject(data)) {
     data = {};
@@ -2604,69 +3792,105 @@ function initData (vm) {
         "Use prop default value instead.",
         vm
       );
-    } else {
-      proxy(vm, keys[i]);
+    } else if (!isReserved(keys[i])) {
+      proxy(vm, "_data", keys[i]);
     }
   }
   // observe data
-  observe(data);
-  data.__ob__ && data.__ob__.vmCount++;
+  observe(data, true /* asRootData */);
 }
 
-var computedSharedDefinition = {
-  enumerable: true,
-  configurable: true,
-  get: noop,
-  set: noop
-};
+function getData (data, vm) {
+  try {
+    return data.call(vm)
+  } catch (e) {
+    handleError(e, vm, "data()");
+    return {}
+  }
+}
 
-function initComputed (vm) {
-  var computed = vm.$options.computed;
-  if (computed) {
-    for (var key in computed) {
-      var userDef = computed[key];
-      if (typeof userDef === 'function') {
-        computedSharedDefinition.get = makeComputedGetter(userDef, vm);
-        computedSharedDefinition.set = noop;
-      } else {
-        computedSharedDefinition.get = userDef.get
-          ? userDef.cache !== false
-            ? makeComputedGetter(userDef.get, vm)
-            : bind$1(userDef.get, vm)
-          : noop;
-        computedSharedDefinition.set = userDef.set
-          ? bind$1(userDef.set, vm)
-          : noop;
+var computedWatcherOptions = { lazy: true };
+
+function initComputed (vm, computed) {
+  var watchers = vm._computedWatchers = Object.create(null);
+
+  for (var key in computed) {
+    var userDef = computed[key];
+    var getter = typeof userDef === 'function' ? userDef : userDef.get;
+    if (false) {
+      if (getter === undefined) {
+        warn(
+          ("No getter function has been defined for computed property \"" + key + "\"."),
+          vm
+        );
+        getter = noop;
       }
-      Object.defineProperty(vm, key, computedSharedDefinition);
+    }
+    // create internal watcher for the computed property.
+    watchers[key] = new Watcher(vm, getter, noop, computedWatcherOptions);
+
+    // component-defined computed properties are already defined on the
+    // component prototype. We only need to define computed properties defined
+    // at instantiation here.
+    if (!(key in vm)) {
+      defineComputed(vm, key, userDef);
+    } else if (false) {
+      if (key in vm.$data) {
+        warn(("The computed property \"" + key + "\" is already defined in data."), vm);
+      } else if (vm.$options.props && key in vm.$options.props) {
+        warn(("The computed property \"" + key + "\" is already defined as a prop."), vm);
+      }
     }
   }
 }
 
-function makeComputedGetter (getter, owner) {
-  var watcher = new Watcher(owner, getter, noop, {
-    lazy: true
-  });
+function defineComputed (target, key, userDef) {
+  if (typeof userDef === 'function') {
+    sharedPropertyDefinition.get = createComputedGetter(key);
+    sharedPropertyDefinition.set = noop;
+  } else {
+    sharedPropertyDefinition.get = userDef.get
+      ? userDef.cache !== false
+        ? createComputedGetter(key)
+        : userDef.get
+      : noop;
+    sharedPropertyDefinition.set = userDef.set
+      ? userDef.set
+      : noop;
+  }
+  Object.defineProperty(target, key, sharedPropertyDefinition);
+}
+
+function createComputedGetter (key) {
   return function computedGetter () {
-    if (watcher.dirty) {
-      watcher.evaluate();
+    var watcher = this._computedWatchers && this._computedWatchers[key];
+    if (watcher) {
+      if (watcher.dirty) {
+        watcher.evaluate();
+      }
+      if (Dep.target) {
+        watcher.depend();
+      }
+      return watcher.value
     }
-    if (Dep.target) {
-      watcher.depend();
-    }
-    return watcher.value
   }
 }
 
-function initMethods (vm) {
-  var methods = vm.$options.methods;
-  if (methods) {
-    for (var key in methods) {
-      vm[key] = methods[key] == null ? noop : bind$1(methods[key], vm);
-      if (false) {
+function initMethods (vm, methods) {
+  var props = vm.$options.props;
+  for (var key in methods) {
+    vm[key] = methods[key] == null ? noop : bind(methods[key], vm);
+    if (false) {
+      if (methods[key] == null) {
         warn(
           "method \"" + key + "\" has an undefined value in the component definition. " +
           "Did you reference the function correctly?",
+          vm
+        );
+      }
+      if (props && hasOwn(props, key)) {
+        warn(
+          ("method \"" + key + "\" has already been defined as a prop."),
           vm
         );
       }
@@ -2674,18 +3898,15 @@ function initMethods (vm) {
   }
 }
 
-function initWatch (vm) {
-  var watch = vm.$options.watch;
-  if (watch) {
-    for (var key in watch) {
-      var handler = watch[key];
-      if (Array.isArray(handler)) {
-        for (var i = 0; i < handler.length; i++) {
-          createWatcher(vm, key, handler[i]);
-        }
-      } else {
-        createWatcher(vm, key, handler);
+function initWatch (vm, watch) {
+  for (var key in watch) {
+    var handler = watch[key];
+    if (Array.isArray(handler)) {
+      for (var i = 0; i < handler.length; i++) {
+        createWatcher(vm, key, handler[i]);
       }
+    } else {
+      createWatcher(vm, key, handler);
     }
   }
 }
@@ -2707,9 +3928,9 @@ function stateMixin (Vue) {
   // when using Object.defineProperty, so we have to procedurally build up
   // the object here.
   var dataDef = {};
-  dataDef.get = function () {
-    return this._data
-  };
+  dataDef.get = function () { return this._data };
+  var propsDef = {};
+  propsDef.get = function () { return this._props };
   if (false) {
     dataDef.set = function (newData) {
       warn(
@@ -2718,10 +3939,14 @@ function stateMixin (Vue) {
         this
       );
     };
+    propsDef.set = function () {
+      warn("$props is readonly.", this);
+    };
   }
   Object.defineProperty(Vue.prototype, '$data', dataDef);
+  Object.defineProperty(Vue.prototype, '$props', propsDef);
 
-  Vue.prototype.$set = set$1;
+  Vue.prototype.$set = set;
   Vue.prototype.$delete = del;
 
   Vue.prototype.$watch = function (
@@ -2742,305 +3967,185 @@ function stateMixin (Vue) {
   };
 }
 
-function proxy (vm, key) {
-  if (!isReserved(key)) {
-    Object.defineProperty(vm, key, {
-      configurable: true,
-      enumerable: true,
-      get: function proxyGetter () {
-        return vm._data[key]
-      },
-      set: function proxySetter (val) {
-        vm._data[key] = val;
+/*  */
+
+function initProvide (vm) {
+  var provide = vm.$options.provide;
+  if (provide) {
+    vm._provided = typeof provide === 'function'
+      ? provide.call(vm)
+      : provide;
+  }
+}
+
+function initInjections (vm) {
+  var result = resolveInject(vm.$options.inject, vm);
+  if (result) {
+    Object.keys(result).forEach(function (key) {
+      /* istanbul ignore else */
+      if (false) {
+        defineReactive$$1(vm, key, result[key], function () {
+          warn(
+            "Avoid mutating an injected value directly since the changes will be " +
+            "overwritten whenever the provided component re-renders. " +
+            "injection being mutated: \"" + key + "\"",
+            vm
+          );
+        });
+      } else {
+        defineReactive$$1(vm, key, result[key]);
       }
     });
   }
 }
 
-/*  */
+function resolveInject (inject, vm) {
+  if (inject) {
+    // inject is :any because flow is not smart enough to figure out cached
+    // isArray here
+    var isArray = Array.isArray(inject);
+    var result = Object.create(null);
+    var keys = isArray
+      ? inject
+      : hasSymbol
+        ? Reflect.ownKeys(inject)
+        : Object.keys(inject);
 
-var VNode = function VNode (
-  tag,
-  data,
-  children,
-  text,
-  elm,
-  context,
-  componentOptions
-) {
-  this.tag = tag;
-  this.data = data;
-  this.children = children;
-  this.text = text;
-  this.elm = elm;
-  this.ns = undefined;
-  this.context = context;
-  this.functionalContext = undefined;
-  this.key = data && data.key;
-  this.componentOptions = componentOptions;
-  this.child = undefined;
-  this.parent = undefined;
-  this.raw = false;
-  this.isStatic = false;
-  this.isRootInsert = true;
-  this.isComment = false;
-  this.isCloned = false;
-  this.isOnce = false;
-};
-
-var createEmptyVNode = function () {
-  var node = new VNode();
-  node.text = '';
-  node.isComment = true;
-  return node
-};
-
-function createTextVNode (val) {
-  return new VNode(undefined, undefined, undefined, String(val))
-}
-
-// optimized shallow clone
-// used for static nodes and slot nodes because they may be reused across
-// multiple renders, cloning them avoids errors when DOM manipulations rely
-// on their elm reference.
-function cloneVNode (vnode) {
-  var cloned = new VNode(
-    vnode.tag,
-    vnode.data,
-    vnode.children,
-    vnode.text,
-    vnode.elm,
-    vnode.context,
-    vnode.componentOptions
-  );
-  cloned.ns = vnode.ns;
-  cloned.isStatic = vnode.isStatic;
-  cloned.key = vnode.key;
-  cloned.isCloned = true;
-  return cloned
-}
-
-function cloneVNodes (vnodes) {
-  var res = new Array(vnodes.length);
-  for (var i = 0; i < vnodes.length; i++) {
-    res[i] = cloneVNode(vnodes[i]);
-  }
-  return res
-}
-
-/*  */
-
-var activeInstance = null;
-
-function initLifecycle (vm) {
-  var options = vm.$options;
-
-  // locate first non-abstract parent
-  var parent = options.parent;
-  if (parent && !options.abstract) {
-    while (parent.$options.abstract && parent.$parent) {
-      parent = parent.$parent;
-    }
-    parent.$children.push(vm);
-  }
-
-  vm.$parent = parent;
-  vm.$root = parent ? parent.$root : vm;
-
-  vm.$children = [];
-  vm.$refs = {};
-
-  vm._watcher = null;
-  vm._inactive = false;
-  vm._isMounted = false;
-  vm._isDestroyed = false;
-  vm._isBeingDestroyed = false;
-}
-
-function lifecycleMixin (Vue) {
-  Vue.prototype._mount = function (
-    el,
-    hydrating
-  ) {
-    var vm = this;
-    vm.$el = el;
-    if (!vm.$options.render) {
-      vm.$options.render = createEmptyVNode;
-      if (false) {
-        /* istanbul ignore if */
-        if (vm.$options.template && vm.$options.template.charAt(0) !== '#') {
-          warn(
-            'You are using the runtime-only build of Vue where the template ' +
-            'option is not available. Either pre-compile the templates into ' +
-            'render functions, or use the compiler-included build.',
-            vm
-          );
-        } else {
-          warn(
-            'Failed to mount component: template or render function not defined.',
-            vm
-          );
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      var provideKey = isArray ? key : inject[key];
+      var source = vm;
+      while (source) {
+        if (source._provided && provideKey in source._provided) {
+          result[key] = source._provided[provideKey];
+          break
         }
+        source = source.$parent;
       }
     }
-    callHook(vm, 'beforeMount');
-    vm._watcher = new Watcher(vm, function () {
-      vm._update(vm._render(), hydrating);
-    }, noop);
-    hydrating = false;
-    // manually mounted instance, call mounted on self
-    // mounted is called for render-created child components in its inserted hook
-    if (vm.$vnode == null) {
-      vm._isMounted = true;
-      callHook(vm, 'mounted');
-    }
-    return vm
-  };
-
-  Vue.prototype._update = function (vnode, hydrating) {
-    var vm = this;
-    if (vm._isMounted) {
-      callHook(vm, 'beforeUpdate');
-    }
-    var prevEl = vm.$el;
-    var prevVnode = vm._vnode;
-    var prevActiveInstance = activeInstance;
-    activeInstance = vm;
-    vm._vnode = vnode;
-    // Vue.prototype.__patch__ is injected in entry points
-    // based on the rendering backend used.
-    if (!prevVnode) {
-      // initial render
-      vm.$el = vm.__patch__(
-        vm.$el, vnode, hydrating, false /* removeOnly */,
-        vm.$options._parentElm,
-        vm.$options._refElm
-      );
-    } else {
-      // updates
-      vm.$el = vm.__patch__(prevVnode, vnode);
-    }
-    activeInstance = prevActiveInstance;
-    // update __vue__ reference
-    if (prevEl) {
-      prevEl.__vue__ = null;
-    }
-    if (vm.$el) {
-      vm.$el.__vue__ = vm;
-    }
-    // if parent is an HOC, update its $el as well
-    if (vm.$vnode && vm.$parent && vm.$vnode === vm.$parent._vnode) {
-      vm.$parent.$el = vm.$el;
-    }
-    if (vm._isMounted) {
-      callHook(vm, 'updated');
-    }
-  };
-
-  Vue.prototype._updateFromParent = function (
-    propsData,
-    listeners,
-    parentVnode,
-    renderChildren
-  ) {
-    var vm = this;
-    var hasChildren = !!(vm.$options._renderChildren || renderChildren);
-    vm.$options._parentVnode = parentVnode;
-    vm.$vnode = parentVnode; // update vm's placeholder node without re-render
-    if (vm._vnode) { // update child tree's parent
-      vm._vnode.parent = parentVnode;
-    }
-    vm.$options._renderChildren = renderChildren;
-    // update props
-    if (propsData && vm.$options.props) {
-      observerState.shouldConvert = false;
-      if (false) {
-        observerState.isSettingProps = true;
-      }
-      var propKeys = vm.$options._propKeys || [];
-      for (var i = 0; i < propKeys.length; i++) {
-        var key = propKeys[i];
-        vm[key] = validateProp(key, vm.$options.props, propsData, vm);
-      }
-      observerState.shouldConvert = true;
-      if (false) {
-        observerState.isSettingProps = false;
-      }
-      vm.$options.propsData = propsData;
-    }
-    // update listeners
-    if (listeners) {
-      var oldListeners = vm.$options._parentListeners;
-      vm.$options._parentListeners = listeners;
-      vm._updateListeners(listeners, oldListeners);
-    }
-    // resolve slots + force update if has children
-    if (hasChildren) {
-      vm.$slots = resolveSlots(renderChildren, parentVnode.context);
-      vm.$forceUpdate();
-    }
-  };
-
-  Vue.prototype.$forceUpdate = function () {
-    var vm = this;
-    if (vm._watcher) {
-      vm._watcher.update();
-    }
-  };
-
-  Vue.prototype.$destroy = function () {
-    var vm = this;
-    if (vm._isBeingDestroyed) {
-      return
-    }
-    callHook(vm, 'beforeDestroy');
-    vm._isBeingDestroyed = true;
-    // remove self from parent
-    var parent = vm.$parent;
-    if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
-      remove$1(parent.$children, vm);
-    }
-    // teardown watchers
-    if (vm._watcher) {
-      vm._watcher.teardown();
-    }
-    var i = vm._watchers.length;
-    while (i--) {
-      vm._watchers[i].teardown();
-    }
-    // remove reference from data ob
-    // frozen object may not have observer.
-    if (vm._data.__ob__) {
-      vm._data.__ob__.vmCount--;
-    }
-    // call the last hook...
-    vm._isDestroyed = true;
-    callHook(vm, 'destroyed');
-    // turn off all instance listeners.
-    vm.$off();
-    // remove __vue__ reference
-    if (vm.$el) {
-      vm.$el.__vue__ = null;
-    }
-    // invoke destroy hooks on current rendered tree
-    vm.__patch__(vm._vnode, null);
-  };
-}
-
-function callHook (vm, hook) {
-  var handlers = vm.$options[hook];
-  if (handlers) {
-    for (var i = 0, j = handlers.length; i < j; i++) {
-      handlers[i].call(vm);
-    }
+    return result
   }
-  vm.$emit('hook:' + hook);
 }
 
 /*  */
 
-var hooks = { init: init, prepatch: prepatch, insert: insert, destroy: destroy$1 };
-var hooksToMerge = Object.keys(hooks);
+function createFunctionalComponent (
+  Ctor,
+  propsData,
+  data,
+  context,
+  children
+) {
+  var props = {};
+  var propOptions = Ctor.options.props;
+  if (isDef(propOptions)) {
+    for (var key in propOptions) {
+      props[key] = validateProp(key, propOptions, propsData || {});
+    }
+  } else {
+    if (isDef(data.attrs)) { mergeProps(props, data.attrs); }
+    if (isDef(data.props)) { mergeProps(props, data.props); }
+  }
+  // ensure the createElement function in functional components
+  // gets a unique context - this is necessary for correct named slot check
+  var _context = Object.create(context);
+  var h = function (a, b, c, d) { return createElement(_context, a, b, c, d, true); };
+  var vnode = Ctor.options.render.call(null, h, {
+    data: data,
+    props: props,
+    children: children,
+    parent: context,
+    listeners: data.on || {},
+    injections: resolveInject(Ctor.options.inject, context),
+    slots: function () { return resolveSlots(children, context); }
+  });
+  if (vnode instanceof VNode) {
+    vnode.functionalContext = context;
+    vnode.functionalOptions = Ctor.options;
+    if (data.slot) {
+      (vnode.data || (vnode.data = {})).slot = data.slot;
+    }
+  }
+  return vnode
+}
+
+function mergeProps (to, from) {
+  for (var key in from) {
+    to[camelize(key)] = from[key];
+  }
+}
+
+/*  */
+
+// hooks to be invoked on component VNodes during patch
+var componentVNodeHooks = {
+  init: function init (
+    vnode,
+    hydrating,
+    parentElm,
+    refElm
+  ) {
+    if (!vnode.componentInstance || vnode.componentInstance._isDestroyed) {
+      var child = vnode.componentInstance = createComponentInstanceForVnode(
+        vnode,
+        activeInstance,
+        parentElm,
+        refElm
+      );
+      child.$mount(hydrating ? vnode.elm : undefined, hydrating);
+    } else if (vnode.data.keepAlive) {
+      // kept-alive components, treat as a patch
+      var mountedNode = vnode; // work around flow
+      componentVNodeHooks.prepatch(mountedNode, mountedNode);
+    }
+  },
+
+  prepatch: function prepatch (oldVnode, vnode) {
+    var options = vnode.componentOptions;
+    var child = vnode.componentInstance = oldVnode.componentInstance;
+    updateChildComponent(
+      child,
+      options.propsData, // updated props
+      options.listeners, // updated listeners
+      vnode, // new parent vnode
+      options.children // new children
+    );
+  },
+
+  insert: function insert (vnode) {
+    var context = vnode.context;
+    var componentInstance = vnode.componentInstance;
+    if (!componentInstance._isMounted) {
+      componentInstance._isMounted = true;
+      callHook(componentInstance, 'mounted');
+    }
+    if (vnode.data.keepAlive) {
+      if (context._isMounted) {
+        // vue-router#1212
+        // During updates, a kept-alive component's child components may
+        // change, so directly walking the tree here may call activated hooks
+        // on incorrect children. Instead we push them into a queue which will
+        // be processed after the whole patch process ended.
+        queueActivatedComponent(componentInstance);
+      } else {
+        activateChildComponent(componentInstance, true /* direct */);
+      }
+    }
+  },
+
+  destroy: function destroy (vnode) {
+    var componentInstance = vnode.componentInstance;
+    if (!componentInstance._isDestroyed) {
+      if (!vnode.data.keepAlive) {
+        componentInstance.$destroy();
+      } else {
+        deactivateChildComponent(componentInstance, true /* direct */);
+      }
+    }
+  }
+};
+
+var hooksToMerge = Object.keys(componentVNodeHooks);
 
 function createComponent (
   Ctor,
@@ -3049,15 +4154,19 @@ function createComponent (
   children,
   tag
 ) {
-  if (!Ctor) {
+  if (isUndef(Ctor)) {
     return
   }
 
   var baseCtor = context.$options._base;
+
+  // plain options object: turn it into a constructor
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor);
   }
 
+  // if at this stage it's not a constructor or an async component factory,
+  // reject.
   if (typeof Ctor !== 'function') {
     if (false) {
       warn(("Invalid Component definition: " + (String(Ctor))), context);
@@ -3066,20 +4175,12 @@ function createComponent (
   }
 
   // async component
-  if (!Ctor.cid) {
-    if (Ctor.resolved) {
-      Ctor = Ctor.resolved;
-    } else {
-      Ctor = resolveAsyncComponent(Ctor, baseCtor, function () {
-        // it's ok to queue this on every render because
-        // $forceUpdate is buffered by the scheduler.
-        context.$forceUpdate();
-      });
-      if (!Ctor) {
-        // return nothing if this is indeed an async component
-        // wait for the callback to trigger parent update.
-        return
-      }
+  if (isUndef(Ctor.cid)) {
+    Ctor = resolveAsyncComponent(Ctor, baseCtor, context);
+    if (Ctor === undefined) {
+      // return nothing if this is indeed an async component
+      // wait for the callback to trigger parent update.
+      return
     }
   }
 
@@ -3089,11 +4190,16 @@ function createComponent (
 
   data = data || {};
 
+  // transform component v-model data into props & events
+  if (isDef(data.model)) {
+    transformModel(Ctor.options, data);
+  }
+
   // extract props
-  var propsData = extractProps(data, Ctor);
+  var propsData = extractPropsFromVNodeData(data, Ctor, tag);
 
   // functional component
-  if (Ctor.options.functional) {
+  if (isTrue(Ctor.options.functional)) {
     return createFunctionalComponent(Ctor, propsData, data, context, children)
   }
 
@@ -3103,7 +4209,7 @@ function createComponent (
   // replace with listeners with .native modifier
   data.on = data.nativeOn;
 
-  if (Ctor.options.abstract) {
+  if (isTrue(Ctor.options.abstract)) {
     // abstract components do not keep anything
     // other than props & listeners
     data = {};
@@ -3119,40 +4225,6 @@ function createComponent (
     data, undefined, undefined, undefined, context,
     { Ctor: Ctor, propsData: propsData, listeners: listeners, tag: tag, children: children }
   );
-  return vnode
-}
-
-function createFunctionalComponent (
-  Ctor,
-  propsData,
-  data,
-  context,
-  children
-) {
-  var props = {};
-  var propOptions = Ctor.options.props;
-  if (propOptions) {
-    for (var key in propOptions) {
-      props[key] = validateProp(key, propOptions, propsData);
-    }
-  }
-  // ensure the createElement function in functional components
-  // gets a unique context - this is necessary for correct named slot check
-  var _context = Object.create(context);
-  var h = function (a, b, c, d) { return createElement(_context, a, b, c, d, true); };
-  var vnode = Ctor.options.render.call(null, h, {
-    props: props,
-    data: data,
-    parent: context,
-    children: children,
-    slots: function () { return resolveSlots(children, context); }
-  });
-  if (vnode instanceof VNode) {
-    vnode.functionalContext = context;
-    if (data.slot) {
-      (vnode.data || (vnode.data = {})).slot = data.slot;
-    }
-  }
   return vnode
 }
 
@@ -3176,164 +4248,11 @@ function createComponentInstanceForVnode (
   };
   // check inline-template render functions
   var inlineTemplate = vnode.data.inlineTemplate;
-  if (inlineTemplate) {
+  if (isDef(inlineTemplate)) {
     options.render = inlineTemplate.render;
     options.staticRenderFns = inlineTemplate.staticRenderFns;
   }
   return new vnodeComponentOptions.Ctor(options)
-}
-
-function init (
-  vnode,
-  hydrating,
-  parentElm,
-  refElm
-) {
-  if (!vnode.child || vnode.child._isDestroyed) {
-    var child = vnode.child = createComponentInstanceForVnode(
-      vnode,
-      activeInstance,
-      parentElm,
-      refElm
-    );
-    child.$mount(hydrating ? vnode.elm : undefined, hydrating);
-  } else if (vnode.data.keepAlive) {
-    // kept-alive components, treat as a patch
-    var mountedNode = vnode; // work around flow
-    prepatch(mountedNode, mountedNode);
-  }
-}
-
-function prepatch (
-  oldVnode,
-  vnode
-) {
-  var options = vnode.componentOptions;
-  var child = vnode.child = oldVnode.child;
-  child._updateFromParent(
-    options.propsData, // updated props
-    options.listeners, // updated listeners
-    vnode, // new parent vnode
-    options.children // new children
-  );
-}
-
-function insert (vnode) {
-  if (!vnode.child._isMounted) {
-    vnode.child._isMounted = true;
-    callHook(vnode.child, 'mounted');
-  }
-  if (vnode.data.keepAlive) {
-    vnode.child._inactive = false;
-    callHook(vnode.child, 'activated');
-  }
-}
-
-function destroy$1 (vnode) {
-  if (!vnode.child._isDestroyed) {
-    if (!vnode.data.keepAlive) {
-      vnode.child.$destroy();
-    } else {
-      vnode.child._inactive = true;
-      callHook(vnode.child, 'deactivated');
-    }
-  }
-}
-
-function resolveAsyncComponent (
-  factory,
-  baseCtor,
-  cb
-) {
-  if (factory.requested) {
-    // pool callbacks
-    factory.pendingCallbacks.push(cb);
-  } else {
-    factory.requested = true;
-    var cbs = factory.pendingCallbacks = [cb];
-    var sync = true;
-
-    var resolve = function (res) {
-      if (isObject(res)) {
-        res = baseCtor.extend(res);
-      }
-      // cache resolved
-      factory.resolved = res;
-      // invoke callbacks only if this is not a synchronous resolve
-      // (async resolves are shimmed as synchronous during SSR)
-      if (!sync) {
-        for (var i = 0, l = cbs.length; i < l; i++) {
-          cbs[i](res);
-        }
-      }
-    };
-
-    var reject = function (reason) {
-      "production" !== 'production' && warn(
-        "Failed to resolve async component: " + (String(factory)) +
-        (reason ? ("\nReason: " + reason) : '')
-      );
-    };
-
-    var res = factory(resolve, reject);
-
-    // handle promise
-    if (res && typeof res.then === 'function' && !factory.resolved) {
-      res.then(resolve, reject);
-    }
-
-    sync = false;
-    // return in case resolved synchronously
-    return factory.resolved
-  }
-}
-
-function extractProps (data, Ctor) {
-  // we are only extracting raw values here.
-  // validation and default values are handled in the child
-  // component itself.
-  var propOptions = Ctor.options.props;
-  if (!propOptions) {
-    return
-  }
-  var res = {};
-  var attrs = data.attrs;
-  var props = data.props;
-  var domProps = data.domProps;
-  if (attrs || props || domProps) {
-    for (var key in propOptions) {
-      var altKey = hyphenate(key);
-      checkProp(res, props, key, altKey, true) ||
-      checkProp(res, attrs, key, altKey) ||
-      checkProp(res, domProps, key, altKey);
-    }
-  }
-  return res
-}
-
-function checkProp (
-  res,
-  hash,
-  key,
-  altKey,
-  preserve
-) {
-  if (hash) {
-    if (hasOwn(hash, key)) {
-      res[key] = hash[key];
-      if (!preserve) {
-        delete hash[key];
-      }
-      return true
-    } else if (hasOwn(hash, altKey)) {
-      res[key] = hash[altKey];
-      if (!preserve) {
-        delete hash[altKey];
-      }
-      return true
-    }
-  }
-  return false
 }
 
 function mergeHooks (data) {
@@ -3343,7 +4262,7 @@ function mergeHooks (data) {
   for (var i = 0; i < hooksToMerge.length; i++) {
     var key = hooksToMerge[i];
     var fromParent = data.hook[key];
-    var ours = hooks[key];
+    var ours = componentVNodeHooks[key];
     data.hook[key] = fromParent ? mergeHook$1(ours, fromParent) : ours;
   }
 }
@@ -3355,148 +4274,23 @@ function mergeHook$1 (one, two) {
   }
 }
 
-/*  */
-
-function mergeVNodeHook (def, hookKey, hook, key) {
-  key = key + hookKey;
-  var injectedHash = def.__injected || (def.__injected = {});
-  if (!injectedHash[key]) {
-    injectedHash[key] = true;
-    var oldHook = def[hookKey];
-    if (oldHook) {
-      def[hookKey] = function () {
-        oldHook.apply(this, arguments);
-        hook.apply(this, arguments);
-      };
-    } else {
-      def[hookKey] = hook;
-    }
+// transform component v-model info (value and callback) into
+// prop and event handler respectively.
+function transformModel (options, data) {
+  var prop = (options.model && options.model.prop) || 'value';
+  var event = (options.model && options.model.event) || 'input';(data.props || (data.props = {}))[prop] = data.model.value;
+  var on = data.on || (data.on = {});
+  if (isDef(on[event])) {
+    on[event] = [data.model.callback].concat(on[event]);
+  } else {
+    on[event] = data.model.callback;
   }
 }
 
 /*  */
 
-function updateListeners (
-  on,
-  oldOn,
-  add,
-  remove$$1,
-  vm
-) {
-  var name, cur, old, fn, event, capture, once;
-  for (name in on) {
-    cur = on[name];
-    old = oldOn[name];
-    if (!cur) {
-      "production" !== 'production' && warn(
-        "Invalid handler for event \"" + name + "\": got " + String(cur),
-        vm
-      );
-    } else if (!old) {
-      once = name.charAt(0) === '~'; // Prefixed last, checked first
-      event = once ? name.slice(1) : name;
-      capture = event.charAt(0) === '!';
-      event = capture ? event.slice(1) : event;
-      if (Array.isArray(cur)) {
-        add(event, (cur.invoker = arrInvoker(cur)), once, capture);
-      } else {
-        if (!cur.invoker) {
-          fn = cur;
-          cur = on[name] = {};
-          cur.fn = fn;
-          cur.invoker = fnInvoker(cur);
-        }
-        add(event, cur.invoker, once, capture);
-      }
-    } else if (cur !== old) {
-      if (Array.isArray(old)) {
-        old.length = cur.length;
-        for (var i = 0; i < old.length; i++) { old[i] = cur[i]; }
-        on[name] = old;
-      } else {
-        old.fn = cur;
-        on[name] = old;
-      }
-    }
-  }
-  for (name in oldOn) {
-    if (!on[name]) {
-      once = name.charAt(0) === '~'; // Prefixed last, checked first
-      event = once ? name.slice(1) : name;
-      capture = event.charAt(0) === '!';
-      event = capture ? event.slice(1) : event;
-      remove$$1(event, oldOn[name].invoker, capture);
-    }
-  }
-}
-
-function arrInvoker (arr) {
-  return function (ev) {
-    var arguments$1 = arguments;
-
-    var single = arguments.length === 1;
-    for (var i = 0; i < arr.length; i++) {
-      single ? arr[i](ev) : arr[i].apply(null, arguments$1);
-    }
-  }
-}
-
-function fnInvoker (o) {
-  return function (ev) {
-    var single = arguments.length === 1;
-    single ? o.fn(ev) : o.fn.apply(null, arguments);
-  }
-}
-
-/*  */
-
-function normalizeChildren (children) {
-  return isPrimitive(children)
-    ? [createTextVNode(children)]
-    : Array.isArray(children)
-      ? normalizeArrayChildren(children)
-      : undefined
-}
-
-function normalizeArrayChildren (children, nestedIndex) {
-  var res = [];
-  var i, c, last;
-  for (i = 0; i < children.length; i++) {
-    c = children[i];
-    if (c == null || typeof c === 'boolean') { continue }
-    last = res[res.length - 1];
-    //  nested
-    if (Array.isArray(c)) {
-      res.push.apply(res, normalizeArrayChildren(c, ((nestedIndex || '') + "_" + i)));
-    } else if (isPrimitive(c)) {
-      if (last && last.text) {
-        last.text += String(c);
-      } else if (c !== '') {
-        // convert primitive to vnode
-        res.push(createTextVNode(c));
-      }
-    } else {
-      if (c.text && last && last.text) {
-        res[res.length - 1] = createTextVNode(last.text + c.text);
-      } else {
-        // default key for nested array children (likely generated by v-for)
-        if (c.tag && c.key == null && nestedIndex != null) {
-          c.key = "__vlist" + nestedIndex + "_" + i + "__";
-        }
-        res.push(c);
-      }
-    }
-  }
-  return res
-}
-
-/*  */
-
-function getFirstComponentChild (children) {
-  return children && children.filter(function (c) { return c && c.componentOptions; })[0]
-}
-
-/*  */
+var SIMPLE_NORMALIZE = 1;
+var ALWAYS_NORMALIZE = 2;
 
 // wrapper function for providing a more flexible interface
 // without getting yelled at by flow
@@ -3505,16 +4299,18 @@ function createElement (
   tag,
   data,
   children,
-  needNormalization,
+  normalizationType,
   alwaysNormalize
 ) {
   if (Array.isArray(data) || isPrimitive(data)) {
-    needNormalization = children;
+    normalizationType = children;
     children = data;
     data = undefined;
   }
-  if (alwaysNormalize) { needNormalization = true; }
-  return _createElement(context, tag, data, children, needNormalization)
+  if (isTrue(alwaysNormalize)) {
+    normalizationType = ALWAYS_NORMALIZE;
+  }
+  return _createElement(context, tag, data, children, normalizationType)
 }
 
 function _createElement (
@@ -3522,9 +4318,9 @@ function _createElement (
   tag,
   data,
   children,
-  needNormalization
+  normalizationType
 ) {
-  if (data && data.__ob__) {
+  if (isDef(data) && isDef((data).__ob__)) {
     "production" !== 'production' && warn(
       "Avoid using observed data object as vnode data: " + (JSON.stringify(data)) + "\n" +
       'Always create fresh vnode data objects in each render!',
@@ -3538,13 +4334,16 @@ function _createElement (
   }
   // support single function children as default scoped slot
   if (Array.isArray(children) &&
-      typeof children[0] === 'function') {
+    typeof children[0] === 'function'
+  ) {
     data = data || {};
     data.scopedSlots = { default: children[0] };
     children.length = 0;
   }
-  if (needNormalization) {
+  if (normalizationType === ALWAYS_NORMALIZE) {
     children = normalizeChildren(children);
+  } else if (normalizationType === SIMPLE_NORMALIZE) {
+    children = simpleNormalizeChildren(children);
   }
   var vnode, ns;
   if (typeof tag === 'string') {
@@ -3556,14 +4355,13 @@ function _createElement (
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       );
-    } else if ((Ctor = resolveAsset(context.$options, 'components', tag))) {
+    } else if (isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
       vnode = createComponent(Ctor, data, context, children, tag);
     } else {
       // unknown or unlisted namespaced elements
       // check at runtime because it may get assigned a namespace when its
       // parent normalizes children
-      ns = tag === 'foreignObject' ? 'xhtml' : ns;
       vnode = new VNode(
         tag, data, children,
         undefined, undefined, context
@@ -3573,7 +4371,7 @@ function _createElement (
     // direct component options / constructor
     vnode = createComponent(tag, data, context, children);
   }
-  if (vnode) {
+  if (isDef(vnode)) {
     if (ns) { applyNS(vnode, ns); }
     return vnode
   } else {
@@ -3583,10 +4381,14 @@ function _createElement (
 
 function applyNS (vnode, ns) {
   vnode.ns = ns;
-  if (vnode.children) {
+  if (vnode.tag === 'foreignObject') {
+    // use default namespace inside foreignObject
+    return
+  }
+  if (isDef(vnode.children)) {
     for (var i = 0, l = vnode.children.length; i < l; i++) {
       var child = vnode.children[i];
-      if (child.tag && !child.ns) {
+      if (isDef(child.tag) && isUndef(child.ns)) {
         applyNS(child, ns);
       }
     }
@@ -3595,25 +4397,214 @@ function applyNS (vnode, ns) {
 
 /*  */
 
+/**
+ * Runtime helper for rendering v-for lists.
+ */
+function renderList (
+  val,
+  render
+) {
+  var ret, i, l, keys, key;
+  if (Array.isArray(val) || typeof val === 'string') {
+    ret = new Array(val.length);
+    for (i = 0, l = val.length; i < l; i++) {
+      ret[i] = render(val[i], i);
+    }
+  } else if (typeof val === 'number') {
+    ret = new Array(val);
+    for (i = 0; i < val; i++) {
+      ret[i] = render(i + 1, i);
+    }
+  } else if (isObject(val)) {
+    keys = Object.keys(val);
+    ret = new Array(keys.length);
+    for (i = 0, l = keys.length; i < l; i++) {
+      key = keys[i];
+      ret[i] = render(val[key], key, i);
+    }
+  }
+  if (isDef(ret)) {
+    (ret)._isVList = true;
+  }
+  return ret
+}
+
+/*  */
+
+/**
+ * Runtime helper for rendering <slot>
+ */
+function renderSlot (
+  name,
+  fallback,
+  props,
+  bindObject
+) {
+  var scopedSlotFn = this.$scopedSlots[name];
+  if (scopedSlotFn) { // scoped slot
+    props = props || {};
+    if (bindObject) {
+      extend(props, bindObject);
+    }
+    return scopedSlotFn(props) || fallback
+  } else {
+    var slotNodes = this.$slots[name];
+    // warn duplicate slot usage
+    if (slotNodes && "production" !== 'production') {
+      slotNodes._rendered && warn(
+        "Duplicate presence of slot \"" + name + "\" found in the same render tree " +
+        "- this will likely cause render errors.",
+        this
+      );
+      slotNodes._rendered = true;
+    }
+    return slotNodes || fallback
+  }
+}
+
+/*  */
+
+/**
+ * Runtime helper for resolving filters
+ */
+function resolveFilter (id) {
+  return resolveAsset(this.$options, 'filters', id, true) || identity
+}
+
+/*  */
+
+/**
+ * Runtime helper for checking keyCodes from config.
+ */
+function checkKeyCodes (
+  eventKeyCode,
+  key,
+  builtInAlias
+) {
+  var keyCodes = config.keyCodes[key] || builtInAlias;
+  if (Array.isArray(keyCodes)) {
+    return keyCodes.indexOf(eventKeyCode) === -1
+  } else {
+    return keyCodes !== eventKeyCode
+  }
+}
+
+/*  */
+
+/**
+ * Runtime helper for merging v-bind="object" into a VNode's data.
+ */
+function bindObjectProps (
+  data,
+  tag,
+  value,
+  asProp
+) {
+  if (value) {
+    if (!isObject(value)) {
+      "production" !== 'production' && warn(
+        'v-bind without argument expects an Object or Array value',
+        this
+      );
+    } else {
+      if (Array.isArray(value)) {
+        value = toObject(value);
+      }
+      var hash;
+      for (var key in value) {
+        if (key === 'class' || key === 'style') {
+          hash = data;
+        } else {
+          var type = data.attrs && data.attrs.type;
+          hash = asProp || config.mustUseProp(tag, type, key)
+            ? data.domProps || (data.domProps = {})
+            : data.attrs || (data.attrs = {});
+        }
+        if (!(key in hash)) {
+          hash[key] = value[key];
+        }
+      }
+    }
+  }
+  return data
+}
+
+/*  */
+
+/**
+ * Runtime helper for rendering static trees.
+ */
+function renderStatic (
+  index,
+  isInFor
+) {
+  var tree = this._staticTrees[index];
+  // if has already-rendered static tree and not inside v-for,
+  // we can reuse the same tree by doing a shallow clone.
+  if (tree && !isInFor) {
+    return Array.isArray(tree)
+      ? cloneVNodes(tree)
+      : cloneVNode(tree)
+  }
+  // otherwise, render a fresh tree.
+  tree = this._staticTrees[index] =
+    this.$options.staticRenderFns[index].call(this._renderProxy);
+  markStatic(tree, ("__static__" + index), false);
+  return tree
+}
+
+/**
+ * Runtime helper for v-once.
+ * Effectively it means marking the node as static with a unique key.
+ */
+function markOnce (
+  tree,
+  index,
+  key
+) {
+  markStatic(tree, ("__once__" + index + (key ? ("_" + key) : "")), true);
+  return tree
+}
+
+function markStatic (
+  tree,
+  key,
+  isOnce
+) {
+  if (Array.isArray(tree)) {
+    for (var i = 0; i < tree.length; i++) {
+      if (tree[i] && typeof tree[i] !== 'string') {
+        markStaticNode(tree[i], (key + "_" + i), isOnce);
+      }
+    }
+  } else {
+    markStaticNode(tree, key, isOnce);
+  }
+}
+
+function markStaticNode (node, key, isOnce) {
+  node.isStatic = true;
+  node.key = key;
+  node.isOnce = isOnce;
+}
+
+/*  */
+
 function initRender (vm) {
-  vm.$vnode = null; // the placeholder node in parent tree
   vm._vnode = null; // the root of the child tree
   vm._staticTrees = null;
-  var parentVnode = vm.$options._parentVnode;
+  var parentVnode = vm.$vnode = vm.$options._parentVnode; // the placeholder node in parent tree
   var renderContext = parentVnode && parentVnode.context;
   vm.$slots = resolveSlots(vm.$options._renderChildren, renderContext);
-  vm.$scopedSlots = {};
+  vm.$scopedSlots = emptyObject;
   // bind the createElement fn to this instance
   // so that we get proper render context inside it.
-  // args order: tag, data, children, needNormalization, alwaysNormalize
+  // args order: tag, data, children, normalizationType, alwaysNormalize
   // internal version is used by render functions compiled from templates
   vm._c = function (a, b, c, d) { return createElement(vm, a, b, c, d, false); };
   // normalization is always applied for the public version, used in
   // user-written render functions.
   vm.$createElement = function (a, b, c, d) { return createElement(vm, a, b, c, d, true); };
-  if (vm.$options.el) {
-    vm.$mount(vm.$options.el);
-  }
 }
 
 function renderMixin (Vue) {
@@ -3635,9 +4626,7 @@ function renderMixin (Vue) {
       }
     }
 
-    if (_parentVnode && _parentVnode.data.scopedSlots) {
-      vm.$scopedSlots = _parentVnode.data.scopedSlots;
-    }
+    vm.$scopedSlots = (_parentVnode && _parentVnode.data.scopedSlots) || emptyObject;
 
     if (staticRenderFns && !vm._staticTrees) {
       vm._staticTrees = [];
@@ -3650,17 +4639,17 @@ function renderMixin (Vue) {
     try {
       vnode = render.call(vm._renderProxy, vm.$createElement);
     } catch (e) {
+      handleError(e, vm, "render function");
+      // return error render result,
+      // or previous vnode to prevent render error causing blank component
       /* istanbul ignore else */
-      if (config.errorHandler) {
-        config.errorHandler.call(null, e, vm);
+      if (false) {
+        vnode = vm.$options.renderError
+          ? vm.$options.renderError.call(vm._renderProxy, vm.$createElement, e)
+          : vm._vnode;
       } else {
-        if (false) {
-          warn(("Error when rendering " + (formatComponentName(vm)) + ":"));
-        }
-        throw e
+        vnode = vm._vnode;
       }
-      // return previous vnode to prevent render error causing blank component
-      vnode = vm._vnode;
     }
     // return empty vnode in case the render function errored out
     if (!(vnode instanceof VNode)) {
@@ -3678,292 +4667,43 @@ function renderMixin (Vue) {
     return vnode
   };
 
-  // toString for mustaches
-  Vue.prototype._s = _toString;
-  // convert text to vnode
-  Vue.prototype._v = createTextVNode;
-  // number conversion
+  // internal render helpers.
+  // these are exposed on the instance prototype to reduce generated render
+  // code size.
+  Vue.prototype._o = markOnce;
   Vue.prototype._n = toNumber;
-  // empty vnode
-  Vue.prototype._e = createEmptyVNode;
-  // loose equal
+  Vue.prototype._s = toString;
+  Vue.prototype._l = renderList;
+  Vue.prototype._t = renderSlot;
   Vue.prototype._q = looseEqual;
-  // loose indexOf
   Vue.prototype._i = looseIndexOf;
-
-  // render static tree by index
-  Vue.prototype._m = function renderStatic (
-    index,
-    isInFor
-  ) {
-    var tree = this._staticTrees[index];
-    // if has already-rendered static tree and not inside v-for,
-    // we can reuse the same tree by doing a shallow clone.
-    if (tree && !isInFor) {
-      return Array.isArray(tree)
-        ? cloneVNodes(tree)
-        : cloneVNode(tree)
-    }
-    // otherwise, render a fresh tree.
-    tree = this._staticTrees[index] = this.$options.staticRenderFns[index].call(this._renderProxy);
-    markStatic(tree, ("__static__" + index), false);
-    return tree
-  };
-
-  // mark node as static (v-once)
-  Vue.prototype._o = function markOnce (
-    tree,
-    index,
-    key
-  ) {
-    markStatic(tree, ("__once__" + index + (key ? ("_" + key) : "")), true);
-    return tree
-  };
-
-  function markStatic (tree, key, isOnce) {
-    if (Array.isArray(tree)) {
-      for (var i = 0; i < tree.length; i++) {
-        if (tree[i] && typeof tree[i] !== 'string') {
-          markStaticNode(tree[i], (key + "_" + i), isOnce);
-        }
-      }
-    } else {
-      markStaticNode(tree, key, isOnce);
-    }
-  }
-
-  function markStaticNode (node, key, isOnce) {
-    node.isStatic = true;
-    node.key = key;
-    node.isOnce = isOnce;
-  }
-
-  // filter resolution helper
-  Vue.prototype._f = function resolveFilter (id) {
-    return resolveAsset(this.$options, 'filters', id, true) || identity
-  };
-
-  // render v-for
-  Vue.prototype._l = function renderList (
-    val,
-    render
-  ) {
-    var ret, i, l, keys, key;
-    if (Array.isArray(val)) {
-      ret = new Array(val.length);
-      for (i = 0, l = val.length; i < l; i++) {
-        ret[i] = render(val[i], i);
-      }
-    } else if (typeof val === 'number') {
-      ret = new Array(val);
-      for (i = 0; i < val; i++) {
-        ret[i] = render(i + 1, i);
-      }
-    } else if (isObject(val)) {
-      keys = Object.keys(val);
-      ret = new Array(keys.length);
-      for (i = 0, l = keys.length; i < l; i++) {
-        key = keys[i];
-        ret[i] = render(val[key], key, i);
-      }
-    }
-    return ret
-  };
-
-  // renderSlot
-  Vue.prototype._t = function (
-    name,
-    fallback,
-    props
-  ) {
-    var scopedSlotFn = this.$scopedSlots[name];
-    if (scopedSlotFn) { // scoped slot
-      return scopedSlotFn(props || {}) || fallback
-    } else {
-      var slotNodes = this.$slots[name];
-      // warn duplicate slot usage
-      if (slotNodes && "production" !== 'production') {
-        slotNodes._rendered && warn(
-          "Duplicate presence of slot \"" + name + "\" found in the same render tree " +
-          "- this will likely cause render errors.",
-          this
-        );
-        slotNodes._rendered = true;
-      }
-      return slotNodes || fallback
-    }
-  };
-
-  // apply v-bind object
-  Vue.prototype._b = function bindProps (
-    data,
-    tag,
-    value,
-    asProp
-  ) {
-    if (value) {
-      if (!isObject(value)) {
-        "production" !== 'production' && warn(
-          'v-bind without argument expects an Object or Array value',
-          this
-        );
-      } else {
-        if (Array.isArray(value)) {
-          value = toObject(value);
-        }
-        for (var key in value) {
-          if (key === 'class' || key === 'style') {
-            data[key] = value[key];
-          } else {
-            var hash = asProp || config.mustUseProp(tag, key)
-              ? data.domProps || (data.domProps = {})
-              : data.attrs || (data.attrs = {});
-            hash[key] = value[key];
-          }
-        }
-      }
-    }
-    return data
-  };
-
-  // check v-on keyCodes
-  Vue.prototype._k = function checkKeyCodes (
-    eventKeyCode,
-    key,
-    builtInAlias
-  ) {
-    var keyCodes = config.keyCodes[key] || builtInAlias;
-    if (Array.isArray(keyCodes)) {
-      return keyCodes.indexOf(eventKeyCode) === -1
-    } else {
-      return keyCodes !== eventKeyCode
-    }
-  };
-}
-
-function resolveSlots (
-  children,
-  context
-) {
-  var slots = {};
-  if (!children) {
-    return slots
-  }
-  var defaultSlot = [];
-  var name, child;
-  for (var i = 0, l = children.length; i < l; i++) {
-    child = children[i];
-    // named slots should only be respected if the vnode was rendered in the
-    // same context.
-    if ((child.context === context || child.functionalContext === context) &&
-        child.data && (name = child.data.slot)) {
-      var slot = (slots[name] || (slots[name] = []));
-      if (child.tag === 'template') {
-        slot.push.apply(slot, child.children);
-      } else {
-        slot.push(child);
-      }
-    } else {
-      defaultSlot.push(child);
-    }
-  }
-  // ignore single whitespace
-  if (defaultSlot.length && !(
-    defaultSlot.length === 1 &&
-    (defaultSlot[0].text === ' ' || defaultSlot[0].isComment)
-  )) {
-    slots.default = defaultSlot;
-  }
-  return slots
+  Vue.prototype._m = renderStatic;
+  Vue.prototype._f = resolveFilter;
+  Vue.prototype._k = checkKeyCodes;
+  Vue.prototype._b = bindObjectProps;
+  Vue.prototype._v = createTextVNode;
+  Vue.prototype._e = createEmptyVNode;
+  Vue.prototype._u = resolveScopedSlots;
 }
 
 /*  */
 
-function initEvents (vm) {
-  vm._events = Object.create(null);
-  // init parent attached events
-  var listeners = vm.$options._parentListeners;
-  var add = function (event, fn, once) {
-    once ? vm.$once(event, fn) : vm.$on(event, fn);
-  };
-  var remove$$1 = bind$1(vm.$off, vm);
-  vm._updateListeners = function (listeners, oldListeners) {
-    updateListeners(listeners, oldListeners || {}, add, remove$$1, vm);
-  };
-  if (listeners) {
-    vm._updateListeners(listeners);
-  }
-}
-
-function eventsMixin (Vue) {
-  Vue.prototype.$on = function (event, fn) {
-    var vm = this;(vm._events[event] || (vm._events[event] = [])).push(fn);
-    return vm
-  };
-
-  Vue.prototype.$once = function (event, fn) {
-    var vm = this;
-    function on () {
-      vm.$off(event, on);
-      fn.apply(vm, arguments);
-    }
-    on.fn = fn;
-    vm.$on(event, on);
-    return vm
-  };
-
-  Vue.prototype.$off = function (event, fn) {
-    var vm = this;
-    // all
-    if (!arguments.length) {
-      vm._events = Object.create(null);
-      return vm
-    }
-    // specific event
-    var cbs = vm._events[event];
-    if (!cbs) {
-      return vm
-    }
-    if (arguments.length === 1) {
-      vm._events[event] = null;
-      return vm
-    }
-    // specific handler
-    var cb;
-    var i = cbs.length;
-    while (i--) {
-      cb = cbs[i];
-      if (cb === fn || cb.fn === fn) {
-        cbs.splice(i, 1);
-        break
-      }
-    }
-    return vm
-  };
-
-  Vue.prototype.$emit = function (event) {
-    var vm = this;
-    var cbs = vm._events[event];
-    if (cbs) {
-      cbs = cbs.length > 1 ? toArray(cbs) : cbs;
-      var args = toArray(arguments, 1);
-      for (var i = 0, l = cbs.length; i < l; i++) {
-        cbs[i].apply(vm, args);
-      }
-    }
-    return vm
-  };
-}
-
-/*  */
-
-var uid = 0;
+var uid$1 = 0;
 
 function initMixin (Vue) {
   Vue.prototype._init = function (options) {
     var vm = this;
     // a uid
-    vm._uid = uid++;
+    vm._uid = uid$1++;
+
+    var startTag, endTag;
+    /* istanbul ignore if */
+    if (false) {
+      startTag = "vue-perf-init:" + (vm._uid);
+      endTag = "vue-perf-end:" + (vm._uid);
+      mark(startTag);
+    }
+
     // a flag to avoid this being observed
     vm._isVue = true;
     // merge options
@@ -3989,10 +4729,23 @@ function initMixin (Vue) {
     vm._self = vm;
     initLifecycle(vm);
     initEvents(vm);
-    callHook(vm, 'beforeCreate');
-    initState(vm);
-    callHook(vm, 'created');
     initRender(vm);
+    callHook(vm, 'beforeCreate');
+    initInjections(vm); // resolve injections before data/props
+    initState(vm);
+    initProvide(vm); // resolve provide after data/props
+    callHook(vm, 'created');
+
+    /* istanbul ignore if */
+    if (false) {
+      vm._name = formatComponentName(vm, false);
+      mark(endTag);
+      measure(((vm._name) + " init"), startTag, endTag);
+    }
+
+    if (vm.$options.el) {
+      vm.$mount(vm.$options.el);
+    }
   };
 }
 
@@ -4016,16 +4769,19 @@ function initInternalComponent (vm, options) {
 function resolveConstructorOptions (Ctor) {
   var options = Ctor.options;
   if (Ctor.super) {
-    var superOptions = Ctor.super.options;
+    var superOptions = resolveConstructorOptions(Ctor.super);
     var cachedSuperOptions = Ctor.superOptions;
-    var extendOptions = Ctor.extendOptions;
     if (superOptions !== cachedSuperOptions) {
-      // super option changed
+      // super option changed,
+      // need to resolve new options.
       Ctor.superOptions = superOptions;
-      extendOptions.render = options.render;
-      extendOptions.staticRenderFns = options.staticRenderFns;
-      extendOptions._scopeId = options._scopeId;
-      options = Ctor.options = mergeOptions(superOptions, extendOptions);
+      // check if there are any late-modified/attached options (#4976)
+      var modifiedOptions = resolveModifiedOptions(Ctor);
+      // update base extend options
+      if (modifiedOptions) {
+        extend(Ctor.extendOptions, modifiedOptions);
+      }
+      options = Ctor.options = mergeOptions(superOptions, Ctor.extendOptions);
       if (options.name) {
         options.components[options.name] = Ctor;
       }
@@ -4034,8 +4790,42 @@ function resolveConstructorOptions (Ctor) {
   return options
 }
 
+function resolveModifiedOptions (Ctor) {
+  var modified;
+  var latest = Ctor.options;
+  var extended = Ctor.extendOptions;
+  var sealed = Ctor.sealedOptions;
+  for (var key in latest) {
+    if (latest[key] !== sealed[key]) {
+      if (!modified) { modified = {}; }
+      modified[key] = dedupe(latest[key], extended[key], sealed[key]);
+    }
+  }
+  return modified
+}
+
+function dedupe (latest, extended, sealed) {
+  // compare latest and sealed to ensure lifecycle hooks won't be duplicated
+  // between merges
+  if (Array.isArray(latest)) {
+    var res = [];
+    sealed = Array.isArray(sealed) ? sealed : [sealed];
+    extended = Array.isArray(extended) ? extended : [extended];
+    for (var i = 0; i < latest.length; i++) {
+      // push original options and not sealed options to exclude duplicated options
+      if (extended.indexOf(latest[i]) >= 0 || sealed.indexOf(latest[i]) < 0) {
+        res.push(latest[i]);
+      }
+    }
+    return res
+  } else {
+    return latest
+  }
+}
+
 function Vue$3 (options) {
-  if (false) {
+  if (false
+  ) {
     warn('Vue is a constructor and should be called with the `new` keyword');
   }
   this._init(options);
@@ -4053,14 +4843,14 @@ function initUse (Vue) {
   Vue.use = function (plugin) {
     /* istanbul ignore if */
     if (plugin.installed) {
-      return
+      return this
     }
     // additional parameters
     var args = toArray(arguments, 1);
     args.unshift(this);
     if (typeof plugin.install === 'function') {
       plugin.install.apply(plugin, args);
-    } else {
+    } else if (typeof plugin === 'function') {
       plugin.apply(null, args);
     }
     plugin.installed = true;
@@ -4073,6 +4863,7 @@ function initUse (Vue) {
 function initMixin$1 (Vue) {
   Vue.mixin = function (mixin) {
     this.options = mergeOptions(this.options, mixin);
+    return this
   };
 }
 
@@ -4098,6 +4889,7 @@ function initExtend (Vue) {
     if (cachedCtors[SuperId]) {
       return cachedCtors[SuperId]
     }
+
     var name = extendOptions.name || Super.options.name;
     if (false) {
       if (!/^[a-zA-Z][\w-]*$/.test(name)) {
@@ -4108,6 +4900,7 @@ function initExtend (Vue) {
         );
       }
     }
+
     var Sub = function VueComponent (options) {
       this._init(options);
     };
@@ -4119,28 +4912,57 @@ function initExtend (Vue) {
       extendOptions
     );
     Sub['super'] = Super;
+
+    // For props and computed properties, we define the proxy getters on
+    // the Vue instances at extension time, on the extended prototype. This
+    // avoids Object.defineProperty calls for each instance created.
+    if (Sub.options.props) {
+      initProps$1(Sub);
+    }
+    if (Sub.options.computed) {
+      initComputed$1(Sub);
+    }
+
     // allow further extension/mixin/plugin usage
     Sub.extend = Super.extend;
     Sub.mixin = Super.mixin;
     Sub.use = Super.use;
+
     // create asset registers, so extended classes
     // can have their private assets too.
-    config._assetTypes.forEach(function (type) {
+    ASSET_TYPES.forEach(function (type) {
       Sub[type] = Super[type];
     });
     // enable recursive self-lookup
     if (name) {
       Sub.options.components[name] = Sub;
     }
+
     // keep a reference to the super options at extension time.
     // later at instantiation we can check if Super's options have
     // been updated.
     Sub.superOptions = Super.options;
     Sub.extendOptions = extendOptions;
+    Sub.sealedOptions = extend({}, Sub.options);
+
     // cache constructor
     cachedCtors[SuperId] = Sub;
     return Sub
   };
+}
+
+function initProps$1 (Comp) {
+  var props = Comp.options.props;
+  for (var key in props) {
+    proxy(Comp.prototype, "_props", key);
+  }
+}
+
+function initComputed$1 (Comp) {
+  var computed = Comp.options.computed;
+  for (var key in computed) {
+    defineComputed(Comp.prototype, key, computed[key]);
+  }
 }
 
 /*  */
@@ -4149,7 +4971,7 @@ function initAssetRegisters (Vue) {
   /**
    * Create asset registration methods.
    */
-  config._assetTypes.forEach(function (type) {
+  ASSET_TYPES.forEach(function (type) {
     Vue[type] = function (
       id,
       definition
@@ -4184,30 +5006,77 @@ function initAssetRegisters (Vue) {
 
 var patternTypes = [String, RegExp];
 
+function getComponentName (opts) {
+  return opts && (opts.Ctor.options.name || opts.tag)
+}
+
 function matches (pattern, name) {
   if (typeof pattern === 'string') {
     return pattern.split(',').indexOf(name) > -1
-  } else {
+  } else if (isRegExp(pattern)) {
     return pattern.test(name)
+  }
+  /* istanbul ignore next */
+  return false
+}
+
+function pruneCache (cache, current, filter) {
+  for (var key in cache) {
+    var cachedNode = cache[key];
+    if (cachedNode) {
+      var name = getComponentName(cachedNode.componentOptions);
+      if (name && !filter(name)) {
+        if (cachedNode !== current) {
+          pruneCacheEntry(cachedNode);
+        }
+        cache[key] = null;
+      }
+    }
+  }
+}
+
+function pruneCacheEntry (vnode) {
+  if (vnode) {
+    vnode.componentInstance.$destroy();
   }
 }
 
 var KeepAlive = {
   name: 'keep-alive',
   abstract: true,
+
   props: {
     include: patternTypes,
     exclude: patternTypes
   },
+
   created: function created () {
     this.cache = Object.create(null);
   },
+
+  destroyed: function destroyed () {
+    var this$1 = this;
+
+    for (var key in this$1.cache) {
+      pruneCacheEntry(this$1.cache[key]);
+    }
+  },
+
+  watch: {
+    include: function include (val) {
+      pruneCache(this.cache, this._vnode, function (name) { return matches(val, name); });
+    },
+    exclude: function exclude (val) {
+      pruneCache(this.cache, this._vnode, function (name) { return !matches(val, name); });
+    }
+  },
+
   render: function render () {
     var vnode = getFirstComponentChild(this.$slots.default);
-    if (vnode && vnode.componentOptions) {
-      var opts = vnode.componentOptions;
+    var componentOptions = vnode && vnode.componentOptions;
+    if (componentOptions) {
       // check pattern
-      var name = opts.Ctor.options.name || opts.tag;
+      var name = getComponentName(componentOptions);
       if (name && (
         (this.include && !matches(this.include, name)) ||
         (this.exclude && matches(this.exclude, name))
@@ -4217,25 +5086,16 @@ var KeepAlive = {
       var key = vnode.key == null
         // same constructor may get registered as different local components
         // so cid alone is not enough (#3269)
-        ? opts.Ctor.cid + (opts.tag ? ("::" + (opts.tag)) : '')
+        ? componentOptions.Ctor.cid + (componentOptions.tag ? ("::" + (componentOptions.tag)) : '')
         : vnode.key;
       if (this.cache[key]) {
-        vnode.child = this.cache[key].child;
+        vnode.componentInstance = this.cache[key].componentInstance;
       } else {
         this.cache[key] = vnode;
       }
       vnode.data.keepAlive = true;
     }
     return vnode
-  },
-  destroyed: function destroyed () {
-    var this$1 = this;
-
-    for (var key in this.cache) {
-      var vnode = this$1.cache[key];
-      callHook(vnode.child, 'deactivated');
-      vnode.child.$destroy();
-    }
   }
 };
 
@@ -4257,13 +5117,23 @@ function initGlobalAPI (Vue) {
     };
   }
   Object.defineProperty(Vue, 'config', configDef);
-  Vue.util = util;
-  Vue.set = set$1;
+
+  // exposed util methods.
+  // NOTE: these are not considered part of the public API - avoid relying on
+  // them unless you are aware of the risk.
+  Vue.util = {
+    warn: warn,
+    extend: extend,
+    mergeOptions: mergeOptions,
+    defineReactive: defineReactive$$1
+  };
+
+  Vue.set = set;
   Vue.delete = del;
   Vue.nextTick = nextTick;
 
   Vue.options = Object.create(null);
-  config._assetTypes.forEach(function (type) {
+  ASSET_TYPES.forEach(function (type) {
     Vue.options[type + 's'] = Object.create(null);
   });
 
@@ -4285,15 +5155,26 @@ Object.defineProperty(Vue$3.prototype, '$isServer', {
   get: isServerRendering
 });
 
-Vue$3.version = '2.1.6';
+Object.defineProperty(Vue$3.prototype, '$ssrContext', {
+  get: function get () {
+    /* istanbul ignore next */
+    return this.$vnode.ssrContext
+  }
+});
+
+Vue$3.version = '2.3.3';
 
 /*  */
 
+// these are reserved for web because they are directly compiled away
+// during template compilation
+var isReservedAttr = makeMap('style,class');
+
 // attributes that should be using props for binding
 var acceptValue = makeMap('input,textarea,option,select');
-var mustUseProp = function (tag, attr) {
+var mustUseProp = function (tag, type, attr) {
   return (
-    (attr === 'value' && acceptValue(tag)) ||
+    (attr === 'value' && acceptValue(tag)) && type !== 'button' ||
     (attr === 'selected' && tag === 'option') ||
     (attr === 'checked' && tag === 'input') ||
     (attr === 'muted' && tag === 'video')
@@ -4331,13 +5212,13 @@ function genClassForVnode (vnode) {
   var data = vnode.data;
   var parentNode = vnode;
   var childNode = vnode;
-  while (childNode.child) {
-    childNode = childNode.child._vnode;
+  while (isDef(childNode.componentInstance)) {
+    childNode = childNode.componentInstance._vnode;
     if (childNode.data) {
       data = mergeClassData(childNode.data, data);
     }
   }
-  while ((parentNode = parentNode.parent)) {
+  while (isDef(parentNode = parentNode.parent)) {
     if (parentNode.data) {
       data = mergeClassData(data, parentNode.data);
     }
@@ -4348,7 +5229,7 @@ function genClassForVnode (vnode) {
 function mergeClassData (child, parent) {
   return {
     staticClass: concat(child.staticClass, parent.staticClass),
-    class: child.class
+    class: isDef(child.class)
       ? [child.class, parent.class]
       : parent.class
   }
@@ -4357,7 +5238,7 @@ function mergeClassData (child, parent) {
 function genClassFromData (data) {
   var dynamicClass = data.class;
   var staticClass = data.staticClass;
-  if (staticClass || dynamicClass) {
+  if (isDef(staticClass) || isDef(dynamicClass)) {
     return concat(staticClass, stringifyClass(dynamicClass))
   }
   /* istanbul ignore next */
@@ -4369,18 +5250,18 @@ function concat (a, b) {
 }
 
 function stringifyClass (value) {
-  var res = '';
-  if (!value) {
-    return res
+  if (isUndef(value)) {
+    return ''
   }
   if (typeof value === 'string') {
     return value
   }
+  var res = '';
   if (Array.isArray(value)) {
     var stringified;
     for (var i = 0, l = value.length; i < l; i++) {
-      if (value[i]) {
-        if ((stringified = stringifyClass(value[i]))) {
+      if (isDef(value[i])) {
+        if (isDef(stringified = stringifyClass(value[i])) && stringified !== '') {
           res += stringified + ' ';
         }
       }
@@ -4401,8 +5282,7 @@ function stringifyClass (value) {
 
 var namespaceMap = {
   svg: 'http://www.w3.org/2000/svg',
-  math: 'http://www.w3.org/1998/Math/MathML',
-  xhtml: 'http://www.w3.org/1999/xhtml'
+  math: 'http://www.w3.org/1998/Math/MathML'
 };
 
 var isHTMLTag = makeMap(
@@ -4422,8 +5302,8 @@ var isHTMLTag = makeMap(
 // this map is intentionally selective, only covering SVG elements that may
 // contain child elements.
 var isSVG = makeMap(
-  'svg,animate,circle,clippath,cursor,defs,desc,ellipse,filter,' +
-  'font-face,g,glyph,image,line,marker,mask,missing-glyph,path,pattern,' +
+  'svg,animate,circle,clippath,cursor,defs,desc,ellipse,filter,font-face,' +
+  'foreignObject,g,glyph,image,line,marker,mask,missing-glyph,path,pattern,' +
   'polygon,polyline,rect,switch,symbol,text,textpath,tspan,use,view',
   true
 );
@@ -4478,16 +5358,17 @@ function isUnknownElement (tag) {
  */
 function query (el) {
   if (typeof el === 'string') {
-    var selector = el;
-    el = document.querySelector(el);
-    if (!el) {
+    var selected = document.querySelector(el);
+    if (!selected) {
       "production" !== 'production' && warn(
-        'Cannot find element: ' + selector
+        'Cannot find element: ' + el
       );
       return document.createElement('div')
     }
+    return selected
+  } else {
+    return el
   }
-  return el
 }
 
 /*  */
@@ -4497,7 +5378,8 @@ function createElement$1 (tagName, vnode) {
   if (tagName !== 'select') {
     return elm
   }
-  if (vnode.data && vnode.data.attrs && 'multiple' in vnode.data.attrs) {
+  // false or null will remove the attribute but undefined will not
+  if (vnode.data && vnode.data.attrs && vnode.data.attrs.multiple !== undefined) {
     elm.setAttribute('multiple', 'multiple');
   }
   return elm
@@ -4585,11 +5467,11 @@ function registerRef (vnode, isRemoval) {
   if (!key) { return }
 
   var vm = vnode.context;
-  var ref = vnode.child || vnode.elm;
+  var ref = vnode.componentInstance || vnode.elm;
   var refs = vm.$refs;
   if (isRemoval) {
     if (Array.isArray(refs[key])) {
-      remove$1(refs[key], ref);
+      remove(refs[key], ref);
     } else if (refs[key] === ref) {
       refs[key] = undefined;
     }
@@ -4622,23 +5504,26 @@ function registerRef (vnode, isRemoval) {
 
 var emptyNode = new VNode('', {}, []);
 
-var hooks$1 = ['create', 'activate', 'update', 'remove', 'destroy'];
+var hooks = ['create', 'activate', 'update', 'remove', 'destroy'];
 
-function isUndef (s) {
-  return s == null
-}
-
-function isDef (s) {
-  return s != null
-}
-
-function sameVnode (vnode1, vnode2) {
+function sameVnode (a, b) {
   return (
-    vnode1.key === vnode2.key &&
-    vnode1.tag === vnode2.tag &&
-    vnode1.isComment === vnode2.isComment &&
-    !vnode1.data === !vnode2.data
+    a.key === b.key &&
+    a.tag === b.tag &&
+    a.isComment === b.isComment &&
+    isDef(a.data) === isDef(b.data) &&
+    sameInputType(a, b)
   )
+}
+
+// Some browsers do not support dynamically changing type for <input>
+// so they need to be treated as different nodes
+function sameInputType (a, b) {
+  if (a.tag !== 'input') { return true }
+  var i;
+  var typeA = isDef(i = a.data) && isDef(i = i.attrs) && i.type;
+  var typeB = isDef(i = b.data) && isDef(i = i.attrs) && i.type;
+  return typeA === typeB
 }
 
 function createKeyToOldIdx (children, beginIdx, endIdx) {
@@ -4658,10 +5543,12 @@ function createPatchFunction (backend) {
   var modules = backend.modules;
   var nodeOps = backend.nodeOps;
 
-  for (i = 0; i < hooks$1.length; ++i) {
-    cbs[hooks$1[i]] = [];
+  for (i = 0; i < hooks.length; ++i) {
+    cbs[hooks[i]] = [];
     for (j = 0; j < modules.length; ++j) {
-      if (modules[j][hooks$1[i]] !== undefined) { cbs[hooks$1[i]].push(modules[j][hooks$1[i]]); }
+      if (isDef(modules[j][hooks[i]])) {
+        cbs[hooks[i]].push(modules[j][hooks[i]]);
+      }
     }
   }
 
@@ -4672,17 +5559,17 @@ function createPatchFunction (backend) {
   function createRmCb (childElm, listeners) {
     function remove$$1 () {
       if (--remove$$1.listeners === 0) {
-        removeElement(childElm);
+        removeNode(childElm);
       }
     }
     remove$$1.listeners = listeners;
     return remove$$1
   }
 
-  function removeElement (el) {
+  function removeNode (el) {
     var parent = nodeOps.parentNode(el);
-    // element may have already been removed due to v-html
-    if (parent) {
+    // element may have already been removed due to v-html / v-text
+    if (isDef(parent)) {
       nodeOps.removeChild(parent, el);
     }
   }
@@ -4705,7 +5592,7 @@ function createPatchFunction (backend) {
         if (
           !inPre &&
           !vnode.ns &&
-          !(config.ignoredElements && config.ignoredElements.indexOf(tag) > -1) &&
+          !(config.ignoredElements.length && config.ignoredElements.indexOf(tag) > -1) &&
           config.isUnknownElement(tag)
         ) {
           warn(
@@ -4733,7 +5620,7 @@ function createPatchFunction (backend) {
       if (false) {
         inPre--;
       }
-    } else if (vnode.isComment) {
+    } else if (isTrue(vnode.isComment)) {
       vnode.elm = nodeOps.createComment(vnode.text);
       insert(parentElm, vnode.elm, refElm);
     } else {
@@ -4745,7 +5632,7 @@ function createPatchFunction (backend) {
   function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     var i = vnode.data;
     if (isDef(i)) {
-      var isReactivated = isDef(vnode.child) && i.keepAlive;
+      var isReactivated = isDef(vnode.componentInstance) && i.keepAlive;
       if (isDef(i = i.hook) && isDef(i = i.init)) {
         i(vnode, false /* hydrating */, parentElm, refElm);
       }
@@ -4753,13 +5640,30 @@ function createPatchFunction (backend) {
       // it should've created a child instance and mounted it. the child
       // component also has set the placeholder vnode's elm.
       // in that case we can just return the element and be done.
-      if (isDef(vnode.child)) {
+      if (isDef(vnode.componentInstance)) {
         initComponent(vnode, insertedVnodeQueue);
-        if (isReactivated) {
+        if (isTrue(isReactivated)) {
           reactivateComponent(vnode, insertedVnodeQueue, parentElm, refElm);
         }
         return true
       }
+    }
+  }
+
+  function initComponent (vnode, insertedVnodeQueue) {
+    if (isDef(vnode.data.pendingInsert)) {
+      insertedVnodeQueue.push.apply(insertedVnodeQueue, vnode.data.pendingInsert);
+    }
+    vnode.elm = vnode.componentInstance.$el;
+    if (isPatchable(vnode)) {
+      invokeCreateHooks(vnode, insertedVnodeQueue);
+      setScope(vnode);
+    } else {
+      // empty component root.
+      // skip all element-related modules except for ref (#3455)
+      registerRef(vnode);
+      // make sure to invoke the insert hook
+      insertedVnodeQueue.push(vnode);
     }
   }
 
@@ -4770,8 +5674,8 @@ function createPatchFunction (backend) {
     // again. It's not ideal to involve module-specific logic in here but
     // there doesn't seem to be a better way to do it.
     var innerNode = vnode;
-    while (innerNode.child) {
-      innerNode = innerNode.child._vnode;
+    while (innerNode.componentInstance) {
+      innerNode = innerNode.componentInstance._vnode;
       if (isDef(i = innerNode.data) && isDef(i = i.transition)) {
         for (i = 0; i < cbs.activate.length; ++i) {
           cbs.activate[i](emptyNode, innerNode);
@@ -4786,9 +5690,11 @@ function createPatchFunction (backend) {
   }
 
   function insert (parent, elm, ref) {
-    if (parent) {
-      if (ref) {
-        nodeOps.insertBefore(parent, elm, ref);
+    if (isDef(parent)) {
+      if (isDef(ref)) {
+        if (ref.parentNode === parent) {
+          nodeOps.insertBefore(parent, elm, ref);
+        }
       } else {
         nodeOps.appendChild(parent, elm);
       }
@@ -4806,8 +5712,8 @@ function createPatchFunction (backend) {
   }
 
   function isPatchable (vnode) {
-    while (vnode.child) {
-      vnode = vnode.child._vnode;
+    while (vnode.componentInstance) {
+      vnode = vnode.componentInstance._vnode;
     }
     return isDef(vnode.tag)
   }
@@ -4818,25 +5724,8 @@ function createPatchFunction (backend) {
     }
     i = vnode.data.hook; // Reuse variable
     if (isDef(i)) {
-      if (i.create) { i.create(emptyNode, vnode); }
-      if (i.insert) { insertedVnodeQueue.push(vnode); }
-    }
-  }
-
-  function initComponent (vnode, insertedVnodeQueue) {
-    if (vnode.data.pendingInsert) {
-      insertedVnodeQueue.push.apply(insertedVnodeQueue, vnode.data.pendingInsert);
-    }
-    vnode.elm = vnode.child.$el;
-    if (isPatchable(vnode)) {
-      invokeCreateHooks(vnode, insertedVnodeQueue);
-      setScope(vnode);
-    } else {
-      // empty component root.
-      // skip all element-related modules except for ref (#3455)
-      registerRef(vnode);
-      // make sure to invoke the insert hook
-      insertedVnodeQueue.push(vnode);
+      if (isDef(i.create)) { i.create(emptyNode, vnode); }
+      if (isDef(i.insert)) { insertedVnodeQueue.push(vnode); }
     }
   }
 
@@ -4845,12 +5734,18 @@ function createPatchFunction (backend) {
   // of going through the normal attribute patching process.
   function setScope (vnode) {
     var i;
-    if (isDef(i = vnode.context) && isDef(i = i.$options._scopeId)) {
-      nodeOps.setAttribute(vnode.elm, i, '');
+    var ancestor = vnode;
+    while (ancestor) {
+      if (isDef(i = ancestor.context) && isDef(i = i.$options._scopeId)) {
+        nodeOps.setAttribute(vnode.elm, i, '');
+      }
+      ancestor = ancestor.parent;
     }
+    // for slot content they should also get the scopeId from the host instance.
     if (isDef(i = activeInstance) &&
-        i !== vnode.context &&
-        isDef(i = i.$options._scopeId)) {
+      i !== vnode.context &&
+      isDef(i = i.$options._scopeId)
+    ) {
       nodeOps.setAttribute(vnode.elm, i, '');
     }
   }
@@ -4883,25 +5778,26 @@ function createPatchFunction (backend) {
           removeAndInvokeRemoveHook(ch);
           invokeDestroyHook(ch);
         } else { // Text node
-          nodeOps.removeChild(parentElm, ch.elm);
+          removeNode(ch.elm);
         }
       }
     }
   }
 
   function removeAndInvokeRemoveHook (vnode, rm) {
-    if (rm || isDef(vnode.data)) {
+    if (isDef(rm) || isDef(vnode.data)) {
+      var i;
       var listeners = cbs.remove.length + 1;
-      if (!rm) {
-        // directly removing
-        rm = createRmCb(vnode.elm, listeners);
-      } else {
+      if (isDef(rm)) {
         // we have a recursively passed down rm callback
         // increase the listeners count
         rm.listeners += listeners;
+      } else {
+        // directly removing
+        rm = createRmCb(vnode.elm, listeners);
       }
       // recursively invoke hooks on child component root node
-      if (isDef(i = vnode.child) && isDef(i = i._vnode) && isDef(i.data)) {
+      if (isDef(i = vnode.componentInstance) && isDef(i = i._vnode) && isDef(i.data)) {
         removeAndInvokeRemoveHook(i, rm);
       }
       for (i = 0; i < cbs.remove.length; ++i) {
@@ -4913,7 +5809,7 @@ function createPatchFunction (backend) {
         rm();
       }
     } else {
-      removeElement(vnode.elm);
+      removeNode(vnode.elm);
     }
   }
 
@@ -5000,24 +5896,24 @@ function createPatchFunction (backend) {
     // note we only do this if the vnode is cloned -
     // if the new node is not cloned it means the render functions have been
     // reset by the hot-reload-api and we need to do a proper re-render.
-    if (vnode.isStatic &&
-        oldVnode.isStatic &&
-        vnode.key === oldVnode.key &&
-        (vnode.isCloned || vnode.isOnce)) {
+    if (isTrue(vnode.isStatic) &&
+      isTrue(oldVnode.isStatic) &&
+      vnode.key === oldVnode.key &&
+      (isTrue(vnode.isCloned) || isTrue(vnode.isOnce))
+    ) {
       vnode.elm = oldVnode.elm;
-      vnode.child = oldVnode.child;
+      vnode.componentInstance = oldVnode.componentInstance;
       return
     }
     var i;
     var data = vnode.data;
-    var hasData = isDef(data);
-    if (hasData && isDef(i = data.hook) && isDef(i = i.prepatch)) {
+    if (isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {
       i(oldVnode, vnode);
     }
     var elm = vnode.elm = oldVnode.elm;
     var oldCh = oldVnode.children;
     var ch = vnode.children;
-    if (hasData && isPatchable(vnode)) {
+    if (isDef(data) && isPatchable(vnode)) {
       for (i = 0; i < cbs.update.length; ++i) { cbs.update[i](oldVnode, vnode); }
       if (isDef(i = data.hook) && isDef(i = i.update)) { i(oldVnode, vnode); }
     }
@@ -5035,7 +5931,7 @@ function createPatchFunction (backend) {
     } else if (oldVnode.text !== vnode.text) {
       nodeOps.setTextContent(elm, vnode.text);
     }
-    if (hasData) {
+    if (isDef(data)) {
       if (isDef(i = data.hook) && isDef(i = i.postpatch)) { i(oldVnode, vnode); }
     }
   }
@@ -5043,7 +5939,7 @@ function createPatchFunction (backend) {
   function invokeInsertHook (vnode, queue, initial) {
     // delay insert hooks for component root nodes, invoke them after the
     // element is really inserted
-    if (initial && vnode.parent) {
+    if (isTrue(initial) && isDef(vnode.parent)) {
       vnode.parent.data.pendingInsert = queue;
     } else {
       for (var i = 0; i < queue.length; ++i) {
@@ -5070,7 +5966,7 @@ function createPatchFunction (backend) {
     var children = vnode.children;
     if (isDef(data)) {
       if (isDef(i = data.hook) && isDef(i = i.init)) { i(vnode, true /* hydrating */); }
-      if (isDef(i = vnode.child)) {
+      if (isDef(i = vnode.componentInstance)) {
         // child component. it should have hydrated its own tree.
         initComponent(vnode, insertedVnodeQueue);
         return true
@@ -5094,7 +5990,8 @@ function createPatchFunction (backend) {
           // if childNode is not null, it means the actual childNodes list is
           // longer than the virtual children list.
           if (!childrenMatch || childNode) {
-            if (false) {
+            if (false
+            ) {
               bailed = true;
               console.warn('Parent: ', elm);
               console.warn('Mismatching childNodes vs. VNodes: ', elm.childNodes, children);
@@ -5111,32 +6008,33 @@ function createPatchFunction (backend) {
           }
         }
       }
+    } else if (elm.data !== vnode.text) {
+      elm.data = vnode.text;
     }
     return true
   }
 
   function assertNodeMatch (node, vnode) {
-    if (vnode.tag) {
+    if (isDef(vnode.tag)) {
       return (
         vnode.tag.indexOf('vue-component') === 0 ||
         vnode.tag.toLowerCase() === (node.tagName && node.tagName.toLowerCase())
       )
     } else {
-      return _toString(vnode.text) === node.data
+      return node.nodeType === (vnode.isComment ? 8 : 3)
     }
   }
 
   return function patch (oldVnode, vnode, hydrating, removeOnly, parentElm, refElm) {
-    if (!vnode) {
-      if (oldVnode) { invokeDestroyHook(oldVnode); }
+    if (isUndef(vnode)) {
+      if (isDef(oldVnode)) { invokeDestroyHook(oldVnode); }
       return
     }
 
-    var elm, parent;
     var isInitialPatch = false;
     var insertedVnodeQueue = [];
 
-    if (!oldVnode) {
+    if (isUndef(oldVnode)) {
       // empty mount (likely as component), create new root element
       isInitialPatch = true;
       createElm(vnode, insertedVnodeQueue, parentElm, refElm);
@@ -5150,11 +6048,11 @@ function createPatchFunction (backend) {
           // mounting to a real element
           // check if this is server-rendered content and if we can perform
           // a successful hydration.
-          if (oldVnode.nodeType === 1 && oldVnode.hasAttribute('server-rendered')) {
-            oldVnode.removeAttribute('server-rendered');
+          if (oldVnode.nodeType === 1 && oldVnode.hasAttribute(SSR_ATTR)) {
+            oldVnode.removeAttribute(SSR_ATTR);
             hydrating = true;
           }
-          if (hydrating) {
+          if (isTrue(hydrating)) {
             if (hydrate(oldVnode, vnode, insertedVnodeQueue)) {
               invokeInsertHook(vnode, insertedVnodeQueue, true);
               return oldVnode
@@ -5172,13 +6070,20 @@ function createPatchFunction (backend) {
           // create an empty node and replace it
           oldVnode = emptyNodeAt(oldVnode);
         }
-
         // replacing existing element
-        elm = oldVnode.elm;
-        parent = nodeOps.parentNode(elm);
-        createElm(vnode, insertedVnodeQueue, parent, nodeOps.nextSibling(elm));
+        var oldElm = oldVnode.elm;
+        var parentElm$1 = nodeOps.parentNode(oldElm);
+        createElm(
+          vnode,
+          insertedVnodeQueue,
+          // extremely rare edge case: do not insert if old element is in a
+          // leaving transition. Only happens when combining transition +
+          // keep-alive + HOCs. (#4590)
+          oldElm._leaveCb ? null : parentElm$1,
+          nodeOps.nextSibling(oldElm)
+        );
 
-        if (vnode.parent) {
+        if (isDef(vnode.parent)) {
           // component root element replaced.
           // update parent placeholder node element, recursively
           var ancestor = vnode.parent;
@@ -5193,8 +6098,8 @@ function createPatchFunction (backend) {
           }
         }
 
-        if (parent !== null) {
-          removeVnodes(parent, [oldVnode], 0, 0);
+        if (isDef(parentElm$1)) {
+          removeVnodes(parentElm$1, [oldVnode], 0, 0);
         } else if (isDef(oldVnode.tag)) {
           invokeDestroyHook(oldVnode);
         }
@@ -5224,6 +6129,7 @@ function updateDirectives (oldVnode, vnode) {
 
 function _update (oldVnode, vnode) {
   var isCreate = oldVnode === emptyNode;
+  var isDestroy = vnode === emptyNode;
   var oldDirs = normalizeDirectives$1(oldVnode.data.directives, oldVnode.context);
   var newDirs = normalizeDirectives$1(vnode.data.directives, vnode.context);
 
@@ -5257,7 +6163,7 @@ function _update (oldVnode, vnode) {
       }
     };
     if (isCreate) {
-      mergeVNodeHook(vnode.data.hook || (vnode.data.hook = {}), 'insert', callInsert, 'dir-insert');
+      mergeVNodeHook(vnode.data.hook || (vnode.data.hook = {}), 'insert', callInsert);
     } else {
       callInsert();
     }
@@ -5268,14 +6174,14 @@ function _update (oldVnode, vnode) {
       for (var i = 0; i < dirsWithPostpatch.length; i++) {
         callHook$1(dirsWithPostpatch[i], 'componentUpdated', vnode, oldVnode);
       }
-    }, 'dir-postpatch');
+    });
   }
 
   if (!isCreate) {
     for (key in oldDirs) {
       if (!newDirs[key]) {
         // no longer present, unbind
-        callHook$1(oldDirs[key], 'unbind', oldVnode);
+        callHook$1(oldDirs[key], 'unbind', oldVnode, oldVnode, isDestroy);
       }
     }
   }
@@ -5307,10 +6213,14 @@ function getRawDirName (dir) {
   return dir.rawName || ((dir.name) + "." + (Object.keys(dir.modifiers || {}).join('.')))
 }
 
-function callHook$1 (dir, hook, vnode, oldVnode) {
+function callHook$1 (dir, hook, vnode, oldVnode, isDestroy) {
   var fn = dir.def && dir.def[hook];
   if (fn) {
-    fn(vnode.elm, dir, vnode, oldVnode);
+    try {
+      fn(vnode.elm, dir, vnode, oldVnode, isDestroy);
+    } catch (e) {
+      handleError(e, vnode.context, ("directive " + (dir.name) + " " + hook + " hook"));
+    }
   }
 }
 
@@ -5322,7 +6232,7 @@ var baseModules = [
 /*  */
 
 function updateAttrs (oldVnode, vnode) {
-  if (!oldVnode.data.attrs && !vnode.data.attrs) {
+  if (isUndef(oldVnode.data.attrs) && isUndef(vnode.data.attrs)) {
     return
   }
   var key, cur, old;
@@ -5330,7 +6240,7 @@ function updateAttrs (oldVnode, vnode) {
   var oldAttrs = oldVnode.data.attrs || {};
   var attrs = vnode.data.attrs || {};
   // clone observed objects, as the user probably wants to mutate it
-  if (attrs.__ob__) {
+  if (isDef(attrs.__ob__)) {
     attrs = vnode.data.attrs = extend({}, attrs);
   }
 
@@ -5347,7 +6257,7 @@ function updateAttrs (oldVnode, vnode) {
     setAttr(elm, 'value', attrs.value);
   }
   for (key in oldAttrs) {
-    if (attrs[key] == null) {
+    if (isUndef(attrs[key])) {
       if (isXlink(key)) {
         elm.removeAttributeNS(xlinkNS, getXlinkProp(key));
       } else if (!isEnumeratedAttr(key)) {
@@ -5394,8 +6304,15 @@ function updateClass (oldVnode, vnode) {
   var el = vnode.elm;
   var data = vnode.data;
   var oldData = oldVnode.data;
-  if (!data.staticClass && !data.class &&
-      (!oldData || (!oldData.staticClass && !oldData.class))) {
+  if (
+    isUndef(data.staticClass) &&
+    isUndef(data.class) && (
+      isUndef(oldData) || (
+        isUndef(oldData.staticClass) &&
+        isUndef(oldData.class)
+      )
+    )
+  ) {
     return
   }
 
@@ -5403,7 +6320,7 @@ function updateClass (oldVnode, vnode) {
 
   // handle transition classes
   var transitionClass = el._transitionClasses;
-  if (transitionClass) {
+  if (isDef(transitionClass)) {
     cls = concat(cls, stringifyClass(transitionClass));
   }
 
@@ -5421,32 +6338,590 @@ var klass = {
 
 /*  */
 
-var target;
+var validDivisionCharRE = /[\w).+\-_$\]]/;
 
-function add$1 (event, handler, once, capture) {
-  if (once) {
-    var oldHandler = handler;
-    handler = function (ev) {
-      remove$2(event, handler, capture);
-      arguments.length === 1
-        ? oldHandler(ev)
-        : oldHandler.apply(null, arguments);
-    };
+function parseFilters (exp) {
+  var inSingle = false;
+  var inDouble = false;
+  var inTemplateString = false;
+  var inRegex = false;
+  var curly = 0;
+  var square = 0;
+  var paren = 0;
+  var lastFilterIndex = 0;
+  var c, prev, i, expression, filters;
+
+  for (i = 0; i < exp.length; i++) {
+    prev = c;
+    c = exp.charCodeAt(i);
+    if (inSingle) {
+      if (c === 0x27 && prev !== 0x5C) { inSingle = false; }
+    } else if (inDouble) {
+      if (c === 0x22 && prev !== 0x5C) { inDouble = false; }
+    } else if (inTemplateString) {
+      if (c === 0x60 && prev !== 0x5C) { inTemplateString = false; }
+    } else if (inRegex) {
+      if (c === 0x2f && prev !== 0x5C) { inRegex = false; }
+    } else if (
+      c === 0x7C && // pipe
+      exp.charCodeAt(i + 1) !== 0x7C &&
+      exp.charCodeAt(i - 1) !== 0x7C &&
+      !curly && !square && !paren
+    ) {
+      if (expression === undefined) {
+        // first filter, end of expression
+        lastFilterIndex = i + 1;
+        expression = exp.slice(0, i).trim();
+      } else {
+        pushFilter();
+      }
+    } else {
+      switch (c) {
+        case 0x22: inDouble = true; break         // "
+        case 0x27: inSingle = true; break         // '
+        case 0x60: inTemplateString = true; break // `
+        case 0x28: paren++; break                 // (
+        case 0x29: paren--; break                 // )
+        case 0x5B: square++; break                // [
+        case 0x5D: square--; break                // ]
+        case 0x7B: curly++; break                 // {
+        case 0x7D: curly--; break                 // }
+      }
+      if (c === 0x2f) { // /
+        var j = i - 1;
+        var p = (void 0);
+        // find first non-whitespace prev char
+        for (; j >= 0; j--) {
+          p = exp.charAt(j);
+          if (p !== ' ') { break }
+        }
+        if (!p || !validDivisionCharRE.test(p)) {
+          inRegex = true;
+        }
+      }
+    }
   }
-  target.addEventListener(event, handler, capture);
+
+  if (expression === undefined) {
+    expression = exp.slice(0, i).trim();
+  } else if (lastFilterIndex !== 0) {
+    pushFilter();
+  }
+
+  function pushFilter () {
+    (filters || (filters = [])).push(exp.slice(lastFilterIndex, i).trim());
+    lastFilterIndex = i + 1;
+  }
+
+  if (filters) {
+    for (i = 0; i < filters.length; i++) {
+      expression = wrapFilter(expression, filters[i]);
+    }
+  }
+
+  return expression
 }
 
-function remove$2 (event, handler, capture) {
-  target.removeEventListener(event, handler, capture);
+function wrapFilter (exp, filter) {
+  var i = filter.indexOf('(');
+  if (i < 0) {
+    // _f: resolveFilter
+    return ("_f(\"" + filter + "\")(" + exp + ")")
+  } else {
+    var name = filter.slice(0, i);
+    var args = filter.slice(i + 1);
+    return ("_f(\"" + name + "\")(" + exp + "," + args)
+  }
+}
+
+/*  */
+
+function baseWarn (msg) {
+  console.error(("[Vue compiler]: " + msg));
+}
+
+function pluckModuleFunction (
+  modules,
+  key
+) {
+  return modules
+    ? modules.map(function (m) { return m[key]; }).filter(function (_) { return _; })
+    : []
+}
+
+function addProp (el, name, value) {
+  (el.props || (el.props = [])).push({ name: name, value: value });
+}
+
+function addAttr (el, name, value) {
+  (el.attrs || (el.attrs = [])).push({ name: name, value: value });
+}
+
+function addDirective (
+  el,
+  name,
+  rawName,
+  value,
+  arg,
+  modifiers
+) {
+  (el.directives || (el.directives = [])).push({ name: name, rawName: rawName, value: value, arg: arg, modifiers: modifiers });
+}
+
+function addHandler (
+  el,
+  name,
+  value,
+  modifiers,
+  important,
+  warn
+) {
+  // warn prevent and passive modifier
+  /* istanbul ignore if */
+  if (
+    false
+  ) {
+    warn(
+      'passive and prevent can\'t be used together. ' +
+      'Passive handler can\'t prevent default event.'
+    );
+  }
+  // check capture modifier
+  if (modifiers && modifiers.capture) {
+    delete modifiers.capture;
+    name = '!' + name; // mark the event as captured
+  }
+  if (modifiers && modifiers.once) {
+    delete modifiers.once;
+    name = '~' + name; // mark the event as once
+  }
+  /* istanbul ignore if */
+  if (modifiers && modifiers.passive) {
+    delete modifiers.passive;
+    name = '&' + name; // mark the event as passive
+  }
+  var events;
+  if (modifiers && modifiers.native) {
+    delete modifiers.native;
+    events = el.nativeEvents || (el.nativeEvents = {});
+  } else {
+    events = el.events || (el.events = {});
+  }
+  var newHandler = { value: value, modifiers: modifiers };
+  var handlers = events[name];
+  /* istanbul ignore if */
+  if (Array.isArray(handlers)) {
+    important ? handlers.unshift(newHandler) : handlers.push(newHandler);
+  } else if (handlers) {
+    events[name] = important ? [newHandler, handlers] : [handlers, newHandler];
+  } else {
+    events[name] = newHandler;
+  }
+}
+
+function getBindingAttr (
+  el,
+  name,
+  getStatic
+) {
+  var dynamicValue =
+    getAndRemoveAttr(el, ':' + name) ||
+    getAndRemoveAttr(el, 'v-bind:' + name);
+  if (dynamicValue != null) {
+    return parseFilters(dynamicValue)
+  } else if (getStatic !== false) {
+    var staticValue = getAndRemoveAttr(el, name);
+    if (staticValue != null) {
+      return JSON.stringify(staticValue)
+    }
+  }
+}
+
+function getAndRemoveAttr (el, name) {
+  var val;
+  if ((val = el.attrsMap[name]) != null) {
+    var list = el.attrsList;
+    for (var i = 0, l = list.length; i < l; i++) {
+      if (list[i].name === name) {
+        list.splice(i, 1);
+        break
+      }
+    }
+  }
+  return val
+}
+
+/*  */
+
+/**
+ * Cross-platform code generation for component v-model
+ */
+function genComponentModel (
+  el,
+  value,
+  modifiers
+) {
+  var ref = modifiers || {};
+  var number = ref.number;
+  var trim = ref.trim;
+
+  var baseValueExpression = '$$v';
+  var valueExpression = baseValueExpression;
+  if (trim) {
+    valueExpression =
+      "(typeof " + baseValueExpression + " === 'string'" +
+        "? " + baseValueExpression + ".trim()" +
+        ": " + baseValueExpression + ")";
+  }
+  if (number) {
+    valueExpression = "_n(" + valueExpression + ")";
+  }
+  var assignment = genAssignmentCode(value, valueExpression);
+
+  el.model = {
+    value: ("(" + value + ")"),
+    expression: ("\"" + value + "\""),
+    callback: ("function (" + baseValueExpression + ") {" + assignment + "}")
+  };
+}
+
+/**
+ * Cross-platform codegen helper for generating v-model value assignment code.
+ */
+function genAssignmentCode (
+  value,
+  assignment
+) {
+  var modelRs = parseModel(value);
+  if (modelRs.idx === null) {
+    return (value + "=" + assignment)
+  } else {
+    return "var $$exp = " + (modelRs.exp) + ", $$idx = " + (modelRs.idx) + ";" +
+      "if (!Array.isArray($$exp)){" +
+        value + "=" + assignment + "}" +
+      "else{$$exp.splice($$idx, 1, " + assignment + ")}"
+  }
+}
+
+/**
+ * parse directive model to do the array update transform. a[idx] = val => $$a.splice($$idx, 1, val)
+ *
+ * for loop possible cases:
+ *
+ * - test
+ * - test[idx]
+ * - test[test1[idx]]
+ * - test["a"][idx]
+ * - xxx.test[a[a].test1[idx]]
+ * - test.xxx.a["asa"][test1[idx]]
+ *
+ */
+
+var len;
+var str;
+var chr;
+var index$1;
+var expressionPos;
+var expressionEndPos;
+
+function parseModel (val) {
+  str = val;
+  len = str.length;
+  index$1 = expressionPos = expressionEndPos = 0;
+
+  if (val.indexOf('[') < 0 || val.lastIndexOf(']') < len - 1) {
+    return {
+      exp: val,
+      idx: null
+    }
+  }
+
+  while (!eof()) {
+    chr = next();
+    /* istanbul ignore if */
+    if (isStringStart(chr)) {
+      parseString(chr);
+    } else if (chr === 0x5B) {
+      parseBracket(chr);
+    }
+  }
+
+  return {
+    exp: val.substring(0, expressionPos),
+    idx: val.substring(expressionPos + 1, expressionEndPos)
+  }
+}
+
+function next () {
+  return str.charCodeAt(++index$1)
+}
+
+function eof () {
+  return index$1 >= len
+}
+
+function isStringStart (chr) {
+  return chr === 0x22 || chr === 0x27
+}
+
+function parseBracket (chr) {
+  var inBracket = 1;
+  expressionPos = index$1;
+  while (!eof()) {
+    chr = next();
+    if (isStringStart(chr)) {
+      parseString(chr);
+      continue
+    }
+    if (chr === 0x5B) { inBracket++; }
+    if (chr === 0x5D) { inBracket--; }
+    if (inBracket === 0) {
+      expressionEndPos = index$1;
+      break
+    }
+  }
+}
+
+function parseString (chr) {
+  var stringQuote = chr;
+  while (!eof()) {
+    chr = next();
+    if (chr === stringQuote) {
+      break
+    }
+  }
+}
+
+/*  */
+
+var warn$1;
+
+// in some cases, the event used has to be determined at runtime
+// so we used some reserved tokens during compile.
+var RANGE_TOKEN = '__r';
+var CHECKBOX_RADIO_TOKEN = '__c';
+
+function model (
+  el,
+  dir,
+  _warn
+) {
+  warn$1 = _warn;
+  var value = dir.value;
+  var modifiers = dir.modifiers;
+  var tag = el.tag;
+  var type = el.attrsMap.type;
+
+  if (false) {
+    var dynamicType = el.attrsMap['v-bind:type'] || el.attrsMap[':type'];
+    if (tag === 'input' && dynamicType) {
+      warn$1(
+        "<input :type=\"" + dynamicType + "\" v-model=\"" + value + "\">:\n" +
+        "v-model does not support dynamic input types. Use v-if branches instead."
+      );
+    }
+    // inputs with type="file" are read only and setting the input's
+    // value will throw an error.
+    if (tag === 'input' && type === 'file') {
+      warn$1(
+        "<" + (el.tag) + " v-model=\"" + value + "\" type=\"file\">:\n" +
+        "File inputs are read only. Use a v-on:change listener instead."
+      );
+    }
+  }
+
+  if (tag === 'select') {
+    genSelect(el, value, modifiers);
+  } else if (tag === 'input' && type === 'checkbox') {
+    genCheckboxModel(el, value, modifiers);
+  } else if (tag === 'input' && type === 'radio') {
+    genRadioModel(el, value, modifiers);
+  } else if (tag === 'input' || tag === 'textarea') {
+    genDefaultModel(el, value, modifiers);
+  } else if (!config.isReservedTag(tag)) {
+    genComponentModel(el, value, modifiers);
+    // component v-model doesn't need extra runtime
+    return false
+  } else if (false) {
+    warn$1(
+      "<" + (el.tag) + " v-model=\"" + value + "\">: " +
+      "v-model is not supported on this element type. " +
+      'If you are working with contenteditable, it\'s recommended to ' +
+      'wrap a library dedicated for that purpose inside a custom component.'
+    );
+  }
+
+  // ensure runtime directive metadata
+  return true
+}
+
+function genCheckboxModel (
+  el,
+  value,
+  modifiers
+) {
+  var number = modifiers && modifiers.number;
+  var valueBinding = getBindingAttr(el, 'value') || 'null';
+  var trueValueBinding = getBindingAttr(el, 'true-value') || 'true';
+  var falseValueBinding = getBindingAttr(el, 'false-value') || 'false';
+  addProp(el, 'checked',
+    "Array.isArray(" + value + ")" +
+      "?_i(" + value + "," + valueBinding + ")>-1" + (
+        trueValueBinding === 'true'
+          ? (":(" + value + ")")
+          : (":_q(" + value + "," + trueValueBinding + ")")
+      )
+  );
+  addHandler(el, CHECKBOX_RADIO_TOKEN,
+    "var $$a=" + value + "," +
+        '$$el=$event.target,' +
+        "$$c=$$el.checked?(" + trueValueBinding + "):(" + falseValueBinding + ");" +
+    'if(Array.isArray($$a)){' +
+      "var $$v=" + (number ? '_n(' + valueBinding + ')' : valueBinding) + "," +
+          '$$i=_i($$a,$$v);' +
+      "if($$c){$$i<0&&(" + value + "=$$a.concat($$v))}" +
+      "else{$$i>-1&&(" + value + "=$$a.slice(0,$$i).concat($$a.slice($$i+1)))}" +
+    "}else{" + (genAssignmentCode(value, '$$c')) + "}",
+    null, true
+  );
+}
+
+function genRadioModel (
+    el,
+    value,
+    modifiers
+) {
+  var number = modifiers && modifiers.number;
+  var valueBinding = getBindingAttr(el, 'value') || 'null';
+  valueBinding = number ? ("_n(" + valueBinding + ")") : valueBinding;
+  addProp(el, 'checked', ("_q(" + value + "," + valueBinding + ")"));
+  addHandler(el, CHECKBOX_RADIO_TOKEN, genAssignmentCode(value, valueBinding), null, true);
+}
+
+function genSelect (
+    el,
+    value,
+    modifiers
+) {
+  var number = modifiers && modifiers.number;
+  var selectedVal = "Array.prototype.filter" +
+    ".call($event.target.options,function(o){return o.selected})" +
+    ".map(function(o){var val = \"_value\" in o ? o._value : o.value;" +
+    "return " + (number ? '_n(val)' : 'val') + "})";
+
+  var assignment = '$event.target.multiple ? $$selectedVal : $$selectedVal[0]';
+  var code = "var $$selectedVal = " + selectedVal + ";";
+  code = code + " " + (genAssignmentCode(value, assignment));
+  addHandler(el, 'change', code, null, true);
+}
+
+function genDefaultModel (
+  el,
+  value,
+  modifiers
+) {
+  var type = el.attrsMap.type;
+  var ref = modifiers || {};
+  var lazy = ref.lazy;
+  var number = ref.number;
+  var trim = ref.trim;
+  var needCompositionGuard = !lazy && type !== 'range';
+  var event = lazy
+    ? 'change'
+    : type === 'range'
+      ? RANGE_TOKEN
+      : 'input';
+
+  var valueExpression = '$event.target.value';
+  if (trim) {
+    valueExpression = "$event.target.value.trim()";
+  }
+  if (number) {
+    valueExpression = "_n(" + valueExpression + ")";
+  }
+
+  var code = genAssignmentCode(value, valueExpression);
+  if (needCompositionGuard) {
+    code = "if($event.target.composing)return;" + code;
+  }
+
+  addProp(el, 'value', ("(" + value + ")"));
+  addHandler(el, event, code, null, true);
+  if (trim || number || type === 'number') {
+    addHandler(el, 'blur', '$forceUpdate()');
+  }
+}
+
+/*  */
+
+// normalize v-model event tokens that can only be determined at runtime.
+// it's important to place the event as the first in the array because
+// the whole point is ensuring the v-model callback gets called before
+// user-attached handlers.
+function normalizeEvents (on) {
+  var event;
+  /* istanbul ignore if */
+  if (isDef(on[RANGE_TOKEN])) {
+    // IE input[type=range] only supports `change` event
+    event = isIE ? 'change' : 'input';
+    on[event] = [].concat(on[RANGE_TOKEN], on[event] || []);
+    delete on[RANGE_TOKEN];
+  }
+  if (isDef(on[CHECKBOX_RADIO_TOKEN])) {
+    // Chrome fires microtasks in between click/change, leads to #4521
+    event = isChrome ? 'click' : 'change';
+    on[event] = [].concat(on[CHECKBOX_RADIO_TOKEN], on[event] || []);
+    delete on[CHECKBOX_RADIO_TOKEN];
+  }
+}
+
+var target$1;
+
+function add$1 (
+  event,
+  handler,
+  once$$1,
+  capture,
+  passive
+) {
+  if (once$$1) {
+    var oldHandler = handler;
+    var _target = target$1; // save current target element in closure
+    handler = function (ev) {
+      var res = arguments.length === 1
+        ? oldHandler(ev)
+        : oldHandler.apply(null, arguments);
+      if (res !== null) {
+        remove$2(event, handler, capture, _target);
+      }
+    };
+  }
+  target$1.addEventListener(
+    event,
+    handler,
+    supportsPassive
+      ? { capture: capture, passive: passive }
+      : capture
+  );
+}
+
+function remove$2 (
+  event,
+  handler,
+  capture,
+  _target
+) {
+  (_target || target$1).removeEventListener(event, handler, capture);
 }
 
 function updateDOMListeners (oldVnode, vnode) {
-  if (!oldVnode.data.on && !vnode.data.on) {
+  if (isUndef(oldVnode.data.on) && isUndef(vnode.data.on)) {
     return
   }
   var on = vnode.data.on || {};
   var oldOn = oldVnode.data.on || {};
-  target = vnode.elm;
+  target$1 = vnode.elm;
+  normalizeEvents(on);
   updateListeners(on, oldOn, add$1, remove$2, vnode.context);
 }
 
@@ -5458,7 +6933,7 @@ var events = {
 /*  */
 
 function updateDOMProps (oldVnode, vnode) {
-  if (!oldVnode.data.domProps && !vnode.data.domProps) {
+  if (isUndef(oldVnode.data.domProps) && isUndef(vnode.data.domProps)) {
     return
   }
   var key, cur;
@@ -5466,12 +6941,12 @@ function updateDOMProps (oldVnode, vnode) {
   var oldProps = oldVnode.data.domProps || {};
   var props = vnode.data.domProps || {};
   // clone observed objects, as the user probably wants to mutate it
-  if (props.__ob__) {
+  if (isDef(props.__ob__)) {
     props = vnode.data.domProps = extend({}, props);
   }
 
   for (key in oldProps) {
-    if (props[key] == null) {
+    if (isUndef(props[key])) {
       elm[key] = '';
     }
   }
@@ -5484,16 +6959,14 @@ function updateDOMProps (oldVnode, vnode) {
       if (vnode.children) { vnode.children.length = 0; }
       if (cur === oldProps[key]) { continue }
     }
+
     if (key === 'value') {
       // store value as _value as well since
       // non-string values will be stringified
       elm._value = cur;
       // avoid resetting cursor position when value is the same
-      var strCur = cur == null ? '' : String(cur);
-      if (!elm.composing && (
-        (document.activeElement !== elm && elm.value !== strCur) ||
-        isValueChanged(vnode, strCur)
-      )) {
+      var strCur = isUndef(cur) ? '' : String(cur);
+      if (shouldUpdateValue(elm, vnode, strCur)) {
         elm.value = strCur;
       }
     } else {
@@ -5502,13 +6975,33 @@ function updateDOMProps (oldVnode, vnode) {
   }
 }
 
-function isValueChanged (vnode, newVal) {
-  var value = vnode.elm.value;
-  var modifiers = vnode.elm._vModifiers; // injected by v-model runtime
-  if ((modifiers && modifiers.number) || vnode.elm.type === 'number') {
+// check platforms/web/util/attrs.js acceptValue
+
+
+function shouldUpdateValue (
+  elm,
+  vnode,
+  checkVal
+) {
+  return (!elm.composing && (
+    vnode.tag === 'option' ||
+    isDirty(elm, checkVal) ||
+    isInputChanged(elm, checkVal)
+  ))
+}
+
+function isDirty (elm, checkVal) {
+  // return true when textbox (.number and .trim) loses focus and its value is not equal to the updated value
+  return document.activeElement !== elm && elm.value !== checkVal
+}
+
+function isInputChanged (elm, newVal) {
+  var value = elm.value;
+  var modifiers = elm._vModifiers; // injected by v-model runtime
+  if ((isDef(modifiers) && modifiers.number) || elm.type === 'number') {
     return toNumber(value) !== toNumber(newVal)
   }
-  if (modifiers && modifiers.trim) {
+  if (isDef(modifiers) && modifiers.trim) {
     return value.trim() !== newVal.trim()
   }
   return value !== newVal
@@ -5565,8 +7058,8 @@ function getStyle (vnode, checkChild) {
 
   if (checkChild) {
     var childNode = vnode;
-    while (childNode.child) {
-      childNode = childNode.child._vnode;
+    while (childNode.componentInstance) {
+      childNode = childNode.componentInstance._vnode;
       if (childNode.data && (styleData = normalizeStyleData(childNode.data))) {
         extend(res, styleData);
       }
@@ -5597,7 +7090,17 @@ var setProp = function (el, name, val) {
   } else if (importantRE.test(val)) {
     el.style.setProperty(name, val.replace(importantRE, ''), 'important');
   } else {
-    el.style[normalize(name)] = val;
+    var normalizedName = normalize(name);
+    if (Array.isArray(val)) {
+      // Support values array created by autoprefixer, e.g.
+      // {display: ["-webkit-box", "-ms-flexbox", "flex"]}
+      // Set them one by one, and the browser will only set those it can recognize
+      for (var i = 0, len = val.length; i < len; i++) {
+        el.style[normalizedName] = val[i];
+      }
+    } else {
+      el.style[normalizedName] = val;
+    }
   }
 };
 
@@ -5623,27 +7126,33 @@ function updateStyle (oldVnode, vnode) {
   var data = vnode.data;
   var oldData = oldVnode.data;
 
-  if (!data.staticStyle && !data.style &&
-      !oldData.staticStyle && !oldData.style) {
+  if (isUndef(data.staticStyle) && isUndef(data.style) &&
+    isUndef(oldData.staticStyle) && isUndef(oldData.style)
+  ) {
     return
   }
 
   var cur, name;
   var el = vnode.elm;
-  var oldStaticStyle = oldVnode.data.staticStyle;
-  var oldStyleBinding = oldVnode.data.style || {};
+  var oldStaticStyle = oldData.staticStyle;
+  var oldStyleBinding = oldData.normalizedStyle || oldData.style || {};
 
   // if static style exists, stylebinding already merged into it when doing normalizeStyleData
   var oldStyle = oldStaticStyle || oldStyleBinding;
 
   var style = normalizeStyleBinding(vnode.data.style) || {};
 
-  vnode.data.style = style.__ob__ ? extend({}, style) : style;
+  // store normalized style under a different key for next diff
+  // make sure to clone it if it's reactive, since the user likley wants
+  // to mutate it.
+  vnode.data.normalizedStyle = isDef(style.__ob__)
+    ? extend({}, style)
+    : style;
 
   var newStyle = getStyle(vnode, true);
 
   for (name in oldStyle) {
-    if (newStyle[name] == null) {
+    if (isUndef(newStyle[name])) {
       setProp(el, name, '');
     }
   }
@@ -5669,7 +7178,7 @@ var style = {
  */
 function addClass (el, cls) {
   /* istanbul ignore if */
-  if (!cls || !cls.trim()) {
+  if (!cls || !(cls = cls.trim())) {
     return
   }
 
@@ -5681,7 +7190,7 @@ function addClass (el, cls) {
       el.classList.add(cls);
     }
   } else {
-    var cur = ' ' + el.getAttribute('class') + ' ';
+    var cur = " " + (el.getAttribute('class') || '') + " ";
     if (cur.indexOf(' ' + cls + ' ') < 0) {
       el.setAttribute('class', (cur + cls).trim());
     }
@@ -5694,7 +7203,7 @@ function addClass (el, cls) {
  */
 function removeClass (el, cls) {
   /* istanbul ignore if */
-  if (!cls || !cls.trim()) {
+  if (!cls || !(cls = cls.trim())) {
     return
   }
 
@@ -5706,7 +7215,7 @@ function removeClass (el, cls) {
       el.classList.remove(cls);
     }
   } else {
-    var cur = ' ' + el.getAttribute('class') + ' ';
+    var cur = " " + (el.getAttribute('class') || '') + " ";
     var tar = ' ' + cls + ' ';
     while (cur.indexOf(tar) >= 0) {
       cur = cur.replace(tar, ' ');
@@ -5716,6 +7225,34 @@ function removeClass (el, cls) {
 }
 
 /*  */
+
+function resolveTransition (def$$1) {
+  if (!def$$1) {
+    return
+  }
+  /* istanbul ignore else */
+  if (typeof def$$1 === 'object') {
+    var res = {};
+    if (def$$1.css !== false) {
+      extend(res, autoCssTransition(def$$1.name || 'v'));
+    }
+    extend(res, def$$1);
+    return res
+  } else if (typeof def$$1 === 'string') {
+    return autoCssTransition(def$$1)
+  }
+}
+
+var autoCssTransition = cached(function (name) {
+  return {
+    enterClass: (name + "-enter"),
+    enterToClass: (name + "-enter-to"),
+    enterActiveClass: (name + "-enter-active"),
+    leaveClass: (name + "-leave"),
+    leaveToClass: (name + "-leave-to"),
+    leaveActiveClass: (name + "-leave-active")
+  }
+});
 
 var hasTransition = inBrowser && !isIE9;
 var TRANSITION = 'transition';
@@ -5729,18 +7266,24 @@ var animationEndEvent = 'animationend';
 if (hasTransition) {
   /* istanbul ignore if */
   if (window.ontransitionend === undefined &&
-    window.onwebkittransitionend !== undefined) {
+    window.onwebkittransitionend !== undefined
+  ) {
     transitionProp = 'WebkitTransition';
     transitionEndEvent = 'webkitTransitionEnd';
   }
   if (window.onanimationend === undefined &&
-    window.onwebkitanimationend !== undefined) {
+    window.onwebkitanimationend !== undefined
+  ) {
     animationProp = 'WebkitAnimation';
     animationEndEvent = 'webkitAnimationEnd';
   }
 }
 
-var raf = (inBrowser && window.requestAnimationFrame) || setTimeout;
+// binding to window is necessary to make hot reload work in IE in strict mode
+var raf = inBrowser && window.requestAnimationFrame
+  ? window.requestAnimationFrame.bind(window)
+  : setTimeout;
+
 function nextFrame (fn) {
   raf(function () {
     raf(fn);
@@ -5754,7 +7297,7 @@ function addTransitionClass (el, cls) {
 
 function removeTransitionClass (el, cls) {
   if (el._transitionClasses) {
-    remove$1(el._transitionClasses, cls);
+    remove(el._transitionClasses, cls);
   }
   removeClass(el, cls);
 }
@@ -5794,9 +7337,9 @@ var transformRE = /\b(transform|all)(,|$)/;
 
 function getTransitionInfo (el, expectedType) {
   var styles = window.getComputedStyle(el);
-  var transitioneDelays = styles[transitionProp + 'Delay'].split(', ');
+  var transitionDelays = styles[transitionProp + 'Delay'].split(', ');
   var transitionDurations = styles[transitionProp + 'Duration'].split(', ');
-  var transitionTimeout = getTimeout(transitioneDelays, transitionDurations);
+  var transitionTimeout = getTimeout(transitionDelays, transitionDurations);
   var animationDelays = styles[animationProp + 'Delay'].split(', ');
   var animationDurations = styles[animationProp + 'Duration'].split(', ');
   var animationTimeout = getTimeout(animationDelays, animationDurations);
@@ -5862,26 +7405,28 @@ function enter (vnode, toggleDisplay) {
   var el = vnode.elm;
 
   // call leave callback now
-  if (el._leaveCb) {
+  if (isDef(el._leaveCb)) {
     el._leaveCb.cancelled = true;
     el._leaveCb();
   }
 
   var data = resolveTransition(vnode.data.transition);
-  if (!data) {
+  if (isUndef(data)) {
     return
   }
 
   /* istanbul ignore if */
-  if (el._enterCb || el.nodeType !== 1) {
+  if (isDef(el._enterCb) || el.nodeType !== 1) {
     return
   }
 
   var css = data.css;
   var type = data.type;
   var enterClass = data.enterClass;
+  var enterToClass = data.enterToClass;
   var enterActiveClass = data.enterActiveClass;
   var appearClass = data.appearClass;
+  var appearToClass = data.appearToClass;
   var appearActiveClass = data.appearActiveClass;
   var beforeEnter = data.beforeEnter;
   var enter = data.enter;
@@ -5891,6 +7436,7 @@ function enter (vnode, toggleDisplay) {
   var appear = data.appear;
   var afterAppear = data.afterAppear;
   var appearCancelled = data.appearCancelled;
+  var duration = data.duration;
 
   // activeInstance will always be the <transition> component managing this
   // transition. One edge case to check is when the <transition> is placed
@@ -5909,22 +7455,45 @@ function enter (vnode, toggleDisplay) {
     return
   }
 
-  var startClass = isAppear ? appearClass : enterClass;
-  var activeClass = isAppear ? appearActiveClass : enterActiveClass;
-  var beforeEnterHook = isAppear ? (beforeAppear || beforeEnter) : beforeEnter;
-  var enterHook = isAppear ? (typeof appear === 'function' ? appear : enter) : enter;
-  var afterEnterHook = isAppear ? (afterAppear || afterEnter) : afterEnter;
-  var enterCancelledHook = isAppear ? (appearCancelled || enterCancelled) : enterCancelled;
+  var startClass = isAppear && appearClass
+    ? appearClass
+    : enterClass;
+  var activeClass = isAppear && appearActiveClass
+    ? appearActiveClass
+    : enterActiveClass;
+  var toClass = isAppear && appearToClass
+    ? appearToClass
+    : enterToClass;
+
+  var beforeEnterHook = isAppear
+    ? (beforeAppear || beforeEnter)
+    : beforeEnter;
+  var enterHook = isAppear
+    ? (typeof appear === 'function' ? appear : enter)
+    : enter;
+  var afterEnterHook = isAppear
+    ? (afterAppear || afterEnter)
+    : afterEnter;
+  var enterCancelledHook = isAppear
+    ? (appearCancelled || enterCancelled)
+    : enterCancelled;
+
+  var explicitEnterDuration = toNumber(
+    isObject(duration)
+      ? duration.enter
+      : duration
+  );
+
+  if (false) {
+    checkDuration(explicitEnterDuration, 'enter', vnode);
+  }
 
   var expectsCSS = css !== false && !isIE9;
-  var userWantsControl =
-    enterHook &&
-    // enterHook may be a bound method which exposes
-    // the length of original fn as _length
-    (enterHook._length || enterHook.length) > 1;
+  var userWantsControl = getHookArgumentsLength(enterHook);
 
   var cb = el._enterCb = once(function () {
     if (expectsCSS) {
+      removeTransitionClass(el, toClass);
       removeTransitionClass(el, activeClass);
     }
     if (cb.cancelled) {
@@ -5944,13 +7513,13 @@ function enter (vnode, toggleDisplay) {
       var parent = el.parentNode;
       var pendingNode = parent && parent._pending && parent._pending[vnode.key];
       if (pendingNode &&
-          pendingNode.context === vnode.context &&
-          pendingNode.tag === vnode.tag &&
-          pendingNode.elm._leaveCb) {
+        pendingNode.tag === vnode.tag &&
+        pendingNode.elm._leaveCb
+      ) {
         pendingNode.elm._leaveCb();
       }
       enterHook && enterHook(el, cb);
-    }, 'transition-insert');
+    });
   }
 
   // start enter transition
@@ -5959,9 +7528,14 @@ function enter (vnode, toggleDisplay) {
     addTransitionClass(el, startClass);
     addTransitionClass(el, activeClass);
     nextFrame(function () {
+      addTransitionClass(el, toClass);
       removeTransitionClass(el, startClass);
       if (!cb.cancelled && !userWantsControl) {
-        whenTransitionEnds(el, type, cb);
+        if (isValidDuration(explicitEnterDuration)) {
+          setTimeout(cb, explicitEnterDuration);
+        } else {
+          whenTransitionEnds(el, type, cb);
+        }
       }
     });
   }
@@ -5980,43 +7554,52 @@ function leave (vnode, rm) {
   var el = vnode.elm;
 
   // call enter callback now
-  if (el._enterCb) {
+  if (isDef(el._enterCb)) {
     el._enterCb.cancelled = true;
     el._enterCb();
   }
 
   var data = resolveTransition(vnode.data.transition);
-  if (!data) {
+  if (isUndef(data)) {
     return rm()
   }
 
   /* istanbul ignore if */
-  if (el._leaveCb || el.nodeType !== 1) {
+  if (isDef(el._leaveCb) || el.nodeType !== 1) {
     return
   }
 
   var css = data.css;
   var type = data.type;
   var leaveClass = data.leaveClass;
+  var leaveToClass = data.leaveToClass;
   var leaveActiveClass = data.leaveActiveClass;
   var beforeLeave = data.beforeLeave;
   var leave = data.leave;
   var afterLeave = data.afterLeave;
   var leaveCancelled = data.leaveCancelled;
   var delayLeave = data.delayLeave;
+  var duration = data.duration;
 
   var expectsCSS = css !== false && !isIE9;
-  var userWantsControl =
-    leave &&
-    // leave hook may be a bound method which exposes
-    // the length of original fn as _length
-    (leave._length || leave.length) > 1;
+  var userWantsControl = getHookArgumentsLength(leave);
+
+  var explicitLeaveDuration = toNumber(
+    isObject(duration)
+      ? duration.leave
+      : duration
+  );
+
+  if (false) {
+    checkDuration(explicitLeaveDuration, 'leave', vnode);
+  }
 
   var cb = el._leaveCb = once(function () {
     if (el.parentNode && el.parentNode._pending) {
       el.parentNode._pending[vnode.key] = null;
     }
     if (expectsCSS) {
+      removeTransitionClass(el, leaveToClass);
       removeTransitionClass(el, leaveActiveClass);
     }
     if (cb.cancelled) {
@@ -6044,16 +7627,21 @@ function leave (vnode, rm) {
     }
     // record leaving element
     if (!vnode.data.show) {
-      (el.parentNode._pending || (el.parentNode._pending = {}))[vnode.key] = vnode;
+      (el.parentNode._pending || (el.parentNode._pending = {}))[(vnode.key)] = vnode;
     }
     beforeLeave && beforeLeave(el);
     if (expectsCSS) {
       addTransitionClass(el, leaveClass);
       addTransitionClass(el, leaveActiveClass);
       nextFrame(function () {
+        addTransitionClass(el, leaveToClass);
         removeTransitionClass(el, leaveClass);
         if (!cb.cancelled && !userWantsControl) {
-          whenTransitionEnds(el, type, cb);
+          if (isValidDuration(explicitLeaveDuration)) {
+            setTimeout(cb, explicitLeaveDuration);
+          } else {
+            whenTransitionEnds(el, type, cb);
+          }
         }
       });
     }
@@ -6064,46 +7652,52 @@ function leave (vnode, rm) {
   }
 }
 
-function resolveTransition (def$$1) {
-  if (!def$$1) {
-    return
-  }
-  /* istanbul ignore else */
-  if (typeof def$$1 === 'object') {
-    var res = {};
-    if (def$$1.css !== false) {
-      extend(res, autoCssTransition(def$$1.name || 'v'));
-    }
-    extend(res, def$$1);
-    return res
-  } else if (typeof def$$1 === 'string') {
-    return autoCssTransition(def$$1)
+// only used in dev mode
+function checkDuration (val, name, vnode) {
+  if (typeof val !== 'number') {
+    warn(
+      "<transition> explicit " + name + " duration is not a valid number - " +
+      "got " + (JSON.stringify(val)) + ".",
+      vnode.context
+    );
+  } else if (isNaN(val)) {
+    warn(
+      "<transition> explicit " + name + " duration is NaN - " +
+      'the duration expression might be incorrect.',
+      vnode.context
+    );
   }
 }
 
-var autoCssTransition = cached(function (name) {
-  return {
-    enterClass: (name + "-enter"),
-    leaveClass: (name + "-leave"),
-    appearClass: (name + "-enter"),
-    enterActiveClass: (name + "-enter-active"),
-    leaveActiveClass: (name + "-leave-active"),
-    appearActiveClass: (name + "-enter-active")
-  }
-});
+function isValidDuration (val) {
+  return typeof val === 'number' && !isNaN(val)
+}
 
-function once (fn) {
-  var called = false;
-  return function () {
-    if (!called) {
-      called = true;
-      fn();
-    }
+/**
+ * Normalize a transition hook's argument length. The hook may be:
+ * - a merged hook (invoker) with the original in .fns
+ * - a wrapped component method (check ._length)
+ * - a plain function (.length)
+ */
+function getHookArgumentsLength (fn) {
+  if (isUndef(fn)) {
+    return false
+  }
+  var invokerFns = fn.fns;
+  if (isDef(invokerFns)) {
+    // invoker
+    return getHookArgumentsLength(
+      Array.isArray(invokerFns)
+        ? invokerFns[0]
+        : invokerFns
+    )
+  } else {
+    return (fn._length || fn.length) > 1
   }
 }
 
 function _enter (_, vnode) {
-  if (!vnode.data.show) {
+  if (vnode.data.show !== true) {
     enter(vnode);
   }
 }
@@ -6111,9 +7705,9 @@ function _enter (_, vnode) {
 var transition = inBrowser ? {
   create: _enter,
   activate: _enter,
-  remove: function remove (vnode, rm) {
+  remove: function remove$$1 (vnode, rm) {
     /* istanbul ignore else */
-    if (!vnode.data.show) {
+    if (vnode.data.show !== true) {
       leave(vnode, rm);
     } else {
       rm();
@@ -6136,14 +7730,12 @@ var platformModules = [
 // built-in modules have been applied.
 var modules = platformModules.concat(baseModules);
 
-var patch$1 = createPatchFunction({ nodeOps: nodeOps, modules: modules });
+var patch = createPatchFunction({ nodeOps: nodeOps, modules: modules });
 
 /**
  * Not type checking this file because flow doesn't like attaching
  * properties to Elements.
  */
-
-var modelableTagRE = /^input|select|textarea|vue-component-[0-9]+(-[0-9a-zA-Z_-]*)?$/;
 
 /* istanbul ignore if */
 if (isIE9) {
@@ -6156,18 +7748,8 @@ if (isIE9) {
   });
 }
 
-var model = {
+var model$1 = {
   inserted: function inserted (el, binding, vnode) {
-    if (false) {
-      if (!modelableTagRE.test(vnode.tag)) {
-        warn(
-          "v-model is not supported on element type: <" + (vnode.tag) + ">. " +
-          'If you are working with contenteditable, it\'s recommended to ' +
-          'wrap a library dedicated for that purpose inside a custom component.',
-          vnode.context
-        );
-      }
-    }
     if (vnode.tag === 'select') {
       var cb = function () {
         setSelected(el, binding, vnode.context);
@@ -6177,9 +7759,14 @@ var model = {
       if (isIE || isEdge) {
         setTimeout(cb, 0);
       }
-    } else if (vnode.tag === 'textarea' || el.type === 'text') {
+    } else if (vnode.tag === 'textarea' || el.type === 'text' || el.type === 'password') {
       el._vModifiers = binding.modifiers;
       if (!binding.modifiers.lazy) {
+        // Safari < 10.2 & UIWebView doesn't fire compositionend when
+        // switching focus before confirming composition choice
+        // this also fixes the issue where some browsers e.g. iOS Chrome
+        // fires "change" instead of "input" on autocomplete.
+        el.addEventListener('change', onCompositionEnd);
         if (!isAndroid) {
           el.addEventListener('compositionstart', onCompositionStart);
           el.addEventListener('compositionend', onCompositionEnd);
@@ -6261,6 +7848,8 @@ function onCompositionStart (e) {
 }
 
 function onCompositionEnd (e) {
+  // prevent triggering an input event for no reason
+  if (!e.target.composing) { return }
   e.target.composing = false;
   trigger(e.target, 'input');
 }
@@ -6275,8 +7864,8 @@ function trigger (el, type) {
 
 // recursively search for possible transition defined inside the component root
 function locateNode (vnode) {
-  return vnode.child && (!vnode.data || !vnode.data.transition)
-    ? locateNode(vnode.child._vnode)
+  return vnode.componentInstance && (!vnode.data || !vnode.data.transition)
+    ? locateNode(vnode.componentInstance._vnode)
     : vnode
 }
 
@@ -6297,6 +7886,7 @@ var show = {
       el.style.display = value ? originalDisplay : 'none';
     }
   },
+
   update: function update (el, ref, vnode) {
     var value = ref.value;
     var oldValue = ref.oldValue;
@@ -6319,11 +7909,23 @@ var show = {
     } else {
       el.style.display = value ? el.__vOriginalDisplay : 'none';
     }
+  },
+
+  unbind: function unbind (
+    el,
+    binding,
+    vnode,
+    oldVnode,
+    isDestroy
+  ) {
+    if (!isDestroy) {
+      el.style.display = el.__vOriginalDisplay;
+    }
   }
 };
 
 var platformDirectives = {
-  model: model,
+  model: model$1,
   show: show
 };
 
@@ -6340,10 +7942,14 @@ var transitionProps = {
   type: String,
   enterClass: String,
   leaveClass: String,
+  enterToClass: String,
+  leaveToClass: String,
   enterActiveClass: String,
   leaveActiveClass: String,
   appearClass: String,
-  appearActiveClass: String
+  appearActiveClass: String,
+  appearToClass: String,
+  duration: [Number, String, Object]
 };
 
 // in case the child is also an abstract component, e.g. <keep-alive>
@@ -6368,15 +7974,17 @@ function extractTransitionData (comp) {
   // extract listeners and pass them directly to the transition methods
   var listeners = options._parentListeners;
   for (var key$1 in listeners) {
-    data[camelize(key$1)] = listeners[key$1].fn;
+    data[camelize(key$1)] = listeners[key$1];
   }
   return data
 }
 
 function placeholder (h, rawChild) {
-  return /\d-keep-alive$/.test(rawChild.tag)
-    ? h('keep-alive')
-    : null
+  if (/\d-keep-alive$/.test(rawChild.tag)) {
+    return h('keep-alive', {
+      props: rawChild.componentOptions.propsData
+    })
+  }
 }
 
 function hasParentTransition (vnode) {
@@ -6387,10 +7995,15 @@ function hasParentTransition (vnode) {
   }
 }
 
+function isSameChild (child, oldChild) {
+  return oldChild.key === child.key && oldChild.tag === child.tag
+}
+
 var Transition = {
   name: 'transition',
   props: transitionProps,
   abstract: true,
+
   render: function render (h) {
     var this$1 = this;
 
@@ -6418,7 +8031,8 @@ var Transition = {
     var mode = this.mode;
 
     // warn invalid mode
-    if (false) {
+    if (false
+    ) {
       warn(
         'invalid <transition> mode: ' + mode,
         this.$parent
@@ -6445,9 +8059,16 @@ var Transition = {
       return placeholder(h, rawChild)
     }
 
-    var key = child.key = child.key == null || child.isStatic
-      ? ("__v" + (child.tag + this._uid) + "__")
-      : child.key;
+    // ensure a key that is unique to the vnode type and to this transition
+    // component instance. This key will be used to remove pending leaving nodes
+    // during entering.
+    var id = "__transition-" + (this._uid) + "-";
+    child.key = child.key == null
+      ? id + child.tag
+      : isPrimitive(child.key)
+        ? (String(child.key).indexOf(id) === 0 ? child.key : id + child.key)
+        : child.key;
+
     var data = (child.data || (child.data = {})).transition = extractTransitionData(this);
     var oldRawChild = this._vnode;
     var oldChild = getRealChild(oldRawChild);
@@ -6458,11 +8079,10 @@ var Transition = {
       child.data.show = true;
     }
 
-    if (oldChild && oldChild.data && oldChild.key !== key) {
+    if (oldChild && oldChild.data && !isSameChild(child, oldChild)) {
       // replace old child transition data with fresh one
       // important for dynamic transitions!
-      var oldData = oldChild.data.transition = extend({}, data);
-
+      var oldData = oldChild && (oldChild.data.transition = extend({}, data));
       // handle transition mode
       if (mode === 'out-in') {
         // return placeholder node and queue update when leave finishes
@@ -6470,16 +8090,14 @@ var Transition = {
         mergeVNodeHook(oldData, 'afterLeave', function () {
           this$1._leaving = false;
           this$1.$forceUpdate();
-        }, key);
+        });
         return placeholder(h, rawChild)
       } else if (mode === 'in-out') {
         var delayedLeave;
         var performLeave = function () { delayedLeave(); };
-        mergeVNodeHook(data, 'afterEnter', performLeave, key);
-        mergeVNodeHook(data, 'enterCancelled', performLeave, key);
-        mergeVNodeHook(oldData, 'delayLeave', function (leave) {
-          delayedLeave = leave;
-        }, key);
+        mergeVNodeHook(data, 'afterEnter', performLeave);
+        mergeVNodeHook(data, 'enterCancelled', performLeave);
+        mergeVNodeHook(oldData, 'delayLeave', function (leave) { delayedLeave = leave; });
       }
     }
 
@@ -6497,7 +8115,7 @@ var Transition = {
 // we force transition-group to update its children into two passes:
 // in the first pass, we remove all nodes that need to be removed,
 // triggering their leaving transition; in the second pass, we insert/move
-// into the final disired state. This way in the second pass removed
+// into the final desired state. This way in the second pass removed
 // nodes will remain where they should be.
 
 var props = extend({
@@ -6527,9 +8145,7 @@ var TransitionGroup = {
           ;(c.data || (c.data = {})).transition = transitionData;
         } else if (false) {
           var opts = c.componentOptions;
-          var name = opts
-            ? (opts.Ctor.options.name || opts.tag)
-            : c.tag;
+          var name = opts ? (opts.Ctor.options.name || opts.tag || '') : c.tag;
           warn(("<transition-group> children must be keyed: <" + name + ">"));
         }
       }
@@ -6580,7 +8196,8 @@ var TransitionGroup = {
     children.forEach(applyTranslation);
 
     // force reflow to put everything in position
-    var f = document.body.offsetHeight; // eslint-disable-line
+    var body = document.body;
+    var f = body.offsetHeight; // eslint-disable-line
 
     children.forEach(function (c) {
       if (c.data.moved) {
@@ -6608,9 +8225,20 @@ var TransitionGroup = {
       if (this._hasMove != null) {
         return this._hasMove
       }
-      addTransitionClass(el, moveClass);
-      var info = getTransitionInfo(el);
-      removeTransitionClass(el, moveClass);
+      // Detect whether an element with the move class applied has
+      // CSS transitions. Since the element may be inside an entering
+      // transition at this very moment, we make a clone of it and remove
+      // all other transition classes applied to ensure only the move class
+      // is applied.
+      var clone = el.cloneNode();
+      if (el._transitionClasses) {
+        el._transitionClasses.forEach(function (cls) { removeClass(clone, cls); });
+      }
+      addClass(clone, moveClass);
+      clone.style.display = 'none';
+      this.$el.appendChild(clone);
+      var info = getTransitionInfo(clone);
+      this.$el.removeChild(clone);
       return (this._hasMove = info.hasTransform)
     }
   }
@@ -6652,25 +8280,26 @@ var platformComponents = {
 /*  */
 
 // install platform specific utils
-Vue$3.config.isUnknownElement = isUnknownElement;
-Vue$3.config.isReservedTag = isReservedTag;
-Vue$3.config.getTagNamespace = getTagNamespace;
 Vue$3.config.mustUseProp = mustUseProp;
+Vue$3.config.isReservedTag = isReservedTag;
+Vue$3.config.isReservedAttr = isReservedAttr;
+Vue$3.config.getTagNamespace = getTagNamespace;
+Vue$3.config.isUnknownElement = isUnknownElement;
 
 // install platform runtime directives & components
 extend(Vue$3.options.directives, platformDirectives);
 extend(Vue$3.options.components, platformComponents);
 
 // install platform patch function
-Vue$3.prototype.__patch__ = inBrowser ? patch$1 : noop;
+Vue$3.prototype.__patch__ = inBrowser ? patch : noop;
 
-// wrap mount
+// public mount method
 Vue$3.prototype.$mount = function (
   el,
   hydrating
 ) {
   el = el && inBrowser ? query(el) : undefined;
-  return this._mount(el, hydrating)
+  return mountComponent(this, el, hydrating)
 };
 
 // devtools global hook
@@ -6679,14 +8308,20 @@ setTimeout(function () {
   if (config.devtools) {
     if (devtools) {
       devtools.emit('init', Vue$3);
-    } else if (
-      false
-    ) {
-      console.log(
-        'Download the Vue Devtools for a better development experience:\n' +
+    } else if (false) {
+      console[console.info ? 'info' : 'log'](
+        'Download the Vue Devtools extension for a better development experience:\n' +
         'https://github.com/vuejs/vue-devtools'
       );
     }
+  }
+  if (false
+  ) {
+    console[console.info ? 'info' : 'log'](
+      "You are running Vue in development mode.\n" +
+      "Make sure to turn on production mode when deploying for production.\n" +
+      "See more tips at https://vuejs.org/guide/deployment.html"
+    );
   }
 }, 0);
 
@@ -6705,27 +8340,15 @@ var shouldDecodeNewlines = inBrowser ? shouldDecode('\n', '&#10;') : false;
 
 /*  */
 
-var decoder;
-
-function decode (html) {
-  decoder = decoder || document.createElement('div');
-  decoder.innerHTML = html;
-  return decoder.textContent
-}
-
-/*  */
-
 var isUnaryTag = makeMap(
   'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
-  'link,meta,param,source,track,wbr',
-  true
+  'link,meta,param,source,track,wbr'
 );
 
 // Elements that you can, intentionally, leave open
 // (and which close themselves)
 var canBeLeftOpenTag = makeMap(
-  'colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr,source',
-  true
+  'colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr,source'
 );
 
 // HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
@@ -6735,9 +8358,18 @@ var isNonPhrasingTag = makeMap(
   'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
   'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
   'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
-  'title,tr,track',
-  true
+  'title,tr,track'
 );
+
+/*  */
+
+var decoder;
+
+function decode (html) {
+  decoder = decoder || document.createElement('div');
+  decoder.innerHTML = html;
+  return decoder.textContent
+}
 
 /**
  * Not type-checking this file because it's mostly vendor code.
@@ -6784,52 +8416,35 @@ var IS_REGEX_CAPTURING_BROKEN = false;
 });
 
 // Special Elements (can contain anything)
-var isScriptOrStyle = makeMap('script,style', true);
-var hasLang = function (attr) { return attr.name === 'lang' && attr.value !== 'html'; };
-var isSpecialTag = function (tag, isSFC, stack) {
-  if (isScriptOrStyle(tag)) {
-    return true
-  }
-  if (isSFC && stack.length === 1) {
-    // top-level template that has no pre-processor
-    if (tag === 'template' && !stack[0].attrs.some(hasLang)) {
-      return false
-    } else {
-      return true
-    }
-  }
-  return false
-};
-
+var isPlainTextElement = makeMap('script,style,textarea', true);
 var reCache = {};
 
-var ltRE = /&lt;/g;
-var gtRE = /&gt;/g;
-var nlRE = /&#10;/g;
-var ampRE = /&amp;/g;
-var quoteRE = /&quot;/g;
+var decodingMap = {
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&amp;': '&',
+  '&#10;': '\n'
+};
+var encodedAttr = /&(?:lt|gt|quot|amp);/g;
+var encodedAttrWithNewLines = /&(?:lt|gt|quot|amp|#10);/g;
 
 function decodeAttr (value, shouldDecodeNewlines) {
-  if (shouldDecodeNewlines) {
-    value = value.replace(nlRE, '\n');
-  }
-  return value
-    .replace(ltRE, '<')
-    .replace(gtRE, '>')
-    .replace(ampRE, '&')
-    .replace(quoteRE, '"')
+  var re = shouldDecodeNewlines ? encodedAttrWithNewLines : encodedAttr;
+  return value.replace(re, function (match) { return decodingMap[match]; })
 }
 
 function parseHTML (html, options) {
   var stack = [];
   var expectHTML = options.expectHTML;
   var isUnaryTag$$1 = options.isUnaryTag || no;
+  var canBeLeftOpenTag$$1 = options.canBeLeftOpenTag || no;
   var index = 0;
   var last, lastTag;
   while (html) {
     last = html;
-    // Make sure we're not in a script or style element
-    if (!lastTag || !isSpecialTag(lastTag, options.sfc, stack)) {
+    // Make sure we're not in a plaintext content element like script/style
+    if (!lastTag || !isPlainTextElement(lastTag)) {
       var textEnd = html.indexOf('<');
       if (textEnd === 0) {
         // Comment:
@@ -6864,7 +8479,7 @@ function parseHTML (html, options) {
         if (endTagMatch) {
           var curIndex = index;
           advance(endTagMatch[0].length);
-          parseEndTag(endTagMatch[0], endTagMatch[1], curIndex, index);
+          parseEndTag(endTagMatch[1], curIndex, index);
           continue
         }
 
@@ -6877,7 +8492,7 @@ function parseHTML (html, options) {
       }
 
       var text = (void 0), rest$1 = (void 0), next = (void 0);
-      if (textEnd > 0) {
+      if (textEnd >= 0) {
         rest$1 = html.slice(textEnd);
         while (
           !endTag.test(rest$1) &&
@@ -6909,7 +8524,7 @@ function parseHTML (html, options) {
       var endTagLength = 0;
       var rest = html.replace(reStackedTag, function (all, text, endTag) {
         endTagLength = endTag.length;
-        if (stackedTag !== 'script' && stackedTag !== 'style' && stackedTag !== 'noscript') {
+        if (!isPlainTextElement(stackedTag) && stackedTag !== 'noscript') {
           text = text
             .replace(/<!--([\s\S]*?)-->/g, '$1')
             .replace(/<!\[CDATA\[([\s\S]*?)]]>/g, '$1');
@@ -6921,11 +8536,14 @@ function parseHTML (html, options) {
       });
       index += html.length - rest.length;
       html = rest;
-      parseEndTag('</' + stackedTag + '>', stackedTag, index - endTagLength, index);
+      parseEndTag(stackedTag, index - endTagLength, index);
     }
 
-    if (html === last && options.chars) {
-      options.chars(html);
+    if (html === last) {
+      options.chars && options.chars(html);
+      if (false) {
+        options.warn(("Mal-formatted tag at end of template: \"" + html + "\""));
+      }
       break
     }
   }
@@ -6967,10 +8585,10 @@ function parseHTML (html, options) {
 
     if (expectHTML) {
       if (lastTag === 'p' && isNonPhrasingTag(tagName)) {
-        parseEndTag('', lastTag);
+        parseEndTag(lastTag);
       }
-      if (canBeLeftOpenTag(tagName) && lastTag === tagName) {
-        parseEndTag('', tagName);
+      if (canBeLeftOpenTag$$1(tagName) && lastTag === tagName) {
+        parseEndTag(tagName);
       }
     }
 
@@ -6997,9 +8615,8 @@ function parseHTML (html, options) {
     }
 
     if (!unary) {
-      stack.push({ tag: tagName, attrs: attrs });
+      stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs });
       lastTag = tagName;
-      unarySlash = '';
     }
 
     if (options.start) {
@@ -7007,16 +8624,19 @@ function parseHTML (html, options) {
     }
   }
 
-  function parseEndTag (tag, tagName, start, end) {
-    var pos;
+  function parseEndTag (tagName, start, end) {
+    var pos, lowerCasedTagName;
     if (start == null) { start = index; }
     if (end == null) { end = index; }
 
+    if (tagName) {
+      lowerCasedTagName = tagName.toLowerCase();
+    }
+
     // Find the closest opened tag of the same type
     if (tagName) {
-      var needle = tagName.toLowerCase();
       for (pos = stack.length - 1; pos >= 0; pos--) {
-        if (stack[pos].tag.toLowerCase() === needle) {
+        if (stack[pos].lowerCasedTag === lowerCasedTagName) {
           break
         }
       }
@@ -7028,6 +8648,12 @@ function parseHTML (html, options) {
     if (pos >= 0) {
       // Close all the open elements, up the stack
       for (var i = stack.length - 1; i >= pos; i--) {
+        if (false
+        ) {
+          options.warn(
+            ("tag <" + (stack[i].tag) + "> has no matching end tag.")
+          );
+        }
         if (options.end) {
           options.end(stack[i].tag, start, end);
         }
@@ -7036,11 +8662,11 @@ function parseHTML (html, options) {
       // Remove the open elements from the stack
       stack.length = pos;
       lastTag = pos && stack[pos - 1].tag;
-    } else if (tagName.toLowerCase() === 'br') {
+    } else if (lowerCasedTagName === 'br') {
       if (options.start) {
         options.start(tagName, [], true, start, end);
       }
-    } else if (tagName.toLowerCase() === 'p') {
+    } else if (lowerCasedTagName === 'p') {
       if (options.start) {
         options.start(tagName, [], false, start, end);
       }
@@ -7053,104 +8679,8 @@ function parseHTML (html, options) {
 
 /*  */
 
-function parseFilters (exp) {
-  var inSingle = false;
-  var inDouble = false;
-  var inTemplateString = false;
-  var inRegex = false;
-  var curly = 0;
-  var square = 0;
-  var paren = 0;
-  var lastFilterIndex = 0;
-  var c, prev, i, expression, filters;
-
-  for (i = 0; i < exp.length; i++) {
-    prev = c;
-    c = exp.charCodeAt(i);
-    if (inSingle) {
-      if (c === 0x27 && prev !== 0x5C) { inSingle = false; }
-    } else if (inDouble) {
-      if (c === 0x22 && prev !== 0x5C) { inDouble = false; }
-    } else if (inTemplateString) {
-      if (c === 0x60 && prev !== 0x5C) { inTemplateString = false; }
-    } else if (inRegex) {
-      if (c === 0x2f && prev !== 0x5C) { inRegex = false; }
-    } else if (
-      c === 0x7C && // pipe
-      exp.charCodeAt(i + 1) !== 0x7C &&
-      exp.charCodeAt(i - 1) !== 0x7C &&
-      !curly && !square && !paren
-    ) {
-      if (expression === undefined) {
-        // first filter, end of expression
-        lastFilterIndex = i + 1;
-        expression = exp.slice(0, i).trim();
-      } else {
-        pushFilter();
-      }
-    } else {
-      switch (c) {
-        case 0x22: inDouble = true; break         // "
-        case 0x27: inSingle = true; break         // '
-        case 0x60: inTemplateString = true; break // `
-        case 0x28: paren++; break                 // (
-        case 0x29: paren--; break                 // )
-        case 0x5B: square++; break                // [
-        case 0x5D: square--; break                // ]
-        case 0x7B: curly++; break                 // {
-        case 0x7D: curly--; break                 // }
-      }
-      if (c === 0x2f) { // /
-        var j = i - 1;
-        var p = (void 0);
-        // find first non-whitespace prev char
-        for (; j >= 0; j--) {
-          p = exp.charAt(j);
-          if (p !== ' ') { break }
-        }
-        if (!p || !/[\w$]/.test(p)) {
-          inRegex = true;
-        }
-      }
-    }
-  }
-
-  if (expression === undefined) {
-    expression = exp.slice(0, i).trim();
-  } else if (lastFilterIndex !== 0) {
-    pushFilter();
-  }
-
-  function pushFilter () {
-    (filters || (filters = [])).push(exp.slice(lastFilterIndex, i).trim());
-    lastFilterIndex = i + 1;
-  }
-
-  if (filters) {
-    for (i = 0; i < filters.length; i++) {
-      expression = wrapFilter(expression, filters[i]);
-    }
-  }
-
-  return expression
-}
-
-function wrapFilter (exp, filter) {
-  var i = filter.indexOf('(');
-  if (i < 0) {
-    // _f: resolveFilter
-    return ("_f(\"" + filter + "\")(" + exp + ")")
-  } else {
-    var name = filter.slice(0, i);
-    var args = filter.slice(i + 1);
-    return ("_f(\"" + name + "\")(" + exp + "," + args)
-  }
-}
-
-/*  */
-
 var defaultTagRE = /\{\{((?:.|\n)+?)\}\}/g;
-var regexEscapeRE = /[-.*+?^${}()|[\]/\\]/g;
+var regexEscapeRE = /[-.*+?^${}()|[\]\/\\]/g;
 
 var buildRegex = cached(function (delimiters) {
   var open = delimiters[0].replace(regexEscapeRE, '\\$&');
@@ -7188,215 +8718,26 @@ function parseText (
 
 /*  */
 
-function baseWarn (msg) {
-  console.error(("[Vue parser]: " + msg));
-}
-
-function pluckModuleFunction (
-  modules,
-  key
-) {
-  return modules
-    ? modules.map(function (m) { return m[key]; }).filter(function (_) { return _; })
-    : []
-}
-
-function addProp (el, name, value) {
-  (el.props || (el.props = [])).push({ name: name, value: value });
-}
-
-function addAttr (el, name, value) {
-  (el.attrs || (el.attrs = [])).push({ name: name, value: value });
-}
-
-function addDirective (
-  el,
-  name,
-  rawName,
-  value,
-  arg,
-  modifiers
-) {
-  (el.directives || (el.directives = [])).push({ name: name, rawName: rawName, value: value, arg: arg, modifiers: modifiers });
-}
-
-function addHandler (
-  el,
-  name,
-  value,
-  modifiers,
-  important
-) {
-  // check capture modifier
-  if (modifiers && modifiers.capture) {
-    delete modifiers.capture;
-    name = '!' + name; // mark the event as captured
-  }
-  if (modifiers && modifiers.once) {
-    delete modifiers.once;
-    name = '~' + name; // mark the event as once
-  }
-  var events;
-  if (modifiers && modifiers.native) {
-    delete modifiers.native;
-    events = el.nativeEvents || (el.nativeEvents = {});
-  } else {
-    events = el.events || (el.events = {});
-  }
-  var newHandler = { value: value, modifiers: modifiers };
-  var handlers = events[name];
-  /* istanbul ignore if */
-  if (Array.isArray(handlers)) {
-    important ? handlers.unshift(newHandler) : handlers.push(newHandler);
-  } else if (handlers) {
-    events[name] = important ? [newHandler, handlers] : [handlers, newHandler];
-  } else {
-    events[name] = newHandler;
-  }
-}
-
-function getBindingAttr (
-  el,
-  name,
-  getStatic
-) {
-  var dynamicValue =
-    getAndRemoveAttr(el, ':' + name) ||
-    getAndRemoveAttr(el, 'v-bind:' + name);
-  if (dynamicValue != null) {
-    return parseFilters(dynamicValue)
-  } else if (getStatic !== false) {
-    var staticValue = getAndRemoveAttr(el, name);
-    if (staticValue != null) {
-      return JSON.stringify(staticValue)
-    }
-  }
-}
-
-function getAndRemoveAttr (el, name) {
-  var val;
-  if ((val = el.attrsMap[name]) != null) {
-    var list = el.attrsList;
-    for (var i = 0, l = list.length; i < l; i++) {
-      if (list[i].name === name) {
-        list.splice(i, 1);
-        break
-      }
-    }
-  }
-  return val
-}
-
-var len;
-var str;
-var chr;
-var index$1;
-var expressionPos;
-var expressionEndPos;
-
-/**
- * parse directive model to do the array update transform. a[idx] = val => $$a.splice($$idx, 1, val)
- *
- * for loop possible cases:
- *
- * - test
- * - test[idx]
- * - test[test1[idx]]
- * - test["a"][idx]
- * - xxx.test[a[a].test1[idx]]
- * - test.xxx.a["asa"][test1[idx]]
- *
- */
-
-function parseModel (val) {
-  str = val;
-  len = str.length;
-  index$1 = expressionPos = expressionEndPos = 0;
-
-  if (val.indexOf('[') < 0 || val.lastIndexOf(']') < len - 1) {
-    return {
-      exp: val,
-      idx: null
-    }
-  }
-
-  while (!eof()) {
-    chr = next();
-    /* istanbul ignore if */
-    if (isStringStart(chr)) {
-      parseString(chr);
-    } else if (chr === 0x5B) {
-      parseBracket(chr);
-    }
-  }
-
-  return {
-    exp: val.substring(0, expressionPos),
-    idx: val.substring(expressionPos + 1, expressionEndPos)
-  }
-}
-
-function next () {
-  return str.charCodeAt(++index$1)
-}
-
-function eof () {
-  return index$1 >= len
-}
-
-function isStringStart (chr) {
-  return chr === 0x22 || chr === 0x27
-}
-
-function parseBracket (chr) {
-  var inBracket = 1;
-  expressionPos = index$1;
-  while (!eof()) {
-    chr = next();
-    if (isStringStart(chr)) {
-      parseString(chr);
-      continue
-    }
-    if (chr === 0x5B) { inBracket++; }
-    if (chr === 0x5D) { inBracket--; }
-    if (inBracket === 0) {
-      expressionEndPos = index$1;
-      break
-    }
-  }
-}
-
-function parseString (chr) {
-  var stringQuote = chr;
-  while (!eof()) {
-    chr = next();
-    if (chr === stringQuote) {
-      break
-    }
-  }
-}
-
-/*  */
-
+var onRE = /^@|^v-on:/;
 var dirRE = /^v-|^@|^:/;
 var forAliasRE = /(.*?)\s+(?:in|of)\s+(.*)/;
 var forIteratorRE = /\((\{[^}]*\}|[^,]*),([^,]*)(?:,([^,]*))?\)/;
-var bindRE = /^:|^v-bind:/;
-var onRE = /^@|^v-on:/;
+
 var argRE = /:(.*)$/;
+var bindRE = /^:|^v-bind:/;
 var modifierRE = /\.[^.]+/g;
 
 var decodeHTMLCached = cached(decode);
 
 // configurable state
-var warn$1;
-var platformGetTagNamespace;
-var platformMustUseProp;
-var platformIsPreTag;
-var preTransforms;
-var transforms;
-var postTransforms;
+var warn$2;
 var delimiters;
+var transforms;
+var preTransforms;
+var postTransforms;
+var platformIsPreTag;
+var platformMustUseProp;
+var platformGetTagNamespace;
 
 /**
  * Convert HTML string to AST.
@@ -7405,7 +8746,7 @@ function parse (
   template,
   options
 ) {
-  warn$1 = options.warn || baseWarn;
+  warn$2 = options.warn || baseWarn;
   platformGetTagNamespace = options.getTagNamespace || no;
   platformMustUseProp = options.mustUseProp || no;
   platformIsPreTag = options.isPreTag || no;
@@ -7413,6 +8754,7 @@ function parse (
   transforms = pluckModuleFunction(options.modules, 'transformNode');
   postTransforms = pluckModuleFunction(options.modules, 'postTransformNode');
   delimiters = options.delimiters;
+
   var stack = [];
   var preserveWhitespace = options.preserveWhitespace !== false;
   var root;
@@ -7420,9 +8762,29 @@ function parse (
   var inVPre = false;
   var inPre = false;
   var warned = false;
+
+  function warnOnce (msg) {
+    if (!warned) {
+      warned = true;
+      warn$2(msg);
+    }
+  }
+
+  function endPre (element) {
+    // check pre state
+    if (element.pre) {
+      inVPre = false;
+    }
+    if (platformIsPreTag(element.tag)) {
+      inPre = false;
+    }
+  }
+
   parseHTML(template, {
+    warn: warn$2,
     expectHTML: options.expectHTML,
     isUnaryTag: options.isUnaryTag,
+    canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldDecodeNewlines: options.shouldDecodeNewlines,
     start: function start (tag, attrs, unary) {
       // check namespace.
@@ -7449,10 +8811,10 @@ function parse (
 
       if (isForbiddenTag(element) && !isServerRendering()) {
         element.forbidden = true;
-        "production" !== 'production' && warn$1(
+        "production" !== 'production' && warn$2(
           'Templates should only be responsible for mapping the state to the ' +
           'UI. Avoid placing tags with side-effects in your templates, such as ' +
-          "<" + tag + ">."
+          "<" + tag + ">" + ', as they will not be parsed.'
         );
       }
 
@@ -7494,17 +8856,15 @@ function parse (
       function checkRootConstraints (el) {
         if (false) {
           if (el.tag === 'slot' || el.tag === 'template') {
-            warned = true;
-            warn$1(
+            warnOnce(
               "Cannot use <" + (el.tag) + "> as component root element because it may " +
-              'contain multiple nodes:\n' + template
+              'contain multiple nodes.'
             );
           }
           if (el.attrsMap.hasOwnProperty('v-for')) {
-            warned = true;
-            warn$1(
+            warnOnce(
               'Cannot use v-for on stateful component root element because ' +
-              'it renders multiple elements:\n' + template
+              'it renders multiple elements.'
             );
           }
         }
@@ -7523,10 +8883,8 @@ function parse (
             block: element
           });
         } else if (false) {
-          warned = true;
-          warn$1(
-            "Component template should contain exactly one root element:" +
-            "\n\n" + template + "\n\n" +
+          warnOnce(
+            "Component template should contain exactly one root element. " +
             "If you are using v-if on multiple elements, " +
             "use v-else-if to chain them instead."
           );
@@ -7537,7 +8895,7 @@ function parse (
           processIfConditions(element, currentParent);
         } else if (element.slotScope) { // scoped slot
           currentParent.plain = false;
-          var name = element.slotTarget || 'default';(currentParent.scopedSlots || (currentParent.scopedSlots = {}))[name] = element;
+          var name = element.slotTarget || '"default"';(currentParent.scopedSlots || (currentParent.scopedSlots = {}))[name] = element;
         } else {
           currentParent.children.push(element);
           element.parent = currentParent;
@@ -7546,6 +8904,8 @@ function parse (
       if (!unary) {
         currentParent = element;
         stack.push(element);
+      } else {
+        endPre(element);
       }
       // apply post-transforms
       for (var i$2 = 0; i$2 < postTransforms.length; i$2++) {
@@ -7557,52 +8917,53 @@ function parse (
       // remove trailing whitespace
       var element = stack[stack.length - 1];
       var lastNode = element.children[element.children.length - 1];
-      if (lastNode && lastNode.type === 3 && lastNode.text === ' ') {
+      if (lastNode && lastNode.type === 3 && lastNode.text === ' ' && !inPre) {
         element.children.pop();
       }
       // pop stack
       stack.length -= 1;
       currentParent = stack[stack.length - 1];
-      // check pre state
-      if (element.pre) {
-        inVPre = false;
-      }
-      if (platformIsPreTag(element.tag)) {
-        inPre = false;
-      }
+      endPre(element);
     },
 
     chars: function chars (text) {
       if (!currentParent) {
         if (false) {
-          warned = true;
-          warn$1(
-            'Component template requires a root element, rather than just text:\n\n' + template
-          );
+          if (text === template) {
+            warnOnce(
+              'Component template requires a root element, rather than just text.'
+            );
+          } else if ((text = text.trim())) {
+            warnOnce(
+              ("text \"" + text + "\" outside root element will be ignored.")
+            );
+          }
         }
         return
       }
       // IE textarea placeholder bug
       /* istanbul ignore if */
       if (isIE &&
-          currentParent.tag === 'textarea' &&
-          currentParent.attrsMap.placeholder === text) {
+        currentParent.tag === 'textarea' &&
+        currentParent.attrsMap.placeholder === text
+      ) {
         return
       }
+      var children = currentParent.children;
       text = inPre || text.trim()
-        ? decodeHTMLCached(text)
+        ? isTextTag(currentParent) ? text : decodeHTMLCached(text)
         // only preserve whitespace if its not right after a starting tag
-        : preserveWhitespace && currentParent.children.length ? ' ' : '';
+        : preserveWhitespace && children.length ? ' ' : '';
       if (text) {
         var expression;
         if (!inVPre && text !== ' ' && (expression = parseText(text, delimiters))) {
-          currentParent.children.push({
+          children.push({
             type: 2,
             expression: expression,
             text: text
           });
-        } else {
-          currentParent.children.push({
+        } else if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
+          children.push({
             type: 3,
             text: text
           });
@@ -7639,7 +9000,7 @@ function processKey (el) {
   var exp = getBindingAttr(el, 'key');
   if (exp) {
     if (false) {
-      warn$1("<template> cannot be keyed. Place the key on real elements instead.");
+      warn$2("<template> cannot be keyed. Place the key on real elements instead.");
     }
     el.key = exp;
   }
@@ -7658,7 +9019,7 @@ function processFor (el) {
   if ((exp = getAndRemoveAttr(el, 'v-for'))) {
     var inMatch = exp.match(forAliasRE);
     if (!inMatch) {
-      "production" !== 'production' && warn$1(
+      "production" !== 'production' && warn$2(
         ("Invalid v-for expression: " + exp)
       );
       return
@@ -7705,10 +9066,27 @@ function processIfConditions (el, parent) {
       block: el
     });
   } else if (false) {
-    warn$1(
+    warn$2(
       "v-" + (el.elseif ? ('else-if="' + el.elseif + '"') : 'else') + " " +
       "used on element <" + (el.tag) + "> without corresponding v-if."
     );
+  }
+}
+
+function findPrevElement (children) {
+  var i = children.length;
+  while (i--) {
+    if (children[i].type === 1) {
+      return children[i]
+    } else {
+      if (false) {
+        warn$2(
+          "text \"" + (children[i].text.trim()) + "\" between v-if and v-else(-if) " +
+          "will be ignored."
+        );
+      }
+      children.pop();
+    }
   }
 }
 
@@ -7720,8 +9098,8 @@ function addIfCondition (el, condition) {
 }
 
 function processOnce (el) {
-  var once = getAndRemoveAttr(el, 'v-once');
-  if (once != null) {
+  var once$$1 = getAndRemoveAttr(el, 'v-once');
+  if (once$$1 != null) {
     el.once = true;
   }
 }
@@ -7730,7 +9108,7 @@ function processSlot (el) {
   if (el.tag === 'slot') {
     el.slotName = getBindingAttr(el, 'name');
     if (false) {
-      warn$1(
+      warn$2(
         "`key` does not work on <slot> because slots are abstract outlets " +
         "and can possibly expand into multiple elements. " +
         "Use the key on a wrapping element instead."
@@ -7759,7 +9137,7 @@ function processComponent (el) {
 
 function processAttrs (el) {
   var list = el.attrsList;
-  var i, l, name, rawName, value, arg, modifiers, isProp;
+  var i, l, name, rawName, value, modifiers, isProp;
   for (i = 0, l = list.length; i < l; i++) {
     name = rawName = list[i].name;
     value = list[i].value;
@@ -7784,20 +9162,28 @@ function processAttrs (el) {
           if (modifiers.camel) {
             name = camelize(name);
           }
+          if (modifiers.sync) {
+            addHandler(
+              el,
+              ("update:" + (camelize(name))),
+              genAssignmentCode(value, "$event")
+            );
+          }
         }
-        if (isProp || platformMustUseProp(el.tag, name)) {
+        if (isProp || platformMustUseProp(el.tag, el.attrsMap.type, name)) {
           addProp(el, name, value);
         } else {
           addAttr(el, name, value);
         }
       } else if (onRE.test(name)) { // v-on
         name = name.replace(onRE, '');
-        addHandler(el, name, value, modifiers);
+        addHandler(el, name, value, modifiers, false, warn$2);
       } else { // normal directives
         name = name.replace(dirRE, '');
         // parse arg
         var argMatch = name.match(argRE);
-        if (argMatch && (arg = argMatch[1])) {
+        var arg = argMatch && argMatch[1];
+        if (arg) {
           name = name.slice(0, -(arg.length + 1));
         }
         addDirective(el, name, rawName, value, arg, modifiers);
@@ -7810,7 +9196,7 @@ function processAttrs (el) {
       if (false) {
         var expression = parseText(value, delimiters);
         if (expression) {
-          warn$1(
+          warn$2(
             name + "=\"" + value + "\": " +
             'Interpolation inside attributes has been removed. ' +
             'Use v-bind or the colon shorthand instead. For example, ' +
@@ -7846,19 +9232,19 @@ function parseModifiers (name) {
 function makeAttrsMap (attrs) {
   var map = {};
   for (var i = 0, l = attrs.length; i < l; i++) {
-    if (false) {
-      warn$1('duplicate attribute: ' + attrs[i].name);
+    if (
+      false
+    ) {
+      warn$2('duplicate attribute: ' + attrs[i].name);
     }
     map[attrs[i].name] = attrs[i].value;
   }
   return map
 }
 
-function findPrevElement (children) {
-  var i = children.length;
-  while (i--) {
-    if (children[i].tag) { return children[i] }
-  }
+// for script (e.g. type="x/template") or style, do not decode content
+function isTextTag (el) {
+  return el.tag === 'script' || el.tag === 'style'
 }
 
 function isForbiddenTag (el) {
@@ -7891,7 +9277,7 @@ function checkForAliasModel (el, value) {
   var _el = el;
   while (_el) {
     if (_el.for && _el.alias === value) {
-      warn$1(
+      warn$2(
         "<" + (el.tag) + " v-model=\"" + value + "\">: " +
         "You are binding v-model directly to a v-for iteration alias. " +
         "This will not be able to modify the v-for source array because " +
@@ -7926,7 +9312,7 @@ function optimize (root, options) {
   isStaticKey = genStaticKeysCached(options.staticKeys || '');
   isPlatformReservedTag = options.isReservedTag || no;
   // first pass: mark all non-static nodes.
-  markStatic(root);
+  markStatic$1(root);
   // second pass: mark static roots.
   markStaticRoots(root, false);
 }
@@ -7938,7 +9324,7 @@ function genStaticKeys$1 (keys) {
   )
 }
 
-function markStatic (node) {
+function markStatic$1 (node) {
   node.static = isStatic(node);
   if (node.type === 1) {
     // do not make component slot content static. this avoids
@@ -7953,7 +9339,7 @@ function markStatic (node) {
     }
     for (var i = 0, l = node.children.length; i < l; i++) {
       var child = node.children[i];
-      markStatic(child);
+      markStatic$1(child);
       if (!child.static) {
         node.static = false;
       }
@@ -8043,20 +9429,41 @@ var keyCodes = {
   'delete': [8, 46]
 };
 
+// #4868: modifiers that prevent the execution of the listener
+// need to explicitly return null so that we can determine whether to remove
+// the listener for .once
+var genGuard = function (condition) { return ("if(" + condition + ")return null;"); };
+
 var modifierCode = {
   stop: '$event.stopPropagation();',
   prevent: '$event.preventDefault();',
-  self: 'if($event.target !== $event.currentTarget)return;',
-  ctrl: 'if(!$event.ctrlKey)return;',
-  shift: 'if(!$event.shiftKey)return;',
-  alt: 'if(!$event.altKey)return;',
-  meta: 'if(!$event.metaKey)return;'
+  self: genGuard("$event.target !== $event.currentTarget"),
+  ctrl: genGuard("!$event.ctrlKey"),
+  shift: genGuard("!$event.shiftKey"),
+  alt: genGuard("!$event.altKey"),
+  meta: genGuard("!$event.metaKey"),
+  left: genGuard("'button' in $event && $event.button !== 0"),
+  middle: genGuard("'button' in $event && $event.button !== 1"),
+  right: genGuard("'button' in $event && $event.button !== 2")
 };
 
-function genHandlers (events, native) {
-  var res = native ? 'nativeOn:{' : 'on:{';
+function genHandlers (
+  events,
+  isNative,
+  warn
+) {
+  var res = isNative ? 'nativeOn:{' : 'on:{';
   for (var name in events) {
-    res += "\"" + name + "\":" + (genHandler(name, events[name])) + ",";
+    var handler = events[name];
+    // #5330: warn click.right, since right clicks do not actually fire click events.
+    if (false
+    ) {
+      warn(
+        "Use \"contextmenu\" instead of \"click.right\" since right clicks " +
+        "do not actually fire \"click\" events."
+      );
+    }
+    res += "\"" + name + "\":" + (genHandler(name, handler)) + ",";
   }
   return res.slice(0, -1) + '}'
 }
@@ -8067,34 +9474,52 @@ function genHandler (
 ) {
   if (!handler) {
     return 'function(){}'
-  } else if (Array.isArray(handler)) {
+  }
+
+  if (Array.isArray(handler)) {
     return ("[" + (handler.map(function (handler) { return genHandler(name, handler); }).join(',')) + "]")
-  } else if (!handler.modifiers) {
-    return fnExpRE.test(handler.value) || simplePathRE.test(handler.value)
+  }
+
+  var isMethodPath = simplePathRE.test(handler.value);
+  var isFunctionExpression = fnExpRE.test(handler.value);
+
+  if (!handler.modifiers) {
+    return isMethodPath || isFunctionExpression
       ? handler.value
-      : ("function($event){" + (handler.value) + "}")
+      : ("function($event){" + (handler.value) + "}") // inline statement
   } else {
     var code = '';
+    var genModifierCode = '';
     var keys = [];
     for (var key in handler.modifiers) {
       if (modifierCode[key]) {
-        code += modifierCode[key];
+        genModifierCode += modifierCode[key];
+        // left/right
+        if (keyCodes[key]) {
+          keys.push(key);
+        }
       } else {
         keys.push(key);
       }
     }
     if (keys.length) {
-      code = genKeyFilter(keys) + code;
+      code += genKeyFilter(keys);
     }
-    var handlerCode = simplePathRE.test(handler.value)
+    // Make sure modifiers like prevent and stop get executed after key filtering
+    if (genModifierCode) {
+      code += genModifierCode;
+    }
+    var handlerCode = isMethodPath
       ? handler.value + '($event)'
-      : handler.value;
-    return 'function($event){' + code + handlerCode + '}'
+      : isFunctionExpression
+        ? ("(" + (handler.value) + ")($event)")
+        : handler.value;
+    return ("function($event){" + code + handlerCode + "}")
   }
 }
 
 function genKeyFilter (keys) {
-  return ("if(" + (keys.map(genFilterCode).join('&&')) + ")return;")
+  return ("if(!('button' in $event)&&" + (keys.map(genFilterCode).join('&&')) + ")return null;")
 }
 
 function genFilterCode (key) {
@@ -8108,24 +9533,27 @@ function genFilterCode (key) {
 
 /*  */
 
-function bind$2 (el, dir) {
+function bind$1 (el, dir) {
   el.wrapData = function (code) {
     return ("_b(" + code + ",'" + (el.tag) + "'," + (dir.value) + (dir.modifiers && dir.modifiers.prop ? ',true' : '') + ")")
   };
 }
 
+/*  */
+
 var baseDirectives = {
-  bind: bind$2,
+  bind: bind$1,
   cloak: noop
 };
 
 /*  */
 
 // configurable state
-var warn$2;
+var warn$3;
 var transforms$1;
 var dataGenFns;
 var platformDirectives$1;
+var isPlatformReservedTag$1;
 var staticRenderFns;
 var onceCount;
 var currentOptions;
@@ -8140,10 +9568,11 @@ function generate (
   var prevOnceCount = onceCount;
   onceCount = 0;
   currentOptions = options;
-  warn$2 = options.warn || baseWarn;
+  warn$3 = options.warn || baseWarn;
   transforms$1 = pluckModuleFunction(options.modules, 'transformCode');
   dataGenFns = pluckModuleFunction(options.modules, 'genData');
   platformDirectives$1 = options.directives || {};
+  isPlatformReservedTag$1 = options.isReservedTag || no;
   var code = ast ? genElement(ast) : '_c("div")';
   staticRenderFns = prevStaticRenderFns;
   onceCount = prevOnceCount;
@@ -8208,7 +9637,7 @@ function genOnce (el) {
       parent = parent.parent;
     }
     if (!key) {
-      "production" !== 'production' && warn$2(
+      "production" !== 'production' && warn$3(
         "v-once can only be used inside v-for that is keyed. "
       );
       return genElement(el)
@@ -8247,6 +9676,18 @@ function genFor (el) {
   var alias = el.alias;
   var iterator1 = el.iterator1 ? ("," + (el.iterator1)) : '';
   var iterator2 = el.iterator2 ? ("," + (el.iterator2)) : '';
+
+  if (
+    false
+  ) {
+    warn$3(
+      "<" + (el.tag) + " v-for=\"" + alias + " in " + exp + "\">: component lists rendered with " +
+      "v-for should have explicit keys. " +
+      "See https://vuejs.org/guide/list.html#key for more info.",
+      true /* tip */
+    );
+  }
+
   el.forProcessed = true; // avoid recursion
   return "_l((" + exp + ")," +
     "function(" + alias + iterator1 + iterator2 + "){" +
@@ -8295,10 +9736,10 @@ function genData (el) {
   }
   // event handlers
   if (el.events) {
-    data += (genHandlers(el.events)) + ",";
+    data += (genHandlers(el.events, false, warn$3)) + ",";
   }
   if (el.nativeEvents) {
-    data += (genHandlers(el.nativeEvents, true)) + ",";
+    data += (genHandlers(el.nativeEvents, true, warn$3)) + ",";
   }
   // slot target
   if (el.slotTarget) {
@@ -8307,6 +9748,10 @@ function genData (el) {
   // scoped slots
   if (el.scopedSlots) {
     data += (genScopedSlots(el.scopedSlots)) + ",";
+  }
+  // component v-model
+  if (el.model) {
+    data += "model:{value:" + (el.model.value) + ",callback:" + (el.model.callback) + ",expression:" + (el.model.expression) + "},";
   }
   // inline-template
   if (el.inlineTemplate) {
@@ -8336,7 +9781,7 @@ function genDirectives (el) {
     if (gen) {
       // compile-time directive that manipulates AST.
       // returns true if it also needs a runtime counterpart.
-      needRuntime = !!gen(el, dir, warn$2);
+      needRuntime = !!gen(el, dir, warn$3);
     }
     if (needRuntime) {
       hasRuntime = true;
@@ -8351,7 +9796,7 @@ function genDirectives (el) {
 function genInlineTemplate (el) {
   var ast = el.children[0];
   if (false) {
-    warn$2('Inline-template components must have exactly one child element.');
+    warn$3('Inline-template components must have exactly one child element.');
   }
   if (ast.type === 1) {
     var inlineRenderFns = generate(ast, currentOptions);
@@ -8360,14 +9805,29 @@ function genInlineTemplate (el) {
 }
 
 function genScopedSlots (slots) {
-  return ("scopedSlots:{" + (Object.keys(slots).map(function (key) { return genScopedSlot(key, slots[key]); }).join(',')) + "}")
+  return ("scopedSlots:_u([" + (Object.keys(slots).map(function (key) { return genScopedSlot(key, slots[key]); }).join(',')) + "])")
 }
 
 function genScopedSlot (key, el) {
-  return key + ":function(" + (String(el.attrsMap.scope)) + "){" +
+  if (el.for && !el.forProcessed) {
+    return genForScopedSlot(key, el)
+  }
+  return "{key:" + key + ",fn:function(" + (String(el.attrsMap.scope)) + "){" +
     "return " + (el.tag === 'template'
       ? genChildren(el) || 'void 0'
-      : genElement(el)) + "}"
+      : genElement(el)) + "}}"
+}
+
+function genForScopedSlot (key, el) {
+  var exp = el.for;
+  var alias = el.alias;
+  var iterator1 = el.iterator1 ? ("," + (el.iterator1)) : '';
+  var iterator2 = el.iterator2 ? ("," + (el.iterator2)) : '';
+  el.forProcessed = true; // avoid recursion
+  return "_l((" + exp + ")," +
+    "function(" + alias + iterator1 + iterator2 + "){" +
+      "return " + (genScopedSlot(key, el)) +
+    '})'
 }
 
 function genChildren (el, checkSkip) {
@@ -8376,30 +9836,47 @@ function genChildren (el, checkSkip) {
     var el$1 = children[0];
     // optimize single v-for
     if (children.length === 1 &&
-        el$1.for &&
-        el$1.tag !== 'template' &&
-        el$1.tag !== 'slot') {
+      el$1.for &&
+      el$1.tag !== 'template' &&
+      el$1.tag !== 'slot'
+    ) {
       return genElement(el$1)
     }
-    return ("[" + (children.map(genNode).join(',')) + "]" + (checkSkip
-        ? canSkipNormalization(children) ? '' : ',true'
-        : ''))
+    var normalizationType = checkSkip ? getNormalizationType(children) : 0;
+    return ("[" + (children.map(genNode).join(',')) + "]" + (normalizationType ? ("," + normalizationType) : ''))
   }
 }
 
-function canSkipNormalization (children) {
+// determine the normalization needed for the children array.
+// 0: no normalization needed
+// 1: simple normalization needed (possible 1-level deep nested array)
+// 2: full normalization needed
+function getNormalizationType (children) {
+  var res = 0;
   for (var i = 0; i < children.length; i++) {
     var el = children[i];
+    if (el.type !== 1) {
+      continue
+    }
     if (needsNormalization(el) ||
-        (el.if && el.ifConditions.some(function (c) { return needsNormalization(c.block); }))) {
-      return false
+        (el.ifConditions && el.ifConditions.some(function (c) { return needsNormalization(c.block); }))) {
+      res = 2;
+      break
+    }
+    if (maybeComponent(el) ||
+        (el.ifConditions && el.ifConditions.some(function (c) { return maybeComponent(c.block); }))) {
+      res = 1;
     }
   }
-  return true
+  return res
 }
 
 function needsNormalization (el) {
-  return el.for || el.tag === 'template' || el.tag === 'slot'
+  return el.for !== undefined || el.tag === 'template' || el.tag === 'slot'
+}
+
+function maybeComponent (el) {
+  return !isPlatformReservedTag$1(el.tag)
 }
 
 function genNode (node) {
@@ -8419,7 +9896,19 @@ function genText (text) {
 function genSlot (el) {
   var slotName = el.slotName || '"default"';
   var children = genChildren(el);
-  return ("_t(" + slotName + (children ? ("," + children) : '') + (el.attrs ? ((children ? '' : ',null') + ",{" + (el.attrs.map(function (a) { return ((camelize(a.name)) + ":" + (a.value)); }).join(',')) + "}") : '') + ")")
+  var res = "_t(" + slotName + (children ? ("," + children) : '');
+  var attrs = el.attrs && ("{" + (el.attrs.map(function (a) { return ((camelize(a.name)) + ":" + (a.value)); }).join(',')) + "}");
+  var bind$$1 = el.attrsMap['v-bind'];
+  if ((attrs || bind$$1) && !children) {
+    res += ",null";
+  }
+  if (attrs) {
+    res += "," + attrs;
+  }
+  if (bind$$1) {
+    res += (attrs ? '' : ',null') + "," + bind$$1;
+  }
+  return res + ')'
 }
 
 // componentName is el.component, take it as argument to shun flow's pessimistic refinement
@@ -8446,33 +9935,22 @@ function transformSpecialNewlines (text) {
 
 /*  */
 
-/**
- * Compile a template.
- */
-function compile$1 (
-  template,
-  options
-) {
-  var ast = parse(template.trim(), options);
-  optimize(ast, options);
-  var code = generate(ast, options);
-  return {
-    ast: ast,
-    render: code.render,
-    staticRenderFns: code.staticRenderFns
-  }
-}
-
-/*  */
-
-// operators like typeof, instanceof and in are allowed
+// these keywords should not appear inside expressions, but operators like
+// typeof, instanceof and in are allowed
 var prohibitedKeywordRE = new RegExp('\\b' + (
   'do,if,for,let,new,try,var,case,else,with,await,break,catch,class,const,' +
   'super,throw,while,yield,delete,export,import,return,switch,default,' +
   'extends,finally,continue,debugger,function,arguments'
 ).split(',').join('\\b|\\b') + '\\b');
+
+// these unary operators should not be used as property/method names
+var unaryOperatorsRE = new RegExp('\\b' + (
+  'delete,typeof,void'
+).split(',').join('\\s*\\([^\\)]*\\)|\\b') + '\\s*\\([^\\)]*\\)');
+
 // check valid identifier for v-for
 var identRE = /[A-Za-z_$][\w$]*/;
+
 // strip strings in expressions
 var stripStringRE = /'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*\$\{|\}(?:[^`\\]|\\.)*`|`(?:[^`\\]|\\.)*`/g;
 
@@ -8493,6 +9971,8 @@ function checkNode (node, errors) {
         if (value) {
           if (name === 'v-for') {
             checkFor(node, ("v-for=\"" + value + "\""), errors);
+          } else if (onRE.test(name)) {
+            checkEvent(value, (name + "=\"" + value + "\""), errors);
           } else {
             checkExpression(value, (name + "=\"" + value + "\""), errors);
           }
@@ -8509,6 +9989,18 @@ function checkNode (node, errors) {
   }
 }
 
+function checkEvent (exp, text, errors) {
+  var stipped = exp.replace(stripStringRE, '');
+  var keywordMatch = stipped.match(unaryOperatorsRE);
+  if (keywordMatch && stipped.charAt(keywordMatch.index - 1) !== '$') {
+    errors.push(
+      "avoid using JavaScript unary operator as property name: " +
+      "\"" + (keywordMatch[0]) + "\" in expression " + (text.trim())
+    );
+  }
+  checkExpression(exp, text, errors);
+}
+
 function checkFor (node, text, errors) {
   checkExpression(node.for || '', text, errors);
   checkIdentifier(node.alias, 'v-for alias', text, errors);
@@ -8518,7 +10010,7 @@ function checkFor (node, text, errors) {
 
 function checkIdentifier (ident, type, text, errors) {
   if (typeof ident === 'string' && !identRE.test(ident)) {
-    errors.push(("- invalid " + type + " \"" + ident + "\" in expression: " + text));
+    errors.push(("invalid " + type + " \"" + ident + "\" in expression: " + (text.trim())));
   }
 }
 
@@ -8529,12 +10021,168 @@ function checkExpression (exp, text, errors) {
     var keywordMatch = exp.replace(stripStringRE, '').match(prohibitedKeywordRE);
     if (keywordMatch) {
       errors.push(
-        "- avoid using JavaScript keyword as property name: " +
-        "\"" + (keywordMatch[0]) + "\" in expression " + text
+        "avoid using JavaScript keyword as property name: " +
+        "\"" + (keywordMatch[0]) + "\" in expression " + (text.trim())
       );
     } else {
-      errors.push(("- invalid expression: " + text));
+      errors.push(("invalid expression: " + (text.trim())));
     }
+  }
+}
+
+/*  */
+
+function baseCompile (
+  template,
+  options
+) {
+  var ast = parse(template.trim(), options);
+  optimize(ast, options);
+  var code = generate(ast, options);
+  return {
+    ast: ast,
+    render: code.render,
+    staticRenderFns: code.staticRenderFns
+  }
+}
+
+function makeFunction (code, errors) {
+  try {
+    return new Function(code)
+  } catch (err) {
+    errors.push({ err: err, code: code });
+    return noop
+  }
+}
+
+function createCompiler (baseOptions) {
+  var functionCompileCache = Object.create(null);
+
+  function compile (
+    template,
+    options
+  ) {
+    var finalOptions = Object.create(baseOptions);
+    var errors = [];
+    var tips = [];
+    finalOptions.warn = function (msg, tip$$1) {
+      (tip$$1 ? tips : errors).push(msg);
+    };
+
+    if (options) {
+      // merge custom modules
+      if (options.modules) {
+        finalOptions.modules = (baseOptions.modules || []).concat(options.modules);
+      }
+      // merge custom directives
+      if (options.directives) {
+        finalOptions.directives = extend(
+          Object.create(baseOptions.directives),
+          options.directives
+        );
+      }
+      // copy other options
+      for (var key in options) {
+        if (key !== 'modules' && key !== 'directives') {
+          finalOptions[key] = options[key];
+        }
+      }
+    }
+
+    var compiled = baseCompile(template, finalOptions);
+    if (false) {
+      errors.push.apply(errors, detectErrors(compiled.ast));
+    }
+    compiled.errors = errors;
+    compiled.tips = tips;
+    return compiled
+  }
+
+  function compileToFunctions (
+    template,
+    options,
+    vm
+  ) {
+    options = options || {};
+
+    /* istanbul ignore if */
+    if (false) {
+      // detect possible CSP restriction
+      try {
+        new Function('return 1');
+      } catch (e) {
+        if (e.toString().match(/unsafe-eval|CSP/)) {
+          warn(
+            'It seems you are using the standalone build of Vue.js in an ' +
+            'environment with Content Security Policy that prohibits unsafe-eval. ' +
+            'The template compiler cannot work in this environment. Consider ' +
+            'relaxing the policy to allow unsafe-eval or pre-compiling your ' +
+            'templates into render functions.'
+          );
+        }
+      }
+    }
+
+    // check cache
+    var key = options.delimiters
+      ? String(options.delimiters) + template
+      : template;
+    if (functionCompileCache[key]) {
+      return functionCompileCache[key]
+    }
+
+    // compile
+    var compiled = compile(template, options);
+
+    // check compilation errors/tips
+    if (false) {
+      if (compiled.errors && compiled.errors.length) {
+        warn(
+          "Error compiling template:\n\n" + template + "\n\n" +
+          compiled.errors.map(function (e) { return ("- " + e); }).join('\n') + '\n',
+          vm
+        );
+      }
+      if (compiled.tips && compiled.tips.length) {
+        compiled.tips.forEach(function (msg) { return tip(msg, vm); });
+      }
+    }
+
+    // turn code into functions
+    var res = {};
+    var fnGenErrors = [];
+    res.render = makeFunction(compiled.render, fnGenErrors);
+    var l = compiled.staticRenderFns.length;
+    res.staticRenderFns = new Array(l);
+    for (var i = 0; i < l; i++) {
+      res.staticRenderFns[i] = makeFunction(compiled.staticRenderFns[i], fnGenErrors);
+    }
+
+    // check function generation errors.
+    // this should only happen if there is a bug in the compiler itself.
+    // mostly for codegen development use
+    /* istanbul ignore if */
+    if (false) {
+      if ((!compiled.errors || !compiled.errors.length) && fnGenErrors.length) {
+        warn(
+          "Failed to generate render function:\n\n" +
+          fnGenErrors.map(function (ref) {
+            var err = ref.err;
+            var code = ref.code;
+
+            return ((err.toString()) + " in\n\n" + code + "\n");
+        }).join('\n'),
+          vm
+        );
+      }
+    }
+
+    return (functionCompileCache[key] = res)
+  }
+
+  return {
+    compile: compile,
+    compileToFunctions: compileToFunctions
   }
 }
 
@@ -8631,201 +10279,6 @@ var modules$1 = [
 
 /*  */
 
-var warn$3;
-
-function model$1 (
-  el,
-  dir,
-  _warn
-) {
-  warn$3 = _warn;
-  var value = dir.value;
-  var modifiers = dir.modifiers;
-  var tag = el.tag;
-  var type = el.attrsMap.type;
-  if (false) {
-    var dynamicType = el.attrsMap['v-bind:type'] || el.attrsMap[':type'];
-    if (tag === 'input' && dynamicType) {
-      warn$3(
-        "<input :type=\"" + dynamicType + "\" v-model=\"" + value + "\">:\n" +
-        "v-model does not support dynamic input types. Use v-if branches instead."
-      );
-    }
-  }
-  if (tag === 'select') {
-    genSelect(el, value, modifiers);
-  } else if (tag === 'input' && type === 'checkbox') {
-    genCheckboxModel(el, value, modifiers);
-  } else if (tag === 'input' && type === 'radio') {
-    genRadioModel(el, value, modifiers);
-  } else {
-    genDefaultModel(el, value, modifiers);
-  }
-  // ensure runtime directive metadata
-  return true
-}
-
-function genCheckboxModel (
-  el,
-  value,
-  modifiers
-) {
-  if (false) {
-    warn$3(
-      "<" + (el.tag) + " v-model=\"" + value + "\" checked>:\n" +
-      "inline checked attributes will be ignored when using v-model. " +
-      'Declare initial values in the component\'s data option instead.'
-    );
-  }
-  var number = modifiers && modifiers.number;
-  var valueBinding = getBindingAttr(el, 'value') || 'null';
-  var trueValueBinding = getBindingAttr(el, 'true-value') || 'true';
-  var falseValueBinding = getBindingAttr(el, 'false-value') || 'false';
-  addProp(el, 'checked',
-    "Array.isArray(" + value + ")" +
-      "?_i(" + value + "," + valueBinding + ")>-1" +
-      ":_q(" + value + "," + trueValueBinding + ")"
-  );
-  addHandler(el, 'change',
-    "var $$a=" + value + "," +
-        '$$el=$event.target,' +
-        "$$c=$$el.checked?(" + trueValueBinding + "):(" + falseValueBinding + ");" +
-    'if(Array.isArray($$a)){' +
-      "var $$v=" + (number ? '_n(' + valueBinding + ')' : valueBinding) + "," +
-          '$$i=_i($$a,$$v);' +
-      "if($$c){$$i<0&&(" + value + "=$$a.concat($$v))}" +
-      "else{$$i>-1&&(" + value + "=$$a.slice(0,$$i).concat($$a.slice($$i+1)))}" +
-    "}else{" + value + "=$$c}",
-    null, true
-  );
-}
-
-function genRadioModel (
-    el,
-    value,
-    modifiers
-) {
-  if (false) {
-    warn$3(
-      "<" + (el.tag) + " v-model=\"" + value + "\" checked>:\n" +
-      "inline checked attributes will be ignored when using v-model. " +
-      'Declare initial values in the component\'s data option instead.'
-    );
-  }
-  var number = modifiers && modifiers.number;
-  var valueBinding = getBindingAttr(el, 'value') || 'null';
-  valueBinding = number ? ("_n(" + valueBinding + ")") : valueBinding;
-  addProp(el, 'checked', ("_q(" + value + "," + valueBinding + ")"));
-  addHandler(el, 'change', genAssignmentCode(value, valueBinding), null, true);
-}
-
-function genDefaultModel (
-  el,
-  value,
-  modifiers
-) {
-  if (false) {
-    if (el.tag === 'input' && el.attrsMap.value) {
-      warn$3(
-        "<" + (el.tag) + " v-model=\"" + value + "\" value=\"" + (el.attrsMap.value) + "\">:\n" +
-        'inline value attributes will be ignored when using v-model. ' +
-        'Declare initial values in the component\'s data option instead.'
-      );
-    }
-    if (el.tag === 'textarea' && el.children.length) {
-      warn$3(
-        "<textarea v-model=\"" + value + "\">:\n" +
-        'inline content inside <textarea> will be ignored when using v-model. ' +
-        'Declare initial values in the component\'s data option instead.'
-      );
-    }
-  }
-
-  var type = el.attrsMap.type;
-  var ref = modifiers || {};
-  var lazy = ref.lazy;
-  var number = ref.number;
-  var trim = ref.trim;
-  var event = lazy || (isIE && type === 'range') ? 'change' : 'input';
-  var needCompositionGuard = !lazy && type !== 'range';
-  var isNative = el.tag === 'input' || el.tag === 'textarea';
-
-  var valueExpression = isNative
-    ? ("$event.target.value" + (trim ? '.trim()' : ''))
-    : trim ? "(typeof $event === 'string' ? $event.trim() : $event)" : "$event";
-  valueExpression = number || type === 'number'
-    ? ("_n(" + valueExpression + ")")
-    : valueExpression;
-
-  var code = genAssignmentCode(value, valueExpression);
-  if (isNative && needCompositionGuard) {
-    code = "if($event.target.composing)return;" + code;
-  }
-
-  // inputs with type="file" are read only and setting the input's
-  // value will throw an error.
-  if (false) {
-    warn$3(
-      "<" + (el.tag) + " v-model=\"" + value + "\" type=\"file\">:\n" +
-      "File inputs are read only. Use a v-on:change listener instead."
-    );
-  }
-
-  addProp(el, 'value', isNative ? ("_s(" + value + ")") : ("(" + value + ")"));
-  addHandler(el, event, code, null, true);
-  if (trim || number || type === 'number') {
-    addHandler(el, 'blur', '$forceUpdate()');
-  }
-}
-
-function genSelect (
-    el,
-    value,
-    modifiers
-) {
-  if (false) {
-    el.children.some(checkOptionWarning);
-  }
-
-  var number = modifiers && modifiers.number;
-  var assignment = "Array.prototype.filter" +
-    ".call($event.target.options,function(o){return o.selected})" +
-    ".map(function(o){var val = \"_value\" in o ? o._value : o.value;" +
-    "return " + (number ? '_n(val)' : 'val') + "})" +
-    (el.attrsMap.multiple == null ? '[0]' : '');
-
-  var code = genAssignmentCode(value, assignment);
-  addHandler(el, 'change', code, null, true);
-}
-
-function checkOptionWarning (option) {
-  if (option.type === 1 &&
-    option.tag === 'option' &&
-    option.attrsMap.selected != null) {
-    warn$3(
-      "<select v-model=\"" + (option.parent.attrsMap['v-model']) + "\">:\n" +
-      'inline selected attributes on <option> will be ignored when using v-model. ' +
-      'Declare initial values in the component\'s data option instead.'
-    );
-    return true
-  }
-  return false
-}
-
-function genAssignmentCode (value, assignment) {
-  var modelRs = parseModel(value);
-  if (modelRs.idx === null) {
-    return (value + "=" + assignment)
-  } else {
-    return "var $$exp = " + (modelRs.exp) + ", $$idx = " + (modelRs.idx) + ";" +
-      "if (!Array.isArray($$exp)){" +
-        value + "=" + assignment + "}" +
-      "else{$$exp.splice($$idx, 1, " + assignment + ")}"
-  }
-}
-
-/*  */
-
 function text (el, dir) {
   if (dir.value) {
     addProp(el, 'textContent', ("_s(" + (dir.value) + ")"));
@@ -8841,94 +10294,28 @@ function html (el, dir) {
 }
 
 var directives$1 = {
-  model: model$1,
+  model: model,
   text: text,
   html: html
 };
 
 /*  */
 
-var cache = Object.create(null);
-
 var baseOptions = {
   expectHTML: true,
   modules: modules$1,
-  staticKeys: genStaticKeys(modules$1),
   directives: directives$1,
-  isReservedTag: isReservedTag,
+  isPreTag: isPreTag,
   isUnaryTag: isUnaryTag,
   mustUseProp: mustUseProp,
+  canBeLeftOpenTag: canBeLeftOpenTag,
+  isReservedTag: isReservedTag,
   getTagNamespace: getTagNamespace,
-  isPreTag: isPreTag
+  staticKeys: genStaticKeys(modules$1)
 };
 
-function compile$$1 (
-  template,
-  options
-) {
-  options = options
-    ? extend(extend({}, baseOptions), options)
-    : baseOptions;
-  return compile$1(template, options)
-}
-
-function compileToFunctions (
-  template,
-  options,
-  vm
-) {
-  var _warn = (options && options.warn) || warn;
-  // detect possible CSP restriction
-  /* istanbul ignore if */
-  if (false) {
-    try {
-      new Function('return 1');
-    } catch (e) {
-      if (e.toString().match(/unsafe-eval|CSP/)) {
-        _warn(
-          'It seems you are using the standalone build of Vue.js in an ' +
-          'environment with Content Security Policy that prohibits unsafe-eval. ' +
-          'The template compiler cannot work in this environment. Consider ' +
-          'relaxing the policy to allow unsafe-eval or pre-compiling your ' +
-          'templates into render functions.'
-        );
-      }
-    }
-  }
-  var key = options && options.delimiters
-    ? String(options.delimiters) + template
-    : template;
-  if (cache[key]) {
-    return cache[key]
-  }
-  var res = {};
-  var compiled = compile$$1(template, options);
-  res.render = makeFunction(compiled.render);
-  var l = compiled.staticRenderFns.length;
-  res.staticRenderFns = new Array(l);
-  for (var i = 0; i < l; i++) {
-    res.staticRenderFns[i] = makeFunction(compiled.staticRenderFns[i]);
-  }
-  if (false) {
-    if (res.render === noop || res.staticRenderFns.some(function (fn) { return fn === noop; })) {
-      _warn(
-        "failed to compile template:\n\n" + template + "\n\n" +
-        detectErrors(compiled.ast).join('\n') +
-        '\n\n',
-        vm
-      );
-    }
-  }
-  return (cache[key] = res)
-}
-
-function makeFunction (code) {
-  try {
-    return new Function(code)
-  } catch (e) {
-    return noop
-  }
-}
+var ref$1 = createCompiler(baseOptions);
+var compileToFunctions = ref$1.compileToFunctions;
 
 /*  */
 
@@ -8980,8 +10367,12 @@ Vue$3.prototype.$mount = function (
       template = getOuterHTML(el);
     }
     if (template) {
+      /* istanbul ignore if */
+      if (false) {
+        mark('compile');
+      }
+
       var ref = compileToFunctions(template, {
-        warn: warn,
         shouldDecodeNewlines: shouldDecodeNewlines,
         delimiters: options.delimiters
       }, this);
@@ -8989,6 +10380,12 @@ Vue$3.prototype.$mount = function (
       var staticRenderFns = ref.staticRenderFns;
       options.render = render;
       options.staticRenderFns = staticRenderFns;
+
+      /* istanbul ignore if */
+      if (false) {
+        mark('compile end');
+        measure(((this._name) + " compile"), 'compile', 'compile end');
+      }
     }
   }
   return mount.call(this, el, hydrating)
@@ -9012,14 +10409,14 @@ Vue$3.compile = compileToFunctions;
 
 module.exports = Vue$3;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
-/***/ },
-/* 8 */
-/***/ function(module, exports) {
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 module.exports = argsArray;
 
@@ -9039,22 +10436,22 @@ function argsArray(fun) {
   };
 }
 
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 10 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_mousetrap__ = __webpack_require__(33);
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_mousetrap__ = __webpack_require__(37);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_mousetrap___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_mousetrap__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_mousetrap_plugins_pause_mousetrap_pause_js__ = __webpack_require__(34);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_mousetrap_plugins_pause_mousetrap_pause_js__ = __webpack_require__(38);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_mousetrap_plugins_pause_mousetrap_pause_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__node_modules_mousetrap_plugins_pause_mousetrap_pause_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__utils_db_js__ = __webpack_require__(23);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utils_utils_js__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__components_Panel_vue__ = __webpack_require__(48);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__utils_db_js__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utils_utils_js__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__components_Panel_vue__ = __webpack_require__(49);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__components_Panel_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__components_Panel_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__components_Overlay_vue__ = __webpack_require__(44);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__components_Overlay_vue__ = __webpack_require__(45);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__components_Overlay_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__components_Overlay_vue__);
-Object.defineProperty(exports, "__esModule", { value: true });
 //
 //
 //
@@ -9079,7 +10476,7 @@ var mousetrap = {
   panel: null
 };
 
-/* harmony default export */ exports["default"] = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   name: 'pixelParallel',
   data: function data() {
     return {
@@ -9396,15 +10793,15 @@ var mousetrap = {
     Panel: __WEBPACK_IMPORTED_MODULE_4__components_Panel_vue___default.a,
     Overlay: __WEBPACK_IMPORTED_MODULE_5__components_Overlay_vue___default.a
   }
-};
+});
 
-/***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 11 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_utils_js__ = __webpack_require__(2);
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_utils_js__ = __webpack_require__(3);
 //
 //
 //
@@ -9415,7 +10812,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 
 
-/* harmony default export */ exports["default"] = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   name: 'droparea',
 
   props: ['title', 'onUpload'],
@@ -9477,14 +10874,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
       }, false);
     }
   }
-};
+});
 
-/***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 12 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
@@ -9502,7 +10899,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //
 //
 
-/* harmony default export */ exports["default"] = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   name: 'toggle',
 
   props: ['title', 'value', 'arrows', 'step', 'min', 'max'],
@@ -9573,20 +10970,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
       doc.addEventListener('mouseout', incrementStopHandler);
     }
   }
-};
+});
 
-/***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 13 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OverlayImage_vue__ = __webpack_require__(46);
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OverlayImage_vue__ = __webpack_require__(47);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OverlayImage_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__OverlayImage_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__OverlayGrids_vue__ = __webpack_require__(45);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__OverlayGrids_vue__ = __webpack_require__(46);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__OverlayGrids_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__OverlayGrids_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__OverlayRulers_vue__ = __webpack_require__(47);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__OverlayRulers_vue__ = __webpack_require__(48);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__OverlayRulers_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__OverlayRulers_vue__);
-Object.defineProperty(exports, "__esModule", { value: true });
 //
 //
 //
@@ -9603,7 +11000,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 
 
-/* harmony default export */ exports["default"] = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   name: 'overlay',
 
   props: ['config', 'image'],
@@ -9613,14 +11010,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
     OverlayGrids: __WEBPACK_IMPORTED_MODULE_1__OverlayGrids_vue___default.a,
     OverlayRulers: __WEBPACK_IMPORTED_MODULE_2__OverlayRulers_vue___default.a
   }
-};
+});
 
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 14 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
@@ -9633,7 +11030,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //
 
 
-/* harmony default export */ exports["default"] = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   name: 'overlay-grids',
 
   props: ['config'],
@@ -9653,15 +11050,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
       };
     }
   }
-};
+});
 
-/***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 15 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__directives_draggable_js__ = __webpack_require__(3);
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__directives_draggable_js__ = __webpack_require__(4);
 //
 //
 //
@@ -9674,14 +11071,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 
 
-/* harmony default export */ exports["default"] = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   name: 'overlayImage',
 
   props: ['config', 'image'],
 
   data: function data() {
     return {
-      imageOuterHeight: document.body.clientHeight
+      imageOuterHeight: this.getDocumentHeight()
     };
   },
 
@@ -9713,9 +11110,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
       this.config.image.top = newPosition.top;
       this.config.image.left = newPosition.left;
     },
+    getDocumentHeight: function getDocumentHeight() {
+      var body = document.body;
+      var html = document.documentElement;
+
+      return Math.max(document.documentElement.offsetHeight, body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight);
+    },
     resizeOverlay: function resizeOverlay() {
       this.imageOuterHeight = 0;
-      this.imageOuterHeight = document.body.clientHeight;
+      this.imageOuterHeight = this.getDocumentHeight();
     }
   },
   mounted: function mounted() {
@@ -9728,15 +11131,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
     draggable: __WEBPACK_IMPORTED_MODULE_0__directives_draggable_js__["a" /* default */]
   }
 
-};
+});
 
-/***/ },
-/* 15 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 16 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__directives_draggable_js__ = __webpack_require__(3);
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__directives_draggable_js__ = __webpack_require__(4);
 //
 //
 //
@@ -9748,7 +11151,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 
 
-/* harmony default export */ exports["default"] = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   name: 'overlay-rulers',
 
   props: ['config'],
@@ -9764,28 +11167,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
   directives: {
     draggable: __WEBPACK_IMPORTED_MODULE_0__directives_draggable_js__["a" /* default */]
   }
-};
+});
 
-/***/ },
-/* 16 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 17 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__styles_panel_fonts_js__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__styles_panel_icons_js__ = __webpack_require__(21);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__styles_panel_js__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Toggle_vue__ = __webpack_require__(50);
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__styles_panel_fonts_js__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__styles_panel_icons_js__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__styles_panel_js__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Toggle_vue__ = __webpack_require__(51);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Toggle_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__Toggle_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Number_vue__ = __webpack_require__(43);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Number_vue__ = __webpack_require__(44);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Number_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__Number_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__UploadButton_vue__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__UploadButton_vue__ = __webpack_require__(52);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__UploadButton_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__UploadButton_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Droparea_vue__ = __webpack_require__(42);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Droparea_vue__ = __webpack_require__(43);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Droparea_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__Droparea_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__PasteBox_vue__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__PasteBox_vue__ = __webpack_require__(50);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__PasteBox_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__PasteBox_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__directives_draggable_js__ = __webpack_require__(3);
-Object.defineProperty(exports, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__directives_draggable_js__ = __webpack_require__(4);
 //
 //
 //
@@ -9972,7 +11375,7 @@ var dragPositions = {
   }
 };
 
-/* harmony default export */ exports["default"] = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   name: 'panel',
 
   props: ['config', 'onImageChange', 'onDisableClick'],
@@ -10119,15 +11522,15 @@ var dragPositions = {
     Droparea: __WEBPACK_IMPORTED_MODULE_6__Droparea_vue___default.a,
     PasteBox: __WEBPACK_IMPORTED_MODULE_7__PasteBox_vue___default.a
   }
-};
+});
 
-/***/ },
-/* 17 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 18 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_utils_js__ = __webpack_require__(2);
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_utils_js__ = __webpack_require__(3);
 //
 //
 //
@@ -10136,7 +11539,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 
 
-/* harmony default export */ exports["default"] = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   name: 'upload-button',
 
   props: ['title', 'onPaste'],
@@ -10153,14 +11556,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
       });
     }
   }
-};
+});
 
-/***/ },
-/* 18 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 19 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
@@ -10174,7 +11577,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //
 //
 
-/* harmony default export */ exports["default"] = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   name: 'toggle',
 
   props: ['title', 'action', 'value'],
@@ -10189,15 +11592,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
       }
     }
   }
-};
+});
 
-/***/ },
-/* 19 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 20 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_utils_js__ = __webpack_require__(2);
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_utils_js__ = __webpack_require__(3);
 //
 //
 //
@@ -10209,7 +11612,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 
 
-/* harmony default export */ exports["default"] = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   name: 'upload-button',
 
   props: ['title', 'onUpload'],
@@ -10226,35 +11629,65 @@ Object.defineProperty(exports, "__esModule", { value: true });
       });
     }
   }
-};
+});
 
-/***/ },
-/* 20 */
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-/* harmony default export */ exports["a"] = "\n  /* latin */\n  @font-face {\n    font-family: 'Roboto';\n    font-style: normal;\n    font-weight: 400;\n    src: local('Roboto'), local('Roboto-Regular'), url(data:application/octet-stream;base64,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) format('woff2');\n    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;\n  }\n\n  @font-face {\n    font-family: 'Roboto';\n    font-style: normal;\n    font-weight: 500;\n    src: local('Roboto Medium'), local('Roboto-Medium'), url(data:application/octet-stream;base64,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) format('woff2');\n    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;\n  }\n";
-
-/***/ },
+/***/ }),
 /* 21 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony default export */ exports["a"] = "\n  .ico { display: inline-block; vertical-align: middle; background-repeat: no-repeat; background-size: contain; background-position: center center; }\n\n  .ico-eye-slash { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAaCAYAAADSbo4CAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo4OTg4M0UyQ0JBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo4OTg4M0UyREJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjg5ODgzRTJBQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjg5ODgzRTJCQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+U11e4gAABLFJREFUeNqsV29IZFUU31FzxP/mv9iiL5qKKZGuOoulKAVZbC1+MRKxdKXCzVBCDcQP6YK1sBEjflm1wLWWCkbZTysIhmu5tpPSfohcNpsRKR11ZpxJc8aZ2+88zrXnc1xn0As/3rxzzz3nd88957w7Z86c/rgIJAarLIRQcNrjFbINbALNgC5YIroQHWUCBuB54CyQBISzYytwAcgmRZ1OtwsHZ3nukUSCHbFAGzDPuw0Kra2tO3DSDOhOejS00w+BtUCOIiMjvRkZGZtJSUn/audSUlKEw+GAfUFkHj8JkWeAHwMRiIuLEwMDA2Jnh3wIMT09fUjHaDQKHp+xvY/YZkhEXgIcbNRXXFw8GxMT46f3hIQEMT8/r3iYmZkRnZ2dnvz8fLeaRFZWlvB4PKRiAxIgywf2ACfwarBE3gQ8HHrr5OTkr6Ojo/tOhoaGFBIgsHtUbphMJhmNy2yzALDQHBLYi+dbxxGhSCgOkpOT76+vrzvJWl1dnRKN+Ph4P+10YmLCfRSJ8vJySeJ34DHI4snw2NjYi0VFRX4m48PzjaOIUMm5SJ6WlvYAieZhgw8TExMXSF5WVqYISktLbwciAQdibm5OEqGmFgEY2VmB0+m0lpSUKLoRERG04ee0RCIBM8mio6P/QiR22dg0Z7yStJmZmWJhYcEFh78EIlJbWytJTPHm3gPu4D2eHSavrKyYUWmKPjb4J556NZEP5PkhAbfZ2CwnGo2bx/WMqKgoYbFYaJ0fKOIjWQ0LC/sa70bVMcROTU3dR/4p61AIV9REPucdb+/t7ZGxP4i9KncajyPS0dEho3GD11wheWNj4whkd9SJuLS09AQqS8nFpqYmqiy9JHIe0VASqbu7m5gYtJ0VvePIKklNTRU4f9m8noaMsA2bG1tbW2uQjWrsfULrwsPDxewsBV68v5+s1dXV92gSoaSyvait6YaGhi+PItLf3y+j0cfqIyRvb2+/xfJLKlO1gJ+juMrz1/aJbG5uvlBRUeHnjKZar9LUemxLS8u2lkROTo7wer1kbI2T8hw5QpSu453ybZ3WspkLsj3k5uY+9Pl8tI5OoORAH0FGf2EwGARHhshc1pBpQOkeIDI+Pi6j0cxqJqAJ7yMsf5vl7wJe7lEWu93u5/muQw0NLxE2m+0HZLLa2bdACqsYqFfIucrKSkniN1oLWRRVC36f4+q5xmu/kWvwgXywuroq28NtICxgi6eSReLdrampUZOxAx8DM1JGuWQ2myWR1zU2TIuLi/TV7uC1go/D7Ha7vbxmAUh85EePyAB3h4eHlc95oAStr6+XJCZ5mR54FtV1Sa/XUxTdqo7r6OnpmRX/j3tAalDXAEzEADc3NjZEW1vbARLovmJ5eZkMUrYV8P3UFqDlO6uqqqZQCA4Vie/Idsh3Vii809fXd+Aj19XVJY1+xWpX5Rx6gyM7O/tnROAnl8v1j4qAnWyd6PKMu8gN6Sg9PV2gSZFhcvIUq5Tn5eW9bLVaN8ThQdH4VObDiW/xvb291wsLC8Xg4KB00KMxdlXlnAh9TxFQ9ZDT+TsBxSGVo7+BOM08XUTOA0+G+v9jn4j8EQRe44xvDGFN0PhPgAEA6WDSgUWIcWAAAAAASUVORK5CYII=); width: 17px; height: 13px; }\n  a.active .ico-eye-slash { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAaCAYAAADSbo4CAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpGNTU1Mjc0RUJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpGNTU1Mjc0RkJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkY1NTUyNzRDQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkY1NTUyNzREQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+8eEv7QAABbtJREFUeNqsV3tQVFUcPvexd18IQgSEDYoKmI0gojyySRNEEzCcSglxMDSclAYJHLPUyT9K89U4ND4mRyscEnBKG5pJy5LC1MR1aqyYdCAJJ41EIB6y7O7t+909i8siiMaZ+WbPvfd3zv3Od36/754VQnf/y4a5pQOngJahBNe94qX9isNMYi7wGc0PrAKEoQ6U7/NF44F4IBoIBnwBCWgGGoA0HucLBjtUxj7hz4aFCGmXCywBJg+V8UtROnX9E/oX0d09dk+7eq/4wbaGVprPZd7hSUInMluIt3jLRy90ew70NQgsf6piQHc7V+2BFQkDPgISPB+YdQJ7PUFhz0/QyXqJ+db8ZWcLj3b1icmfprARipYexVCDtqYIOAZcvh9FkoDznIQjKkA6Z9IJmrQ0eVm6kS1+XMd+abKzrWetPRu+7+5wHxw6UmSZE3XU/Qd4G5gEbAFqgHlDVSQD+JiUh/R/fphqbGnqVONWf31be7h+usIm+otEwLr3olWhOI7etjZeYbJzeZugRit/fg0IgUbHsKJs9EsHUySJb4cOe3zpbLbZJ2GUNKmqwaap4aUI6oJwHatutHdwEv1aXLDEkkO1tf0O7AO8Acu+uYasyABRxUQyyJTg3rMDEYng9a88ZBSunFpsigAZmqTu5FX7zxQAJQRa6a7z1tN3I0EZsS5B3ysMrxTaGjY7VO44lGZsnBwoMdwUJZGV43aUJxGFS+VllNn1ExmmEOQCyVkNTGvrVjsp8EaHyn676Wi3XLc/fDci88NkhlVTtwokjuJ3OfkNnNMb1xYoGr1njsGCSmN2B1O89QIlr96dyApgClZkK0kz+kAJInYOSOUZT0bFrrY6WEp5p5fqNLM+DdXD1sRrc5IKa/iWbBIFbaymCua6GWgWZrz7tP4S8o9hgaNRCBvdiYylToiP2BMVKBnRrQdSeKJR++qe5hWpsGAvrVxLMY4qbi0QgBK3MzfieNY+aoQw+1Fv0UrXj/mLuS5ViEg5plCxYmNxjZUGZhJ7t/eUwTusA5HwMwps5RStcKi03qA1AQWYs3nDdGUOieke/9ShzpX1LQ5FQsDCCbI/buW4iJxJHitb6OL9C1YpYl97kMe72ueNk0sHIgIHpYqi7i4swLUVxtxo5QcsgPLpW7fwxeQC1Hl5svI3JS83T2fVbJmpX41SVR3YYQdjFbj1jPvLsK+vLp2k6/IkMe6OeTUB7wBT6WVQaT/8JBF9UvYwD6cP4gEqsDBfsa4oTglAn3agrJdI9IGO6p2JhuJoMERGy0iyz3E7z31vNz6pz4sJkvoQWQurl+6YVxt+36Tkr1lqpu8M5VsRjeUF8SlVKIqhoWKBMVR0HhDe4oVxx9CQ0YX75xm+QyYzKEOuVEz5A/hzMr+idHtJQEGWNEYzr1puXvTybJTrRb4F72FMJXMeBfaSi+MDeQX2EITSJRonuIp9nRWDbGA7vyTN8GPq+F7nf4F/qNYx5/nCOUjoZ142nqyaKn+0Ogpw7wYfm6Elgq9oOb3ENAaGSfbwE7AIMY5eQ/Q8KmJFPsT2SG1P7OYzVnbrdv+jxHMRMts2iwRg32CyRF6C45GcCT0ONRm1Rx83M3fc1oJYpTYvRonjwy9QDmJc06BHRe4fs+ABZSczTWxZVJ9vGoP7ssJYTQ0HN6+RQCNwqaNH/QAkSEUzCLTNDJGqLDlm5kbiCDDDReKe5xEE0qc9A2yPQ8pi1+qoLYtSWJDTvErIuvG7zZVH8IbW0T7i5fRw2ZYTqYvE8WEGH0YH6dcQf/CBjoo0EJMl8uRj/jCvFdGaQp0uP0CrDPcTTxxMMR5+xEvw4yXsaq08kTdjrpb/dWbt7FGzCmOVruP1tuVZOBDRCQ1tJyZu5CFVXy4ykSp+/LqZm9gXQAUv3+E5xa+KUUTAdUnVsNUjpJL7RANefO2B/oioOK4MESlADbDsPsYMGf8JMABPgCmUXqy07wAAAABJRU5ErkJggg==); }\n\n  .ico-eye-slash-small { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAWCAYAAADXYyzPAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpGNTU1Mjc1MkJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpGNTU1Mjc1M0JBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkY1NTUyNzUwQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkY1NTUyNzUxQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+OJ3L3AAABKJJREFUeNqsVglQlGUY/v6FBXZxggF2l6O4FllTMEZhUeSGAGW6hOFy0KRdjo7JYVCINMOIQQcDWqtpumvMY5ycRqSBDgLByakBPJJJC8HpUtwlNiBjr56X/iVsCZfwn3nme/9vv+99/vderuaFF9linud2VrM9tXVCrIaF3OMWS4xHDHwHfA1sxwf8YM8lRzuVOwFJgBJYBrgDQuAaL9/N4wZQfCeIvYEqoBDwmO+gg4ODRa0q8ocoB25rtWCe/W28gqetpBzH/SGXB5/OXJ/RFSKX/zT7QrQyipNKJOkQKxHzQECwUGI3oBVoBKYEAsHAdCDFYnNZiVqUvfGRGJFIFC8QcH4zQRaLWey6GBJv6vX6vVhbgE9A7m4vsQToAujLv1A/VtS4ZIkrxZQ99OADAk4gYK+89rrl2EfH2aXL389cio+LZS4uLiRqml4+cB3rr0Aa0Alyye2IKTtPACsdHR0/ePaZSqOzs3ONXv87B4sMS0PkrK2t/c/x8XFutgJPDw8WuXoViTdOdfdoSE9GelrmiuXLR0kXPNYKcvF8xOTaaKFQeKxqR0UEkiVNNzr6Df3g6urKLBYLuzI0fPPfClJSkhmUk7in48vOUqzByqhIp6yND/eGh4Uxs9kc6eTk9M5/ESdTGSB5LlSUbwuAonC8v9VysjWPfhwZGRHub2w2m0wmt9mXA/z92TJFKImXmjUHTmItDwwMmOS9l565IeM9mVTKpqamcl5qal4/FzERsZXhYVOwOAriQaAEiTIIyylmbHJy0iYR709NsYqVY2P6GnJ34aaCHLIaMMHSrb5+vuf/1h3+/FzEh2Gl/sK3F1cNDQ9T1qgRFxNWi5vbXa/OlRzkRl9fHxK7cPZHrJvc3d3fhdfKIU9/LPaVfX39CiSeae2aaCXv2VuIr8XFrjsCV7JDh4/64sI9Mx1E5l0L990SWyQfS05KJNECVAANQMeTj5cG8d1rEDoUfLIKUWpHKU/wrLBJroT4uF1JiQmTBoNBDOtPYyuS9i8ODJhysrOqKXtnNQsGT5D4IQioVV5Fje/GvQJKUuxRuDqpPOEVTczaNVmQtcARG2IcJqvzEDcksMUTW90UO+rTjc2abq1OZ9MsgGqgB4Nhs0QiqTUajZ21dfVU0KcAqaenZ4OqaGs+39cftYbApoGA/ARiUVWQn8fQnehwPXAZXnjTeiYxIZ6hvklswvmrIL2u0+kKUEoudfX7/FA+NO7Gke1VT5SVFPJNaTvfzeYfi1BWgSze29HZZent7ePggekP9PLyYqXFKqrbkfZPP1/91Zkzu7B9Lz+1aIKZkVzvY1j87C2TVfCW0pDZZ9d0giUNID+3ISP94NDQsJdWq53eT/2nWewGKQ0RNX/lPMqwLTcn+7fgoKDNeKfiptiogOMLGosgb4+IuC91YmKih5oXMpuFLg2hn2hovAHE+Ph4t+Tn5m5BP6dR+BRAMTADbwM7gV/+1zzu7z97Fp1HhhIcVChCpfz2DnyUkeoXQ2Q/1i1Wq/nyoXy4suh/ICXFKqojI//aAdLZSfIxcIgSEBhb0H8uav52PCKgDPgMOMfuwPOXAAMAFT2J6mINzK8AAAAASUVORK5CYII=); width: 15px; height: 11px; }\n  a.active .ico-eye-slash-small,\n  a:hover .ico-eye-slash-small { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAWCAYAAADXYyzPAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoyRDhDQjlEQUJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoyRDhDQjlEQkJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjJEOENCOUQ4QkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjJEOENCOUQ5QkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+rDemogAABJxJREFUeNqsVg1MVVUc/597373vvstLka8VCAoSkgoxgqeow2LxSM1a0/BrBi4/0mYWw8lYjjTdomnWWLoS/GKGtDZDCaYzDVLmtNqKlpVJ5gyFSKUejwfv4/Y7l/sYBCGEZ/vtfNxz/r/z/zyXRe/5m0bTmtZZKWavQ0LvHsk5NlpiNBX4CbgEbMIFrg7nkGmYwmXgCcAGxAOBgAS0GOPxBtqANfeD+EGgAFgBBA15M5G044vUKAwnAffUWhhi/VVDwEY/qcioMz1SbHgz3Vz/eJT4e98DuQkyiwsSsjDcDJ9PBISREo8FaoDdQLdJoMt8McjCfLWLVUuJXZkZqLB0gbEI/4FxCqP1ydzy5Lrp0IrRVwO1IA8cLnEoUA9kMaIzMN3uEJVxn9LODEWAxpRZ4dQ2nHLRmd88vYdeSZFpjJnxYcms8o5W9LcAO1AH8tB7EfPoPAEkKiYq/3Gt1fOATFtvOTQGbd1zokTadr6rq9Wpsb4CogMFWj5V17bt/a+7S7icotnm+U/Hmu5wWaJANSBXhyLmpp1uMdEnjS9akySB7Nfata/4h2ALI59G1HDD6/q3gM0zZDL1SNm262L3S+hjchIk+b1M5ZtnHzaR10cpqsQO/BdxBk8DgdH3l3IDJuCWCZiXFda5lvCPV277JNvBDp/bp/u/t9nCRbJH64nx8+zyjs/Q56VFiE6uNcyStX2O+VB8sEBOt5Y9/VDH3MGIORE9F2fqxu1SMTwCrEWgNCFNuM/ojkvrFw/c3oVp5l7Fmx3aVm7u8gWWbK414A2Q2MpHw8TGHtnSG4MRH4W5/jp+xZN8odn7C+ar4Rcveu0hq7BnsOB4BmZMDNOP12PvDfTLI8cIB2G1PIz1y2LdVnnZPRmB512dJNkMy/Yjbnk5Wa70+IhW1bjCcSDSv2FqiLAd5uvnW7OI2jhD1xaep3we9MDZz5eq0Ub1aoKMyUawSki1j3mccHEDgmtjqrwlzyY74Q8V2jdgKYWv11z1ePdmKYU8ev1tZaJM4VZd0Ecg4KXy+snFahHOLeNBijXurjqenrBKyZokeSHGfwKVA0omNregwC+RRVZVfKErGGLPQZ0iLijtcMc5l5G2SK3eYsHdzHucO4b+iy4v1U0rdSgYf8k1jQkUdn66UM0x6nqu3wUDCgjIT8AXBQfmW2ismfHNb/Gg7vRQqWbseS1VJqusa/su9l8Haeu1dt+ydy52K1M+dEQgfXbgmwPRXnB6qbrCKEqbjGo29LMIYfmI4mII0yp+cDPksH7B2HEC1WarhHT7Y0dD12Nl37q3YPkRXMOm9bxgPlS3w1WL1OYpIUK+oSl/ZN4e9nsMcjsIj9iPOkOa7vr0tdJ5CmVM0L2zHtrG8rw1tjciDU9+8JRyd9Z48QXM44DbwCrg2IieRQg+9Xy89GRbp3Ye0wBEtp+UPxr7gJnTQoXqsnmWnFCV8adwAw94rjWwH3gduPm//0BQeQLmTjI1ZU40hfEqhLYAl6o2rLKrr9ZG+pQCv476D6QmW+Vvsf8pOusnNVoVUMEDEGgf0T+XpmnD2WcB1gGnge/oPrR/BBgAJ8Z/uPblQXYAAAAASUVORK5CYII=); }\n\n  .ico-minimize { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAECAYAAACHtL/sAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpGNTU1Mjc1NkJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoxNzg5RUNEMEJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkY1NTUyNzU0QkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkY1NTUyNzU1QkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+scZqyQAAACJJREFUeNpibGxunclAAWAB4jRKDGBioBCAXDCLEgMAAgwAnRQDLht0cb4AAAAASUVORK5CYII=); width: 8px; height: 2px; }\n  a.active .ico-minimize,\n  a:hover .ico-minimize {  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAECAYAAACHtL/sAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoyRDhDQjlENkJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoyRDhDQjlEN0JBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjE3ODlFQ0Q5QkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjE3ODlFQ0RBQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+0GRmFwAAACJJREFUeNpiVJz2eSYDBYAFiNMoMYCJgUIAcsEsSgwACDAAvYgDTxaOGksAAAAASUVORK5CYII=); }\n\n  .ico-maximize { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoyRDhDQjlERUJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoyRDhDQjlERkJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjJEOENCOURDQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjJEOENCOUREQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+IjlJQwAAADJJREFUeNpinDVn7n8GKgImBiqDwW8gCxYxRhLN+D/Cw3DUwFEDB2te/j8ahiQBgAADAF83BP0ZNeZfAAAAAElFTkSuQmCC); width: 10px; height: 10px; }\n  a.active .ico-maximize,\n  a:hover .ico-maximize { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpBRTdEOTYyOUJBOUExMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpBRTdEOTYyQUJBOUExMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjJEOENCOUUwQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkFFN0Q5NjI4QkE5QTExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+rpUt2wAAADJJREFUeNpiVJz2+T8DFQETA5XB4DeQBYsYI4lm/B/hYThq4KiBgzUv/x8NQ5IAQIABAFs3BNTp9ScaAAAAAElFTkSuQmCC); }\n\n  .ico-close { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAYAAACJfM0wAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoxNzg5RUNEM0JBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoxNzg5RUNENEJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjE3ODlFQ0QxQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjE3ODlFQ0QyQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+0WmeEwAAAPtJREFUeNqU1UsKwjAQBuAY3HQnnsGz1F3VleJFfOxERE9SdaXSnXcRTyB01W6dyASGsUlmAj80TfoxNEPb2+0PhowF5AFpjX5kkAJydRNLFtaQM+SGm7ToHXKBrCg8hxzxeqzEPZrj/OQ8D1eQJ9ksxTlq0Kk83EBmSjyEOqeh71iDR1F+eFI8iXbBKXwoQUNwDH9J0BgcwgcSNAV7fAmp2f0a7zehB62gT0tWqa+8jPW5VTY/rTzH9UwDh1pqxN55ELcKdAr5dBxoJ24VaBvplj/cKlEjxSk8EaIpvOCw+0hvhWgI3/g/SJ9tdB/7t/L35PECi/uNrwADAPh2YLGNv80DAAAAAElFTkSuQmCC); width: 11px; height: 10px; }\n  a.active .ico-close,\n  a:hover .ico-close { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAYAAACJfM0wAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoxNzg5RUNEN0JBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoxNzg5RUNEOEJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjE3ODlFQ0Q1QkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjE3ODlFQ0Q2QkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+Pl14FgAAAPxJREFUeNqU1UsKwjAQBuAY3HQn3kDwLHVXdaV4ER8X0BN4hKorle68i3gCoSC0WyeSgTB2kpnAD02TfgzN0PZGx48JxhJyh7RGPzJIAbm4iQ0WNpAT5Oo3adEb5AxZh/ACsvfXEyWOaO7nB+chXEEewWYpTlHjnQrhBjJX4hzqnCZ8xxo8itLDk+JJtAtO4UMJysEx/ClBYzCHDyRoCkZ8BanJ/drfb7gHraBPS1IpVl7G+twqmz+sPPfrmQbmWmpM3jmLWwU6g7w7DrQTtwq0jXTLH26VqJHiITwVoim8oLD7SO+EKIdv8Q/SJxvdx/6l/D0hXvjifuMrwADc6WDSaVwquAAAAABJRU5ErkJggg==); }\n\n  .ico-lock { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAcCAYAAAB/E6/TAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo4OTg4M0UzMEJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo4OTg4M0UzMUJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjg5ODgzRTJFQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjg5ODgzRTJGQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+ZGIeAgAAAfFJREFUeNpiZCAMZIE4BogdgFgaiFmA+DYQ7wHief/////MQCFgAuI6IP4GxP9x4NdAHAm0jIEQxgXYgHgVHguQ8T8griRkESMOiyYAcT6Mw8jIyGBra8tgZGTE8OvXL4aDBw8yXL16FVk9yMIIoIGrSAkyfSD+C3OxpKTk/0OHDv1HBv/+/fu/YMGC/2xsbHCfcXJyfgXSPKQE3RyYZhYWlv9nzpyBmw/EB4G4H4inAvGV2bNnowRjeHj4TFIsug/TGBYWBrPkGRDbooTV//+Mf/78SVBSUvoHUx8UFPQTKI7VV0xYLJKDMezs7EDUHyD2BcbTYWRFQD7Ixwv4+PiOw8QeP34MSkSRuJIwTjFBQUEQtQ5o6FlcEXrhwoWLMPaPHz9AlAuxFqGDQyTmP0VyLXpPokUc2ASR8xGoiHEDZT6YgK+vL8P79+83Hzly5Boeg0F6DEEMUVFRhpiYmFf9/f0OwARwHZtiFWik/6cSfgoKLWypTh2ImRmoB6R27Nhhgk3Cm4q+AeN37949B/qECV8+ogpgYmKSAFK8pKQ66lg8atGoRQNm0Xcq5yEGYDWPVY5VRkbmFFABxSUCqB1RUVEBq5n5MVpBQI4TkNpLRY+BqngeWGghxxGoqt4KVUAp+AXEXchRwoivFUlNABBgAMOih6y6PH/+AAAAAElFTkSuQmCC); width: 13px; height: 14px; }\n  a.active .ico-lock { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAcCAYAAAB/E6/TAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpDM0E3NkI0QkJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpDM0E3NkI0Q0JBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkMzQTc2QjQ5QkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkMzQTc2QjRBQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+R5SWVwAAAglJREFUeNpiVJz2mYEAkAXiGCB2AGJpIGYB4ttAvAeI593L5CFoAAgw4rGICYhrgLgCiDlxqHkDxHlAy5YTsogJhzgbEK8A4kY8loCACBAvVZr+pZJci7qAOBTubSA2k2JmSNJjZYjRYWVQFULRBpJuBVoWRmrQ6QPxOZgjxLgYGSa7cTCYSjLDFfwH4nU3/zBUHfjB8PsfRIyDheHbjz8M4sBg/ILNIhYsYrkwS5iB5BwvTgYdUSaY+YdBjgB6gS1YncX+zz927coDP8GagJZw+aiw9AKZ6cRa5AxjeCiywCx5DsThwOA5DJMDupwxRIM1fvq53/MeffoHCj6Q7xKAVDEQfyEmjuRgDFC8AMEfIPZFtgQEgPz/qjO+LOBhYzgOE3v+5R8oEUUSmxjgYvzsYIeuAxp6FlckX3vz7yKM/fMvmHIhJdUhg0MMpAFFci16T6JFHIQSA6iIcUOW3HznD8OSq78jgEw9PAZbwBivv/1naDn2U3zexd+awMRyHVs+UgHiG6AUzUAd8AxURgIt+4cedOpUtAQEpBb4cJqQGkdkAX0xpo3I5tPMIiZGBgkgxUtzi8hJ3qMWjVpEG4u+UzkPMbAyMWK16LAED+NpNDmyACvQxDQDNlAbAmvp/ftYLDeo/baXih4DFai/sMURqKreClVAKfgFbbLBo4Tx////dEkMAAEGABHchhTziHgTAAAAAElFTkSuQmCC); }\n\n  .ico-color { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAeCAYAAABNChwpAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpDM0E3NkI0M0JBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpDM0E3NkI0NEJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjg5ODgzRTMyQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkMzQTc2QjQyQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+HF+mwQAAAyxJREFUeNq0l89rE0EUx2fTiDHEJhIJgaSGUlEUrA1IaTVIaaSH9qD0UE9SoT0oHopQCurB9GD7N0hQPHjxoF5SaSFgRKlSMNLcCorGaCGa/jDWqE3d8ftgt0yXbXa32Q58mGV3Zt53Zue9eSOxOgvnvK7+koW2AXAenAGt4CDYB1ZBHrwFU+AVRMnMxnIIJMFfmrAJPoBh4KTVMcJoda6BNZOGtcyBYzsVsAfcNzIiSZKRiB/gnFUBNPOHegPGYjGeTCb5wsIC39jY4H19fdyEyHXU3VYE3NQOEolE+MzMDNcWMwIIp9P5E3XEjIDjYF3s3NnZyUulkmj3JRgGRzC7KbN7IhgMzpkR8Fjs1NLSwldWVlTDn0CPpn3KysaMx+MXawk4CmRxg83OzqrG6cGv87ssCWhvb/9eS0BCbNzf368afw9823iLJQEOh4P20gVRgEMY7Kw48tDQEFM6XsJqrNoR0WRZZvl8PiG+EwVE1YeGhgbW1dVFj09h/LWdYbVQKLQqYX2LgL1gc5nD4TBzu930eI/ZXIrFIsWZmFaAS2zU2NhI1T+QsVvA2hpFdnZSK6AiNlpeXqbqC5a/YrcAZXJBrYAqjJXUl4uLiyTiF9uFQr8XxaO3CbNikjE9PR3cDQFtbW1UlfW+XRd9trubzg/uNRjPUhxwuVy8XC7TuLf0AlEI7ieLHUZGRibtFDAwMLB5jumeBR0dHW/EDn6/n7KgsB0CKLRns1ky/hvs1xUwNjZ2yuv1buno8Xi+oj5cr4DBwUF19o9q5gPj4+MvdGI4bZorlOftREBTUxOHV5FxGURrCsDL8Ojo6J9tBvsI7oAeZVXSRsZpRXO5nDr7B6ZyQqRblxOJhJmcrybwedH4Z3DAdFaMj5OpVIqHQqEdGafjHHFfNb4KTlhKy/FRArfht/LExAQPBAKmdjpOUZ5Op8UUrrCdccLwZkQ+i+putVoNZTIZhiyJzc/Ps6WlJVapVJjP52PNzc0sGo2y3t5ehgRW7P4EXAXf6r3/kd/eAEVuXGinPwdxMzcjyeLlki4slKmcVo5UyhPdyv2QPOQdeKbcFU2V/wIMAB8kuOEdlGYQAAAAAElFTkSuQmCC); width: 16px; height: 15px; }\n  a.active .ico-color { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAeCAYAAABNChwpAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpDM0E3NkI0N0JBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpDM0E3NkI0OEJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkMzQTc2QjQ1QkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkMzQTc2QjQ2QkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+EZEHUwAAA55JREFUeNq0l2lIVFEUx+9zVsdRI83GvaQQLbRcCrRlCikYiRYCESuKMpSkok8VRYKVfupDSCblgvTFghYliUIws7TFjISKpMLUNhU1dVzGmdf/vnkjz2mW95zxwI8Z7tx553/PPffc85jl10aJJ/Y1X+vR/+US5oaAnSAdJIBg4BtTNjaMz27QDh6CFoiyiH0oIyICUeA8OACUYoICikE1hMy4m+zjShw4Bj6AIyKdU4sBN8ALRCduvgIUoAKUAj9XCl1YKmiDiAypAuhzq8Ah+x9SQmWkWK8ijdka0pWnJfpotykUgIc1QMRWKUl4BuQIB8L9GXJ5s5psjJRJznIW0ZT5kAcQsRo50e0uAvGgUDiQtFRG6vZqhM5bQC6IbeqeaRAjwmwh2iUa5o6YCBTx+29N/wAfUpmpJgEqbrep+qNYyeO5CxRn/UY2dV/9RNatHb61ziIQC3YLE+FKhsrmvBUk2zmXbOPTXFI73YJsYWJvi5Fz4Yd9AQY4HyQeWme/OfhZj3mXMwGbhD9kxSlsId7PVzuPzYKn9Y1aCp0JWGv7IkMc1odxq78H563Ei/ZzjE3gy/ocASqwyDao0zLE15qeFcTLNjDB0m3eYC9ALZykVXKpYAZN3hYwbuIOTqK9AKNw0sgkN6kX4Td6W4C/dXE6ewEmDA/YBn+Ps2R4ih0nC2A6P06A1lESvhVWl+bvZt1CCIgP5lz+/U8AnD4STqz9aFqM2h3oTecqHKx11tPV6ygCt3H8Zktra5+ZFD2fOu1NARnL5MRPwW3BO0cC+hJCZK+Ef7j/eeYUPiK84Zy6zUvieppJusMOb0OEp4DPUs6GJlmlRsG8xNcVngrYEysnq6z7XwdGHQoo75h+czhR0SwcM5rYMB+GS9A8iU3srIWisJ1LV9nyu8RlR3Q8RZmTu0YxZVfD/fFRBrrAJXpX8VFRizn3lQZfEmi9VWtAh9uuGO3WwdL26aqrr6fFX/iOzjxWXgXnsUHcOnv4CjjktildeX2s+kSKsuSmQW0rHJJtO67zenRSvPMRkGnv3N2Lydkt0fLJJ9myCzWdJqbyvYkMTrBuM53eogXJSpIWMdvC0TNvoO3AvF5MUIyo8vIZCwlv+2Em7b/M5NOAhQxNsWQCFwvtmCLRutEM10fJuQZWYHdBPvjjyZsRFUGTsACcFN7lzhth8hRcBI1u6wPLSkoz2ibpQRqfUEFAA2jH9I3P8Aa+gRVl/wQYAICSAbXYakIpAAAAAElFTkSuQmCC); }\n";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__PixelParallel_vue__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__PixelParallel_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__PixelParallel_vue__);
 
-/***/ },
+
+
+var pixelParallelContainer = document.querySelector('#pixel-parallel-container');
+
+if (pixelParallelContainer === null) {
+
+  pixelParallelContainer = document.createElement('div');
+  pixelParallelContainer.id = 'pixel-parallel-container';
+
+  document.body.appendChild(pixelParallelContainer);
+
+  new __WEBPACK_IMPORTED_MODULE_0_vue___default.a({
+    el: pixelParallelContainer,
+    render: function render(h) {
+      return h(__WEBPACK_IMPORTED_MODULE_1__PixelParallel_vue___default.a);
+    }
+  });
+}
+
+/***/ }),
 /* 22 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony default export */ exports["a"] = "\n  /* ------------------------------------------------------------ *    Pixel Parallel Panel\n  * ------------------------------------------------------------ */\n\n  * { padding: 0; margin: 0; outline: 0; border: 0; box-sizing: border-box; }\n\n  body { font-family: Roboto, Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1; color: rgba(0,0,0,.85); overflow: hidden; font-weight: 500; }\n\n\n  /* ------------------------------------------------------------ *    Buttons\n  * ------------------------------------------------------------ */\n\n  .btn { display: inline-block; position: relative; overflow: hidden; background: #2196f3; padding: 0 15px; border-radius: 2px; font-size: 14px; line-height: 32px; color: #fff; text-transform: uppercase; text-decoration: none; text-align: center; cursor: pointer; transition: 200ms; }\n  .btn:hover { background: #2980b9; }\n  \n  .btn-block { display: block; width: 100%; padding-left: 0; padding-right: 0; }\n\n  .btn-success { background: #abdc28; }\n  .btn-success:hover { background: #9ac117; }\n\n  .btn-danger { background: #e85128; }\n  .btn-danger:hover { background: #e04a28; }\n\n  .btn[disabled] { background: #ccc; cursor: default; }\n\n  .btn-file input { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0.01; cursor: pointer; }\n\n\n  /* ------------------------------------------------------------ *    Grid\n  * ------------------------------------------------------------ */\n\n  .row { padding: 10px 15px; }\n  .row:after { content: ''; line-height: 0; display: table; clear: both; }\n\n  .row-head { border-bottom: 1px solid #ebebeb; padding-top: 18px; padding-bottom: 18px; margin-bottom: 10px; }\n  .row-head-large-gutter { padding-top: 21px; padding-bottom: 21px; }\n\n  .col { float: left; padding: 0 5px; display: table; width: 100%; }\n  .col-1-of-2 { width: 50%; }\n\n  .col-1-of-3 { width: 33.33%; }\n  .col-2-of-3 { width: 66.66%; }\n\n  .col-1-of-4 { width: 25%; }\n  .col-3-of-4 { width: 75%; }\n\n  .col-1-of-5 { width: 20%; }\n  .col-2-of-5 { width: 40%; }\n  .col-3-of-5 { width: 60%; }\n  .col-4-of-5 { width: 80%; }\n\n  @media (max-width: 372px) {\n    .row { padding-left: 5px; padding-right: 5px; }\n  }\n\n\n  /* ------------------------------------------------------------ *    Header\n  * ------------------------------------------------------------ */\n\n  .header { border-bottom: 1px solid #ebebeb; }\n\n\n  /* ------------------------------------------------------------ *    Panel Control\n  * ------------------------------------------------------------ */\n  \n  .panel-control { float: right; padding-right: 10px; }\n  .panel-control ul { list-style: none; }\n  .panel-control li { float: left; }\n  .panel-control li a { display: block; position: relative; height: 48px; width: 30px; line-height: 48px; text-align: center; }\n  .panel-control li a .ico { position: absolute; top: 50%; left: 50%; margin-top: -6px; margin-left: -5px; transition: 200ms; }\n  .panel-control li a .ico-minimize { margin-top: 1px; margin-left: -3px; }\n  .panel-control li a .ico-eye-slash-small { margin-left: -6px; }\n\n\n  /* ------------------------------------------------------------ *    Nav\n  * ------------------------------------------------------------ */\n  \n  .nav { overflow: hidden; margin-bottom: -1px; }\n  .nav ul { list-style: none outside none; overflow: hidden; }\n  .nav li { float: left; }\n  .nav li a { display: block; position: relative; height: 48px; padding: 0 20px; line-height: 50px; color: rgba(0,0,0,.5); font-size: 16px; text-decoration: none; text-transform: uppercase; transition: 200ms; }\n  .nav li a:after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 2px; background: #2196f3; transition: 200ms; }\n  .nav li.current a { color: #2196f3; }\n  .nav li.current a:after { width: 100%; }\n  .nav li a:hover { color: #2196f3; }\n\n  @media (max-width: 372px) {\n    .nav li a .ad { display: none; }\n  }\n\n\n  /* ------------------------------------------------------------ *    Number\n  * ------------------------------------------------------------ */\n  \n  .number { display: block; }\n\n  .number .number-field { display: block; position: relative; }\n  \n  .number .number-arrows { position: absolute; top: 50%; right: 2px; width: 10px; height: 16px; margin-top: -8px; }\n  .number .number-arrow { position: absolute; font-size: 0; line-height: 0; color: #bdbdbd; cursor: pointer; transition: 200ms; }\n  .number .number-arrow:nth-child(1) { top: 0; left: 0; }\n  .number .number-arrow:nth-child(2) { bottom: 0; left: 0; }\n  .number .number-arrow-up { border-width: 0 5px 5px; border-style: none outset solid; border-left-color: transparent; border-right-color: transparent; }\n  .number .number-arrow-down { border-width: 5px 5px 0; border-style: solid outset none; border-left-color: transparent; border-right-color: transparent; }\n  .number .number-arrow:hover { color: #2196f3; }\n\n  .number .number-input { display: block; width: 100%; border: 0 none; border-bottom: 2px solid #bdbdbd; font-family: inherit; font-size: 14px; font-weight: inherit; line-height: 30px; color: rgba(0,0,0,.5); transition: 200ms; -moz-appearance: textfield; }\n  .number .number-input::-webkit-outer-spin-button,\n  .number .number-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }\n\n  .number:active .number-input,\n  .number .number-input:focus { border-color: #2196f3; outline: 0 none; color: rgba(0,0,0,.85); }\n\n  .number .number-arrows + .number-input { padding-right: 20px; }\n\n\n  /* ------------------------------------------------------------ *    Toggle\n  * ------------------------------------------------------------ */\n  \n  .toggle { display: block; cursor: pointer; padding-bottom: 1px; }\n  .toggle .toggle-checkbox { position: absolute; opacity: 0; z-index: -999; }\n  \n  .toggle .toggle-title { display: block; margin-bottom: 10px; }\n  .toggle .toggle-title a { text-decoration: underline; color: inherit; font-size: .9em; }\n\n  .toggle .toggle-main,\n  .toggle .toggle-handle { transition: 200ms; }\n\n  .toggle .toggle-main { display: block; position: relative; width: 40px; height: 14px; border-radius: 100px; background: #898989; }\n  .toggle .toggle-handle { position: absolute; top: -3px; left: 0; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.2); transform: translateX(0%); }\n\n  .toggle-checked .toggle-main { background: #90caf9; }\n  .toggle-checked .toggle-handle { background: #2196f3; transform: translateX(100%); }\n\n\n  /* ------------------------------------------------------------ *    Icon Link\n  * ------------------------------------------------------------ */\n\n  .icon-link-group { margin: 0 -10px; }\n\n  .icon-link { display: inline-block; text-decoration: none; color: #000; opacity: .5; padding: 10px; transition: 200ms; font-weight: 400; text-transform: uppercase; }\n  .icon-link.active,\n  .icon-link:hover { opacity: 1; }\n  .icon-link.active { color: #2196f3; }\n\n  .icon-link .text { display: inline-block; vertical-align: middle; }\n  .icon-link .ico { transition: 200ms; margin-right: 5px; }\n\n\n  /* ------------------------------------------------------------ *    Paste Box\n  * ------------------------------------------------------------ */\n  \n  .paste-box { display: inline-block; position: relative; overflow: hidden; height: 32px; width: 100%; font-size: 0; line-height: 0; background: #fff; border: 2px dashed #2196f3; text-align: center; border-radius: 2px; vertical-align: middle; transition: 200ms; }\n  .paste-box > * { display: none; }\n  .paste-box:focus { border-style: solid; }\n  .paste-box:before { content: attr(title); display: block; line-height: 28px; font-size: 14px; text-transform: uppercase; color: #2196f3; }\n\n  /* ------------------------------------------------------------ *    Elements Divider\n  * ------------------------------------------------------------ */\n  \n  .elements-divider { display: block; text-align: center; color: #000; text-transform: uppercase; padding: 10px 0; }\n\n\n  /* ------------------------------------------------------------ *    Droparea\n  * ------------------------------------------------------------ */\n  \n  .droparea { display: none; position: absolute; top: 0; left: 0; z-index: 999; width: 100%; height: 100%; background: #fff; }\n  .droparea:after { content: ''; position: absolute; top: 10px; bottom: 10px; left: 10px; right: 10px; border: 4px dashed #2196f3; border-radius: 4px; }\n  .droparea input { position: absolute; top: 0; left: 0; z-index: 9; width: 100%; height: 100%; opacity: 0; }\n  .droparea .droparea-title { position: absolute; top: 50%; left: 0; right: 0; text-align: center; font-size: 26px; line-height: 30px; margin-top: -15px; color: #2196f3; font-weight: normal; }\n\n  .droparea.enabled { display: block; }\n\n\n  /* ------------------------------------------------------------ *    States\n  * ------------------------------------------------------------ */\n\n  .panel-control .ico-maximize { opacity: 0; }\n  \n  .nav,\n  .main { transition: 200ms 200ms; }\n\n  .pixelParallel-panel-content-minimized .nav,\n  .pixelParallel-panel-content-minimized .main { opacity: 0; transition: 200ms; }\n  .pixelParallel-panel-content-minimized .panel-control .ico-minimize { opacity: 0; transition: 200ms 200ms; }\n  .pixelParallel-panel-content-minimized .panel-control .ico-maximize { opacity: 1; transition: 200ms 200ms; }\n";
+/* harmony default export */ __webpack_exports__["a"] = ("\n  /* latin */\n  @font-face {\n    font-family: 'Roboto';\n    font-style: normal;\n    font-weight: 400;\n    src: local('Roboto'), local('Roboto-Regular'), url(data:application/octet-stream;base64,d09GMgABAAAAACg0AA8AAAAATaQAACfbAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGkwbmg4cgQgGYACGOBEMCuZU0TgSgWgBNgIkA4Z2C4M+AAQgBYIQByAbRUCjoqpXxKIoH5Q92V8lZBMGrq4VkzIoWdkSpzdCGXy2xbxfTGISI9NfZ9qH9r3UXR2SFE2ef6zr+V9JTqr6PrOf+Tn0CCBnokdk7x/4ufX+AkYKG2IUomASqWKREiIRITVqVAg9ctSokhqCDHqjQ6REpeUUzLOS++Y+sy8TGFhI/gGQvVMKGNspbc/1V6gqU6FbDdTgAJoP719nOSPbCzOSdWGq8tJym+sS/mBaQIMCLJjma7eT1kV7XYp2X5+OSoEhwGvLBeTnhcah9NJtLy9Rkni0WKPjxq/xfzbTVv/GRGNzF4Vt1nt+fbgmaKqUO7Mj6WZHK/Hz7QEb9nglGXQhSaE9BQAqV+HXe2WUWT4HdA6dQwAVQcfUNGk7O126IMicjR4PRVzb16FvPNM1iCLEXyh1qUs5ZCEU5cbibk/DaWsPKuYhEMV020u8BuzH5e7YCbkBocIKImjCaJEYEY0RcRiR8HuISJICUaoMSo1VCATYhwFfmKtdQ9MADt8hiEQE4buQHN1A8p62vh5wAwaQPWjguENkhygb+irc404kDzjs64A2l2GgyiyMux8wnl96EFGXJVdt5MzpH6a2wtbSahum7dMO2ufibwJNsRk0ZrvbvjTizAgHt189ybwlJwm8MJehd4uPmZUCkv8shriGBQcCIWecdc55YsRJkXaZnKuuu0GdBk269OgzYsZSpizZctSgqfVAnXoPNaBr1KQZA1OnLt0GTJg0ZdqceQsWLXliZQVWRIgAhFFeQpin3xdeAcUEt8iUwMFkmVFamWeU+64DQnOW3ZA74pIqIWUwuPBRwMsoW2wRFrAPOOGN4C5Y8R+0SOAFGE0jwYQkc7ySfXFkO5VBJvnAPOvSPnnZJ1/IohjFIu+Z5zVEZKKRG3u2ipVx51HBRI28ZpRlJoEWfzq456HQTItMqbj0S0ifvMxDZIUOoYEL4iAMsDpPnKI/iG+n2w0IVhiczpMh6yYNiMtZhiGHz1V41/EbmMcWxRN++PyEYkR098NlfFSyRjVvqBlQh9ugD4aOpnnNLDssHVPyBjX8cu20GKmFB1AH9fDQPpg1QzAMIzAKY3z8DiZgEqZgGub5AmARluCJfTmvPYVn8Ny+kh2r+WBdziK5bLuat65n1YDhGAbo/N0CZhNnsRDNe1cIeqAX+qB/bF4seHDYVbNDDdThtjBsS2LPxCMLsiHHPp4dEzAJUzDdfQg+GGASpMNVqGwILG0mzFnLwkE1b6kZUIfbYAgpMA4TMAlTMK2x0LcwDwuwyJcAT8bG4EkMPFAhl1p4C2/hLbyFt4lvsdMkQBugk6ifCMZJMx/4AmARluDJN3bUvC4MmJ9dcY46CDKTr/kQcr6kM/fyFWdoKedC+c9fEDsZl6ovwqWzDY+3dOB1NgfxF0B+dunIp9WX4cq9Aw7Lh0Tmd9JhHdm2KrIPT8oyhIcaGkGEmXc1zTmYzPwfSpLDA7KcTd3Hslv5ZOmjD6+EpDcTOzpAvHfv9hZAdMOLwKkH5nT4TAcR/2zuuvZeXm35CnK5A8ftNev5mh/J3CoxG9sKcgJoMz1PxZDNvLr0vfGZDmjVKXKiK2/zIqUgvXjx5mm24OFTjisiTNbsZirL+T/tGZG4nNxR7wFrE5dFkFgmlCGo66znv9V1anGtpbo/Mr9pVXy8OOO6uTMwX0VJm5LVSls7OWadPyE/adltcmU7OIE79X/67sjIeKDGixHqBnSn0CHnfFDeSjvEfmidUpYT6elIMkeo+UjjCgk1g7FKvvcOV9hfZkK/AGLE6R0By4TBvhjBg1HwhaAJOQfjImlsLrsBT4WqQ9QNPkrT8RhdBo4zwoLMHE+xYOW0xM6ckSnXWTWmiZrzhME3QY1mUGQqosPoMDqiHSFMGHEGY5zFaOccsS4SgSKK2YlhVuKOOBIkoUhVoEnrlGAWVzA7OczhKuZ2DXO6jrncwPuoYB63MJ6q4G0LEfrw4Xqe6xPez0DgW0QHgF+CD7LE/KzEoXb74OlZDqNCHPl2UTssF/iIGo6GRMOgIxGrRQcUxmUiWo9+7AbIkcugMTzGHXlNmEYwF8tn3hP7uwf8SBphEEbjxguEx9yEBGcPNZQLYH0TB7qkocgQRrkk+HqFWBEasSMWxLVDDr6fdHU8bpPg6Q8iIKxGYAjMw1jCTSFwvUII4kWIYBtaNJRkwigpzTzSZXQPYRA3wmjcqhGLR/MQZw9Z3xAKoREH7C+bxtMxRIjFWvYcDq5BqPEiNcjYk4jDDrnhjfQEyDX8uAafWNQ97+ZkC9x+Dn6gG2wAaWQhABM14yAuhsvHKIVyh+2NhzKhk7k+GtD1pJYGC+bLpxRoJ1Lz+Ia7/d0wd6/8HHt0nHwMgJMA17yOtirIg/xd4B/Andf8DgKQ1wDqypNOgMBr1THz47yKhIWzg3ZbmHY14HLtB+cH9heudKS5NXuNeOSlD/aQi5p+H+nP+sqWT+CwwHEBQQE5AWUBX4E6wXpvD+T0EdCnjNVDfUbNeuV/01PPThA4KHB0h1fui5Zv2caSgfxKP8gOyBaIWeT+P/a39W/LRrgQwQLYMnFu/dNaynoku9fBmcDFwC2ZlFFt/kg1Osa0zz5KtB69+vQbECPWoCHDRowaEyd+fFs5WYJlTz3z3IpEq4O5t30JOMnpXLj5Yk3nRQxgCzzaSK2+Fqt+M/A64J3AHYB3mc69BXg38DHgPsDHgc80UQE+C8mqwOeArwHvAb6O+/+twDeA7wLvB74HfB94PPAD4CfAR4GfAj8Dngj8HPgN8Cngt2bVTwZ+B/wR+ALwJ3PjnwL8GcA/AHwT+CeAfwF4KvBvAP+vpe6wzdOBbP0T0C4ayzNAu/7UNwCeCfpnJ/Bs0H84geeA/uOxPBdsD3U8DMDzwPYox2MAvABsj5v6BAAvBtuTx/IysL3S1FcG8HKwvdoEXgm2D5zAq8D2nRN4NTj5kCm8BgIFF8net6l5/hTQPgz8Euz3dnDocwEGQv1cmOcXUjqVIbAfamlhRgU6K+jyzp+qqEieGS1Je+8qfCQnH6qIGdmn5B7pvEyICoHSlQlTwi1V45wJH9qr6KO7EWeDKrJ3l3EyKfoUSP0z4vpixi1Qe3MeVxd5xVlx0I+S1bUXBALnio5xhr5WO5cQdYzLAig6cc6WqS+xVygLGRAIknuqHWOb9TheNoqGIJVQvnDt+8lzX+C2sq2La0BLFvrqIIFdDzfeVhVWAnVCZwfg0FCPbweYDYjLXeJ7KPehDUFYoH0cGky+sK6TQiodiA6np7nsc0DUVmJg6JBBiQAxT8jKFQWMQBu0F+26N05wldMwkdliL5qEC4z6U8o4yf/l132KnwxozCcHbwJf+1AntGv+uh8PhjFQgA6fFCC5mqbB3Cxy8lOAcqWCwdV/XRhcpYDwlTV/EC5NcuNS4FEjFYp6sDDEqAVDmtty3uEGUCL6sRE9xi0XQFEJRk1dtD0dNJkKT1R/UrrL18uLyxzatkWSq383HuVpa3W1GqirotaqMZvY+ZUy7XaMedwYW6/XcmpPRjw408dDNRoYCUA8Sptal/KKaZL2oYovlSXKKAA7o0lYrjwVcYTXicswNMWFlFfrJdqQcBs/5weCOatJHVA+zPXz81D4iecauFojUypy01OJZDcYEgaqRC5nlJOgN7O1FYIbtCUFwBU7XQ3Xny2FCnhHgCpWb4wz4styNqmOF7AdRhKSO1hpQZT+yTRVEh7I2UTGu0BpnytVBgopVisPPv57TMi/7bR9XhRxdPQpZChAVgHSS7vFFBKctq217e7fWqtSFQzki1d1lEVXq7bdvizVk4pxFtv//aJdqWr911Xp+/oX4dZsxtst6+q6dVIxV3tk/L3zFqU/IOGUvgsOWQIq1tCiGwxKr/PTXfZcydfqT7qZOxhxZJ00NUqFB3BrQhSxwG6twa3+VNkeNxNijEb6XZ8EqcB5/qzSkWAhdeGGtQQhXtMmL/yARLuPO77xSr1sBu76jO2+XHiPzUyotTZW3puoJ/4mpTPSpSxp/Q29rYSyg1w1QtlerybdZ60LK8eTN7wGzHWsMlJaslHGkrDsRP6kNtrM1eW8OlGnVR77MtnYLwpqKjUHyjnnSixkkjW9BtMKuCadzFX8lMTHhubVqN4uZrPL+WMdd6+EG1DDU23rTjfkKmBUpyssEc/mtJhRtOA44qRL2Ws+uw9qVJn2iVLKIBJQYfsSpD6yGgcU8ZzSd/FKl3zfF5LXqoFZn2SVatSeQ5DHAH0eBMV1FUXhut+X4BllELwe/3zo56oEqZAClk/uAPPaTkRziT1+RYV4ogMKuk5P+dSUXBoQdPV4hVZXWcEqxF/Ku2RYg8oO6hZTPQPt9FUr+LCx9owSNVmgS8vLgg1yBZaidkg5IORV/Yjeu8qLI36PxvefeBiKqfzE7ixN+XxO6jWbbrnEFhOK9BDICnIKvkktIYRb7aibABwlXNZWBox20BW6rWxc1HU156wp9ZhT1AvLbTkyQutWov5tq9N5A9maMLsVJR4n1MUQ2oFYo3pkONXTLNNj+CDO7XJJewolZEePtjQYjVWp32jApw8tVvTqorlbmrUyNSSEAP2sN02DGDNsrvC3sBbiwQdVA6zxomnrMMbcNYgvZOtag2P4xIyQki5TCaHqb6zvvlQaHs0VYT3ljVONZN/WFBFj8n3JqvQeRtpBqO5H/moWDSGvsqJmGIAOqkkZqy53xopvBVarGpzSKnNSl56DQqUynZkBCIQlbtbaKQ/NbvaCMlYHWtqqpkEbPoqbQtvHTNrUAdppqj9rTHUh3ijEKzLnPTswJmRALjq9SdbPXPhrOWwxj3+TrSZ2hi+B015VxPc23qWW2UQUj8HQ3nN4WtrLSMUqEthOodpC4xbrSbiEdSceFW5dURxa2CtA986HGzLczuYg7aNXHzqDCtVSfDInQZzakJonh0cv1J/bEMtgVKYCoVSmXyjuAA5bQsFs5yTdWhRSWeSc7pGGvQpT1lYFr46ig1DwbF7F5HoJL2Mj6s3jGcc+aSMcTcXVIqyevA/zD7ZR76mMcSmItVTujHzdet8HbhiCOwiz4HA8vbQXU31+oS7PPUUcKbJNZ5gFLat6mDiUMBel0pyS2mfUixc0FYUwpl6H3WBSGRC2nEqEcz78TftNliNG1/nX6Q1VvDUpFNpC9oC+7q3y0j7mdKgWV9kUVdae1XElFSFsDECq/lqrSJ7/QUJpkTQw+G5p6ts5eo6QaOuER0ZudO3YYZQSNH6a0+xHVLcl28kutbJBvVODho3p5AnKoZ0nAX/Gc+n2UzlWCmtUL1F0nmMzltPVvABQZcpxjY2nObdSjn0nzUAfxN2a26z40Cx8rWsqtCspjyYx57QfnHq6D710mjTaMrqgS5yyXMA5SUSrES1+LQ3ziJDN2v9/EUQFhLIklLFJgYs9ZR3FM4ZcMiDoPW19/SmlQJKPQ6hJu8F0uV8zEBDKYsTn3Jlgp2/KIjDtyPdgkb1e5FlD4OwQYOlDaEcLwLLyRqn4f+AIeFGGRizJ9QajwSy/Ghb2D3BS9UWIxFCzYKIr8BoGHnP0hHfJXPH7tvAnD6edR7GgDwlsyraopGO6JZSw4WxpJVNJr64lmwm/P6rTigRx21MGBzKRARYRYbmSC/IDs2UVPY+rCM+pK9X8zDfTHSmxlaSAsGCPuzGB4na1/jpFrrSJ6TZ8b1Yvg2fu5QgjKZ0aF00NA5as3OgqWnRsRS1ZNaaqKjKKVpWUwKJl7KChamRrqK5l6JjVW+qdahaLrqphqa5OUt0rmPd9sdprpWZoZ6ihbWSvrmpiZ/Djk7PCRV9S25SBQ5yLb0OFr42fAkW1arCzJnvwYayJSZaHrquWUpRSZEn13uvqRz/WbEjqCiPKTovI5pJGZpCnXQ1rVXCUf24K6tR/Nn4UPz0lMQmjG0r2Jpp61h6wbzGdzzMS1qgQo7UVWPJBP0JFKCjdkzmJOwoGUclHDGi+1kJeMeqB9W/0QVZ53Tf3f9NoNWGvPD/m/4iowJyxc+ExW+2zdO/e94b+BcB3/4mIqUi2iCfOOI/N4qy7SI6k2TB3iCXjRPPBUDM494IruyF7ijm1/f+CxoTYk86qllHoxOrWdEe7ceA8vpOzAxQbcQqpQVy0npQC9NASYRaRYpAvd1dZvfp2d10aLfldYfXSuzerF1FXOjjfRC9RUiMXkdWzb8kbSQkx86gX8JT52JdcwztyDKSYsd/FPMMNig1JCek+ibmFyYxx1Penk28WGp/wno2teg4H7SWTohBqLAn2klSyN6P+z/bgzO7TAevgRpcLAUJRDfeG9qZ8WG1j+lATwuNSkqLvFcRnIElw2XZ3ImdCj6mX43528OPwmc+jwxPGMP1UffH1gzsXkl1vkEd3WTY2P6Ge9X9e5Olq4AmlhPtHZjQUZBTTY4KUpVlB+mtjkeAT9N53wgYperRni2Nh8wvXzGO0/F/VDKMaPcxjinWJ93FD5Zay50Fhqe3U7LQOUDRUE2pVGxCiHuTLXYYbQ9LuJJqtmLd4TGdA97/12bk/G13+Ed1dd9mIedKIHW+e9Pe9fcLmYx2cn/crO+dHRkp0VGYqr8Nh97g4X88Y8trqoZGQBFJbEVeUS/VtwpkhjhvkDI/dyRDy8g/FA7I07Tg9zOnCM9vory95f1oWep/S12grehEUnMnMo6b2AWu0958hqZMhGcNaBw/B9fuiimWK8oqliiDRlJiF6pGxDc6IOzWkDxzyEH+JBE39qDh9K3cXd3+XuyFu5gykbGukrXtuorGhjEZ0U9PJ7btmug8zYtk3jo9PDrR2SlfLGCTqaaSmv8JPcVcEonoyXXTvnde+IXUO/zLTO2kd24yPuZWjNX5ppDmA/SvHdwpRuO+xWcuFptOkpSkJl19OG01VHL+v3BOrbSHvP/y0X6+vlN/04krRyTG55uF4ygon8i1U3i/3HVx7HGpHDhkRHKbXCC7Sh5sOffj+3zyPWix95d37wb67PoX25/0EyB0RQ3/Xdy7XcF6Py08MZj1+M08wPDuMGJhEpByFO5Ezh18e//UeJestmzyZJsVW0bBzAMW/3X+wvqogu2N23++Ud8MHmkpr0440411AQc+p6mIZGLOcGQsSrhxEuGTwfhNr3wh7hj928IsI3ECVBWBWi4o+s8wsnl8IgGsD0fbRfZf3bFzxyCd7uNPXq+6Cc6Y3EaqypZCJe+qSLvzb+3eOL/bJCAj2j3ADBHxdF+gllompqeoW8oBOBPSXrZUhx/aR1kj9EHDaQBBvpfezPv715vHTj6tjfWHkpKiADCrEweGKxo63r3POxj3auRYlfF/kJbgUNhX53Cf0w+H99GNDFSvlZzf7JV77Y9sFmccWcvE2lxDkohpEFuzs+jPeoyJfnJx6QSeDtkS5wVpNr2OrybiMTLvMpSuw19Y1sNdQ5Bd7EPQjvs62WT7UV7ffc8cZzElu1B9wviJH6Evj0Afuz+MLuO3vRoWm+ffTEqLuF6SiHEAHT5uPFQ80RE9GBUp+VuXVwbpwOjuNcmOxF5Ap/p7Wr7pfsyd8QW2PptGdWj3Mt77h1pfIGeNREoYunDPpu2coNZmh8aWUHBAGQ/K3WxszuXX4jZXs1z4Rk0H9MdXZeanFoZ6m2cGujlPBdvc9GwkLr7LRpOTRe/0xA7n3c8tClqi+oO6HXwAsvnf9EJsvvgsalfQ1mAbs830nPxxBkM2NnmfF9Q/L7tfVFz+HxH+HMY1zJ4fptSdb6Y9ha+JI79k6PPpHOW/mjzMNxwe5T2338++nN+CHhPg9soHgK9TAz7PCzypFWYhsTT5eWt12vOR06cWT1anHm+CwEPLs2Qn79BN9J7bXbwUuFyoUnU6T2I7iLf6eAgKtO73AQu7NDQLWjr4GFUun21YDHSA7IvhOC87tf0P4usyKzu7NuvNL984tPYArETlZuVmEYxXLJYjQOpzdY9ONiG0unWpJogFzt8XQ1ofkbR9rr8rUJWUPGft3zjPR9z9RhYx5viQbF5gKqq6lG4wa+9iCIor3x4uLfdOeabjQWmABxnXPxMSNc+gOTHf6dEK7Nm3BgNYSmzkN16PsMwNYTRswFn7VQ/YeqxhhOFHs83U5Pqvt/6es9Q2szqlxLin5E32nOvPGwUro5xvR3h6PSGkGxqdALc7HI36k663Ujw6WjpxHcXSdoo96uXXknMegSVghCHwSLAv+s5IaOb+7H31nFV3SNJRoF68tqeBlHD+L95nwyinnzTjOzZocnw+vHjygPPB8yOiuld9go+7ImNk625FeUZ7uHrAW+rt7vn/EIwkXQBOY+/Fxzm/dXs7I2sM/oy4+OyfR0uNeX89rCcandupsfINu8XuD/Nr4wteVT789OHvYGBU1yZgCX2dPT7N4a6E76CpvLAYYMuQYo8dF3IlhZiFEN+BrkWu/fOS6RNZ36Rvyivqd+OMXPWRkn8eaA+OLT2BoDqsyO38d+82KwUW/p8gyiZ8CQoUcJsA/aeKFbr3MnTprfwds4CJjwteFFOYUH8zuNMMcfvuqTTGfnyEHhBY5bHxIwVht1lIOzIRLQv+uJVBWeST+cRUH/tpIyljZ7tY/DFxL1dPklMqV0aaaleSE6qegsMX7fVOkf9grlI0B2Gc0XIBX0vjglhBLB7q9YJ5co5+F1ct8EFs4xyWLvd2zw30eEazE2kybZQbGM4A5tCP+p4OVWTgfW2mUjjdOLY8rWoBzPlnZEm3y+cCQa0GFmqVVy3aD+MkTt730Dl6t0Nfy0YndaG/o2O7OYmpGuNs5ehurKrko8V1/YKgXaJz+6iEjatTcq8KGgbFIJJJcwg3goJ88ywRlokRBRl5BICRbjaASGkZNLBmmDLOAZISbW/jj+pYxGOpjdH4bW1ApIjDk6PD/L57Bm90HleVSDsbIdYNy6Z5FX2UwKyGbx0eaBy2dzeK16+DSP79v8DwVvj38kLhsy08UXPqZlcVPZmmvXoJ33O9PuwsjR6Q3HbhWBJU5swlWzrdPOpx1P3hadAKuZAflmJOF9A9p5klHQ4A7XaJpu2v080L6wqdZpO3hRpOkEGlW8fDEiyqTKtP/ZlD4aQVQ4qICSw8V8L8m5FnYVl616Lfo7k4enlUUItElGjegY+5D3rvj80RXy+ZDCdD6zFbMXE5Quyddk6l+6ryWvqtVKVLaPp2kmXSzofRnv6aVjzXQHtTAAl/S7NOUui+GepRDZiCrSQM2bHiMcmiX8brp5OiRlVML40fpAluMdSp/7zyWqn+2/Kdbnzvr8/zrZqtQiCu6EygRhVjjWFcqi0px6NEv78Z6Vucbe93CQzxdIvPCcOibRaD8v1dx9ONHxZGx8ZFxiclOBRMznuUZ2ZHxGdSigMGh4sCsnGhydp57+eSQY3EqJTpeDhUSQpofDNoaDPaaC1lvuoYCvbwHA0jzIGzP7Vb2vOzR5bCIyojQCMV+xeDQ4MrgsCtlj1Ygg+sA88AY8xsTVNMbuhkGyuKq8Q416JFtr7FLKpcTvaYZSFRzdiG50tfGNMV59nqrWK+HRb4ns9VYQfxWvEMV++jaDnpzmhFWnZ+UWkqyU7mkHSd/XLtG1cvmSsTxWtMDGoe18RoOKrdktGMUjujS7xD0D7EmiURgcTSPYwg1p9Wfp+v1VflkmFdXWlzUNdfmQe+ZKyh9cJ+aYW9lYG7llhDiHdiWZWVhoe/4L7qu5DS+Up63clrLutqik/iqslJCRfEpEm2CaaoxEqE+En8rTAw3G2vMjgxrzLQag0tfo+Ftw4iAyBAnz6qAOqJ0fKiKloxUKYfTg8iE2LzUuGu2h3TMgy8Yn2GmeumByQ0pK7i6GcDExZbdBNNlgiHSSA0WV1pGqCk8WfegUIAAu7n3i16KLl9eTVRYyD35IAnIu26E5UmfZwjssyahG+4VqiLGCrLqd645JIK00Emd+/cF3Ok+56wCV+eMfBfXDKqzC5X6b7+s+q0rcuoaspc0tIga6nA204iYQyyuLo7MiSyq5uP7rJSrBLX5xsQLh4iOKhJ/rt2+dftKEakqE5cX7uHs6qqv1ZBGAZ4sRwMN1WviIru3rmhIniuyKw8OTSgIdL6kYqZwMOssxZUWSo6pDHMrFtG6qnRL7aqUdwFiAoThfxscQlTYLy0XBOV3C3xHr+cIMOWqcSSLuNpMHbVFG9YZiMMZvMT9XVpk+/eSC7B0yFj+OfLQEHtISoVjzbmHM2xLvCgsrtpGUmIXf9riTsTC+7Ii0yeXI+x88cBaYV/cOZBf0NlXpVHC7Jfu7q8sxzrYeBvoW5EcteyXQvR1rd0RG7hdDS5nw6392vvY7fjcfUjuDqFeKXHO0o3J9qHFseb6kodEL4U7GV9EfoIiF2E3+nmBD7eN9JTN1iUsvT23mbCklaO2H99vyBs4dnwFTNTUtVW1/IPVtNS20iqdpM6voZNJSdciH0Tp2uSnUl529zrrR0idXsoMvVuRUvyPzESErsvbf7FNPqVEdvSoSsIWKaHD1XYpSlDf2+xmUDRG0o5cQgcynzv794cPsL58gb/CZM28jC7B/akl2YEhw3+feABlhvHszGtmy1BTSdi9CRUpDatOimG8ZslEY5tuywXz8/n74i7IuHlZ6kmrW3dlGCXomibOGFg5uZo8EwKtDT5sfLO84aZlSnVnXU7RVv3quqGbe7CzS5K7bjue8rGl06dBT0Lvhla9kcvcK9j1WWZpqO+hZgXefn8zvijwple2WpH6/nfbvkiSu/4dFwsZtLRPVi1P4uETMbEZIKWy/wdrnmWx758nlLj45xGB63GZnjszkZH3A73FBpKTn2aq2fVGRZu1iV8ufi/zMLErQs2eJZrrAGeimkV6WU91ctXgrwKL2uwAxTmTlx0vra/IBPmeKlBHRVQ6iOf8Xgf/2UikeFieU8sMdZwayJMvDvm7Tk5zNhRUzwq1n5jK6pAdsPEwal1XS6x+6tjSZuSh3+CsmFT1jAGKJG961VlLGbJe0QOgi4ZMOSZ4pYFOIx+p/C81iRtqZeoSef5ml4fSCLe+LfCi7w5PAVX5I96OXKlEbmJ9/zYyc2V+4DXYCJcG/n1GTk0Y871mL+84SPJ6tPv3je8MC+3+UFxXgJt6GDn6a/yU5w3763YjXnErrGL/OnDtJU+SEkqWZtpKlxPjyxYVZ5fsqeX7E7gPu75UEHd4z55HpWXR8ji/7vMCQb8I4xBfc4tgv7rgoI76CNcwFFNUkhBXUrBTVJaQVFABqf9WiMGxFueaba7XHT1XLBHC4haYZHnKx/rKyRMXLiuJAM9LgouqRTgqg9zhe9dmFNiy+J1VLSJRlLT2KLC3GYHkw85qZuGodH+Gwx8NVpl80VnVjIzKZTAqiHZzKzevbkFmhZvNLODuY4w9PC3MvYmWQsbu7laWHh4mcEwISU4RjiYIx6QAt0/rRI7tU5EUJBXK3Z3+1CK1exhk8Mci0APNjyt9HU8SSgKOBf44ehrL0RTalNAU1sSGPXr8s2vccUIZUdCjgj6B7bwXFpEQATeakpRylGAidlxXi9aZ8W6v2mvHC0IlvAOcXd2sVimrD9SF1l4Kax9C0Bybc4snFcaHa/KHut72Rsfz1wC7zIAPtuT4PHCBZzRuAnwOtc+7RbnRimgBWMdAbFnI7vpJDhjNL88pv/eddItbeYf/jtd1BC/8OIB5bfziMMDp8P8AWOHzffg4Aw2wXsuCZz8e5//nX3V+U478hBXsD7AqaK7AGcrzvOeahRW2g3BYVfYlrrHQW7gULDWxuj+Oo3/LsVcOSbC8ChK9wC0lPwDNr8i3H/NEd++c9XSZG4BVZlMS9cvaz5DVboJeIwH053YWvCg7nVCZVuUm3mSxe7/Wu/tU49ulGW5yZ3X1k7dTmk5TQGfsQW0u39G5VmW/URG792uJu0+VNczVEBLZvXKqd+9HZvepkR/mGi/WGZ5Wi2pUpVqr0muXI4l5ExLzG0iqXrVrKHNtR3j1SgFxoVH1CszMSGIewjBXX9TrIkT2qFDIYtdVFfgcouKF6d53VWl3L8FZXRXL7RRfgUNV7TG62VNdDItUdfgMIlLYdGt2mKtUlFSl/Ky94yC/Y2l3TyKce4kwgkdPW9HtVP2K6FFPfZ8VEZjueneStDvKh7nKVU2zzaORxGcEAtNt2WGu0lRLie+IbV643gj+jpC5LGUfuEMhj4nJ9Udcvjb3UnZut4YYhrHvyhkOozlX7ggcrQzBfN6sp2PgC+C54N/PTuU9qVKGoLToO8e/rJxLoncuBNeKv8ctAJf3tN45Kwn1E52rv9dRMI9fpU1P2R6CkeV3/M6lC9gp1/IcQgN1jVUePRWNrNkA7XHcLDro19M3uyS1vSyBfhsDGpib0rp/3k62Wmlszyv2OHX08n/JB1a1q3QPWaJN3wfqQ5zN/RLG6/mPIgug59uew1bmLHbK421psTT8szSVIgvQsoYzAtpd5l/ZoF9B3zyynzv39rqsrz6HJIPxs/mWuZZzkJ7/EFnAulLaMLLlK0gNkQVi4zD+3e1BJ0bq8N+ftv35HluBXizGMtelj1HzZFpNSMiZVpuFDjbnsvS5TJLP+cbH9OpVQybGdbhvjvqYtdbT5G15f2Hp7EscmCuKR5liVu+jag3U5hkxX5HY9zY1aln7jWzZm9K9RF0sU5QUs8skrfKlk+6HKgjQwS1O7Z213rW/w5ENAD79J15RAL7+I63/OvJ3kU184wPs/UG1sYH1njvOm+Jr//T5p5H+b4tbfjKSOVC4/Xe+W/uBSjsFud4JqHAec4VL/eTYHDn1LrF9jPAgOVoJtFqGY12GUD8ibWjCS7kPoBYswQpkIB9i4A54dbdD+19ca3SueKmVg9wSFTdG3V7FuM7LjtZvtCkjYN5Eq2RjI+YxfQTPFrQuor1cyUwMZ9PyL39QxMwI/pMzdK97vVNTvXRqhMQUlzwPOLoecn1iXKkZ++qLjPoJGUPNWWPFNm5KfhTC9Iel8jXjXmGSS5xFRbOu6yz7qGvLXDblLLl9lNJ201vctKKPCle0pHKVXGnMc/Rk1r0VIJBvEba6G/LYcHJBuzC+OzfG8Rtuktbl22cN0AnTW/TRKqlsuFQV89kCq2Un2huZtcNMWz53F3XmI1Pm6He3PNxbNLhctQL7X1F1i23/QHHO70aPElJk+WOXUueX2X7zhRY87qMrfe7OFYaLDJ3lCs8xTnkNzqdSZtq7u72YqmpA0tJPq+jCK51qkZlXIWr7pWAt47wqsx1DaL1e0BgRMuWVLzeltTw2yCXecpzuC5z7c9d6/9HYJLHfRQQ3rZ/P1f6BbIWzrgw15eFEJUmINrd2kpK3INlSgWk57/VlR8nWkLdFMkkC2bCcHviu9S1tibSg2yEZMuiaHyHRLXC26ywxuv3KSEB24I/g61r7tNiDCzJddzIZEeCnKPsKA9gPyIMfADrUYVjixJUZNKT2Lio4wYWGwg0GM5ozY7AN1kWHt2Fx1K1Ebgbs6PH0miffOaDng9mCHyJbJEbRikh8uPDkQYAk0f87AgnqxdUl3XeULpBJ5FJz5juVeZH73yURAE2U7cJoy54zx8jKE4kTMUQu97ojDz6e+1grTeqUqNCiD1VEgfObgZPE9RNVigM=) format('woff2');\n    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;\n  }\n\n  @font-face {\n    font-family: 'Roboto';\n    font-style: normal;\n    font-weight: 500;\n    src: local('Roboto Medium'), local('Roboto-Medium'), url(data:application/octet-stream;base64,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) format('woff2');\n    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;\n  }\n");
 
-/***/ },
+/***/ }),
 /* 23 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_pouchdb__ = __webpack_require__(36);
+/* harmony default export */ __webpack_exports__["a"] = ("\n  .ico { display: inline-block; vertical-align: middle; background-repeat: no-repeat; background-size: contain; background-position: center center; }\n\n  .ico-eye-slash { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAaCAYAAADSbo4CAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo4OTg4M0UyQ0JBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo4OTg4M0UyREJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjg5ODgzRTJBQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjg5ODgzRTJCQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+U11e4gAABLFJREFUeNqsV29IZFUU31FzxP/mv9iiL5qKKZGuOoulKAVZbC1+MRKxdKXCzVBCDcQP6YK1sBEjflm1wLWWCkbZTysIhmu5tpPSfohcNpsRKR11ZpxJc8aZ2+88zrXnc1xn0As/3rxzzz3nd88957w7Z86c/rgIJAarLIRQcNrjFbINbALNgC5YIroQHWUCBuB54CyQBISzYytwAcgmRZ1OtwsHZ3nukUSCHbFAGzDPuw0Kra2tO3DSDOhOejS00w+BtUCOIiMjvRkZGZtJSUn/audSUlKEw+GAfUFkHj8JkWeAHwMRiIuLEwMDA2Jnh3wIMT09fUjHaDQKHp+xvY/YZkhEXgIcbNRXXFw8GxMT46f3hIQEMT8/r3iYmZkRnZ2dnvz8fLeaRFZWlvB4PKRiAxIgywf2ACfwarBE3gQ8HHrr5OTkr6Ojo/tOhoaGFBIgsHtUbphMJhmNy2yzALDQHBLYi+dbxxGhSCgOkpOT76+vrzvJWl1dnRKN+Ph4P+10YmLCfRSJ8vJySeJ34DHI4snw2NjYi0VFRX4m48PzjaOIUMm5SJ6WlvYAieZhgw8TExMXSF5WVqYISktLbwciAQdibm5OEqGmFgEY2VmB0+m0lpSUKLoRERG04ee0RCIBM8mio6P/QiR22dg0Z7yStJmZmWJhYcEFh78EIlJbWytJTPHm3gPu4D2eHSavrKyYUWmKPjb4J556NZEP5PkhAbfZ2CwnGo2bx/WMqKgoYbFYaJ0fKOIjWQ0LC/sa70bVMcROTU3dR/4p61AIV9REPucdb+/t7ZGxP4i9KncajyPS0dEho3GD11wheWNj4whkd9SJuLS09AQqS8nFpqYmqiy9JHIe0VASqbu7m5gYtJ0VvePIKklNTRU4f9m8noaMsA2bG1tbW2uQjWrsfULrwsPDxewsBV68v5+s1dXV92gSoaSyvait6YaGhi+PItLf3y+j0cfqIyRvb2+/xfJLKlO1gJ+juMrz1/aJbG5uvlBRUeHnjKZar9LUemxLS8u2lkROTo7wer1kbI2T8hw5QpSu453ybZ3WspkLsj3k5uY+9Pl8tI5OoORAH0FGf2EwGARHhshc1pBpQOkeIDI+Pi6j0cxqJqAJ7yMsf5vl7wJe7lEWu93u5/muQw0NLxE2m+0HZLLa2bdACqsYqFfIucrKSkniN1oLWRRVC36f4+q5xmu/kWvwgXywuroq28NtICxgi6eSReLdrampUZOxAx8DM1JGuWQ2myWR1zU2TIuLi/TV7uC1go/D7Ha7vbxmAUh85EePyAB3h4eHlc95oAStr6+XJCZ5mR54FtV1Sa/XUxTdqo7r6OnpmRX/j3tAalDXAEzEADc3NjZEW1vbARLovmJ5eZkMUrYV8P3UFqDlO6uqqqZQCA4Vie/Idsh3Vii809fXd+Aj19XVJY1+xWpX5Rx6gyM7O/tnROAnl8v1j4qAnWyd6PKMu8gN6Sg9PV2gSZFhcvIUq5Tn5eW9bLVaN8ThQdH4VObDiW/xvb291wsLC8Xg4KB00KMxdlXlnAh9TxFQ9ZDT+TsBxSGVo7+BOM08XUTOA0+G+v9jn4j8EQRe44xvDGFN0PhPgAEA6WDSgUWIcWAAAAAASUVORK5CYII=); width: 17px; height: 13px; }\n  a.active .ico-eye-slash { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAaCAYAAADSbo4CAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpGNTU1Mjc0RUJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpGNTU1Mjc0RkJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkY1NTUyNzRDQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkY1NTUyNzREQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+8eEv7QAABbtJREFUeNqsV3tQVFUcPvexd18IQgSEDYoKmI0gojyySRNEEzCcSglxMDSclAYJHLPUyT9K89U4ND4mRyscEnBKG5pJy5LC1MR1aqyYdCAJJ41EIB6y7O7t+909i8siiMaZ+WbPvfd3zv3Od36/754VQnf/y4a5pQOngJahBNe94qX9isNMYi7wGc0PrAKEoQ6U7/NF44F4IBoIBnwBCWgGGoA0HucLBjtUxj7hz4aFCGmXCywBJg+V8UtROnX9E/oX0d09dk+7eq/4wbaGVprPZd7hSUInMluIt3jLRy90ew70NQgsf6piQHc7V+2BFQkDPgISPB+YdQJ7PUFhz0/QyXqJ+db8ZWcLj3b1icmfprARipYexVCDtqYIOAZcvh9FkoDznIQjKkA6Z9IJmrQ0eVm6kS1+XMd+abKzrWetPRu+7+5wHxw6UmSZE3XU/Qd4G5gEbAFqgHlDVSQD+JiUh/R/fphqbGnqVONWf31be7h+usIm+otEwLr3olWhOI7etjZeYbJzeZugRit/fg0IgUbHsKJs9EsHUySJb4cOe3zpbLbZJ2GUNKmqwaap4aUI6oJwHatutHdwEv1aXLDEkkO1tf0O7AO8Acu+uYasyABRxUQyyJTg3rMDEYng9a88ZBSunFpsigAZmqTu5FX7zxQAJQRa6a7z1tN3I0EZsS5B3ysMrxTaGjY7VO44lGZsnBwoMdwUJZGV43aUJxGFS+VllNn1ExmmEOQCyVkNTGvrVjsp8EaHyn676Wi3XLc/fDci88NkhlVTtwokjuJ3OfkNnNMb1xYoGr1njsGCSmN2B1O89QIlr96dyApgClZkK0kz+kAJInYOSOUZT0bFrrY6WEp5p5fqNLM+DdXD1sRrc5IKa/iWbBIFbaymCua6GWgWZrz7tP4S8o9hgaNRCBvdiYylToiP2BMVKBnRrQdSeKJR++qe5hWpsGAvrVxLMY4qbi0QgBK3MzfieNY+aoQw+1Fv0UrXj/mLuS5ViEg5plCxYmNxjZUGZhJ7t/eUwTusA5HwMwps5RStcKi03qA1AQWYs3nDdGUOieke/9ShzpX1LQ5FQsDCCbI/buW4iJxJHitb6OL9C1YpYl97kMe72ueNk0sHIgIHpYqi7i4swLUVxtxo5QcsgPLpW7fwxeQC1Hl5svI3JS83T2fVbJmpX41SVR3YYQdjFbj1jPvLsK+vLp2k6/IkMe6OeTUB7wBT6WVQaT/8JBF9UvYwD6cP4gEqsDBfsa4oTglAn3agrJdI9IGO6p2JhuJoMERGy0iyz3E7z31vNz6pz4sJkvoQWQurl+6YVxt+36Tkr1lqpu8M5VsRjeUF8SlVKIqhoWKBMVR0HhDe4oVxx9CQ0YX75xm+QyYzKEOuVEz5A/hzMr+idHtJQEGWNEYzr1puXvTybJTrRb4F72FMJXMeBfaSi+MDeQX2EITSJRonuIp9nRWDbGA7vyTN8GPq+F7nf4F/qNYx5/nCOUjoZ142nqyaKn+0Ogpw7wYfm6Elgq9oOb3ENAaGSfbwE7AIMY5eQ/Q8KmJFPsT2SG1P7OYzVnbrdv+jxHMRMts2iwRg32CyRF6C45GcCT0ONRm1Rx83M3fc1oJYpTYvRonjwy9QDmJc06BHRe4fs+ABZSczTWxZVJ9vGoP7ssJYTQ0HN6+RQCNwqaNH/QAkSEUzCLTNDJGqLDlm5kbiCDDDReKe5xEE0qc9A2yPQ8pi1+qoLYtSWJDTvErIuvG7zZVH8IbW0T7i5fRw2ZYTqYvE8WEGH0YH6dcQf/CBjoo0EJMl8uRj/jCvFdGaQp0uP0CrDPcTTxxMMR5+xEvw4yXsaq08kTdjrpb/dWbt7FGzCmOVruP1tuVZOBDRCQ1tJyZu5CFVXy4ykSp+/LqZm9gXQAUv3+E5xa+KUUTAdUnVsNUjpJL7RANefO2B/oioOK4MESlADbDsPsYMGf8JMABPgCmUXqy07wAAAABJRU5ErkJggg==); }\n\n  .ico-eye-slash-small { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAWCAYAAADXYyzPAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpGNTU1Mjc1MkJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpGNTU1Mjc1M0JBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkY1NTUyNzUwQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkY1NTUyNzUxQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+OJ3L3AAABKJJREFUeNqsVglQlGUY/v6FBXZxggF2l6O4FllTMEZhUeSGAGW6hOFy0KRdjo7JYVCINMOIQQcDWqtpumvMY5ycRqSBDgLByakBPJJJC8HpUtwlNiBjr56X/iVsCZfwn3nme/9vv+99/vderuaFF9linud2VrM9tXVCrIaF3OMWS4xHDHwHfA1sxwf8YM8lRzuVOwFJgBJYBrgDQuAaL9/N4wZQfCeIvYEqoBDwmO+gg4ODRa0q8ocoB25rtWCe/W28gqetpBzH/SGXB5/OXJ/RFSKX/zT7QrQyipNKJOkQKxHzQECwUGI3oBVoBKYEAsHAdCDFYnNZiVqUvfGRGJFIFC8QcH4zQRaLWey6GBJv6vX6vVhbgE9A7m4vsQToAujLv1A/VtS4ZIkrxZQ99OADAk4gYK+89rrl2EfH2aXL389cio+LZS4uLiRqml4+cB3rr0Aa0Alyye2IKTtPACsdHR0/ePaZSqOzs3ONXv87B4sMS0PkrK2t/c/x8XFutgJPDw8WuXoViTdOdfdoSE9GelrmiuXLR0kXPNYKcvF8xOTaaKFQeKxqR0UEkiVNNzr6Df3g6urKLBYLuzI0fPPfClJSkhmUk7in48vOUqzByqhIp6yND/eGh4Uxs9kc6eTk9M5/ESdTGSB5LlSUbwuAonC8v9VysjWPfhwZGRHub2w2m0wmt9mXA/z92TJFKImXmjUHTmItDwwMmOS9l565IeM9mVTKpqamcl5qal4/FzERsZXhYVOwOAriQaAEiTIIyylmbHJy0iYR709NsYqVY2P6GnJ34aaCHLIaMMHSrb5+vuf/1h3+/FzEh2Gl/sK3F1cNDQ9T1qgRFxNWi5vbXa/OlRzkRl9fHxK7cPZHrJvc3d3fhdfKIU9/LPaVfX39CiSeae2aaCXv2VuIr8XFrjsCV7JDh4/64sI9Mx1E5l0L990SWyQfS05KJNECVAANQMeTj5cG8d1rEDoUfLIKUWpHKU/wrLBJroT4uF1JiQmTBoNBDOtPYyuS9i8ODJhysrOqKXtnNQsGT5D4IQioVV5Fje/GvQJKUuxRuDqpPOEVTczaNVmQtcARG2IcJqvzEDcksMUTW90UO+rTjc2abq1OZ9MsgGqgB4Nhs0QiqTUajZ21dfVU0KcAqaenZ4OqaGs+39cftYbApoGA/ARiUVWQn8fQnehwPXAZXnjTeiYxIZ6hvklswvmrIL2u0+kKUEoudfX7/FA+NO7Gke1VT5SVFPJNaTvfzeYfi1BWgSze29HZZent7ePggekP9PLyYqXFKqrbkfZPP1/91Zkzu7B9Lz+1aIKZkVzvY1j87C2TVfCW0pDZZ9d0giUNID+3ISP94NDQsJdWq53eT/2nWewGKQ0RNX/lPMqwLTcn+7fgoKDNeKfiptiogOMLGosgb4+IuC91YmKih5oXMpuFLg2hn2hovAHE+Ph4t+Tn5m5BP6dR+BRAMTADbwM7gV/+1zzu7z97Fp1HhhIcVChCpfz2DnyUkeoXQ2Q/1i1Wq/nyoXy4suh/ICXFKqojI//aAdLZSfIxcIgSEBhb0H8uav52PCKgDPgMOMfuwPOXAAMAFT2J6mINzK8AAAAASUVORK5CYII=); width: 15px; height: 11px; }\n  a.active .ico-eye-slash-small,\n  a:hover .ico-eye-slash-small { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAWCAYAAADXYyzPAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoyRDhDQjlEQUJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoyRDhDQjlEQkJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjJEOENCOUQ4QkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjJEOENCOUQ5QkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+rDemogAABJxJREFUeNqsVg1MVVUc/597373vvstLka8VCAoSkgoxgqeow2LxSM1a0/BrBi4/0mYWw8lYjjTdomnWWLoS/GKGtDZDCaYzDVLmtNqKlpVJ5gyFSKUejwfv4/Y7l/sYBCGEZ/vtfNxz/r/z/zyXRe/5m0bTmtZZKWavQ0LvHsk5NlpiNBX4CbgEbMIFrg7nkGmYwmXgCcAGxAOBgAS0GOPxBtqANfeD+EGgAFgBBA15M5G044vUKAwnAffUWhhi/VVDwEY/qcioMz1SbHgz3Vz/eJT4e98DuQkyiwsSsjDcDJ9PBISREo8FaoDdQLdJoMt8McjCfLWLVUuJXZkZqLB0gbEI/4FxCqP1ydzy5Lrp0IrRVwO1IA8cLnEoUA9kMaIzMN3uEJVxn9LODEWAxpRZ4dQ2nHLRmd88vYdeSZFpjJnxYcms8o5W9LcAO1AH8tB7EfPoPAEkKiYq/3Gt1fOATFtvOTQGbd1zokTadr6rq9Wpsb4CogMFWj5V17bt/a+7S7icotnm+U/Hmu5wWaJANSBXhyLmpp1uMdEnjS9akySB7Nfata/4h2ALI59G1HDD6/q3gM0zZDL1SNm262L3S+hjchIk+b1M5ZtnHzaR10cpqsQO/BdxBk8DgdH3l3IDJuCWCZiXFda5lvCPV277JNvBDp/bp/u/t9nCRbJH64nx8+zyjs/Q56VFiE6uNcyStX2O+VB8sEBOt5Y9/VDH3MGIORE9F2fqxu1SMTwCrEWgNCFNuM/ojkvrFw/c3oVp5l7Fmx3aVm7u8gWWbK414A2Q2MpHw8TGHtnSG4MRH4W5/jp+xZN8odn7C+ar4Rcveu0hq7BnsOB4BmZMDNOP12PvDfTLI8cIB2G1PIz1y2LdVnnZPRmB512dJNkMy/Yjbnk5Wa70+IhW1bjCcSDSv2FqiLAd5uvnW7OI2jhD1xaep3we9MDZz5eq0Ub1aoKMyUawSki1j3mccHEDgmtjqrwlzyY74Q8V2jdgKYWv11z1ePdmKYU8ev1tZaJM4VZd0Ecg4KXy+snFahHOLeNBijXurjqenrBKyZokeSHGfwKVA0omNregwC+RRVZVfKErGGLPQZ0iLijtcMc5l5G2SK3eYsHdzHucO4b+iy4v1U0rdSgYf8k1jQkUdn66UM0x6nqu3wUDCgjIT8AXBQfmW2ismfHNb/Gg7vRQqWbseS1VJqusa/su9l8Haeu1dt+ydy52K1M+dEQgfXbgmwPRXnB6qbrCKEqbjGo29LMIYfmI4mII0yp+cDPksH7B2HEC1WarhHT7Y0dD12Nl37q3YPkRXMOm9bxgPlS3w1WL1OYpIUK+oSl/ZN4e9nsMcjsIj9iPOkOa7vr0tdJ5CmVM0L2zHtrG8rw1tjciDU9+8JRyd9Z48QXM44DbwCrg2IieRQg+9Xy89GRbp3Ye0wBEtp+UPxr7gJnTQoXqsnmWnFCV8adwAw94rjWwH3gduPm//0BQeQLmTjI1ZU40hfEqhLYAl6o2rLKrr9ZG+pQCv476D6QmW+Vvsf8pOusnNVoVUMEDEGgf0T+XpmnD2WcB1gGnge/oPrR/BBgAJ8Z/uPblQXYAAAAASUVORK5CYII=); }\n\n  .ico-minimize { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAECAYAAACHtL/sAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpGNTU1Mjc1NkJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoxNzg5RUNEMEJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkY1NTUyNzU0QkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkY1NTUyNzU1QkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+scZqyQAAACJJREFUeNpibGxunclAAWAB4jRKDGBioBCAXDCLEgMAAgwAnRQDLht0cb4AAAAASUVORK5CYII=); width: 8px; height: 2px; }\n  a.active .ico-minimize,\n  a:hover .ico-minimize {  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAECAYAAACHtL/sAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoyRDhDQjlENkJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoyRDhDQjlEN0JBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjE3ODlFQ0Q5QkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjE3ODlFQ0RBQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+0GRmFwAAACJJREFUeNpiVJz2eSYDBYAFiNMoMYCJgUIAcsEsSgwACDAAvYgDTxaOGksAAAAASUVORK5CYII=); }\n\n  .ico-maximize { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoyRDhDQjlERUJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoyRDhDQjlERkJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjJEOENCOURDQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjJEOENCOUREQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+IjlJQwAAADJJREFUeNpinDVn7n8GKgImBiqDwW8gCxYxRhLN+D/Cw3DUwFEDB2te/j8ahiQBgAADAF83BP0ZNeZfAAAAAElFTkSuQmCC); width: 10px; height: 10px; }\n  a.active .ico-maximize,\n  a:hover .ico-maximize { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpBRTdEOTYyOUJBOUExMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpBRTdEOTYyQUJBOUExMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjJEOENCOUUwQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkFFN0Q5NjI4QkE5QTExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+rpUt2wAAADJJREFUeNpiVJz2+T8DFQETA5XB4DeQBYsYI4lm/B/hYThq4KiBgzUv/x8NQ5IAQIABAFs3BNTp9ScaAAAAAElFTkSuQmCC); }\n\n  .ico-close { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAYAAACJfM0wAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoxNzg5RUNEM0JBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoxNzg5RUNENEJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjE3ODlFQ0QxQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjE3ODlFQ0QyQkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+0WmeEwAAAPtJREFUeNqU1UsKwjAQBuAY3HQnnsGz1F3VleJFfOxERE9SdaXSnXcRTyB01W6dyASGsUlmAj80TfoxNEPb2+0PhowF5AFpjX5kkAJydRNLFtaQM+SGm7ToHXKBrCg8hxzxeqzEPZrj/OQ8D1eQJ9ksxTlq0Kk83EBmSjyEOqeh71iDR1F+eFI8iXbBKXwoQUNwDH9J0BgcwgcSNAV7fAmp2f0a7zehB62gT0tWqa+8jPW5VTY/rTzH9UwDh1pqxN55ELcKdAr5dBxoJ24VaBvplj/cKlEjxSk8EaIpvOCw+0hvhWgI3/g/SJ9tdB/7t/L35PECi/uNrwADAPh2YLGNv80DAAAAAElFTkSuQmCC); width: 11px; height: 10px; }\n  a.active .ico-close,\n  a:hover .ico-close { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAYAAACJfM0wAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoxNzg5RUNEN0JBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoxNzg5RUNEOEJBNzcxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjE3ODlFQ0Q1QkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjE3ODlFQ0Q2QkE3NzExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+Pl14FgAAAPxJREFUeNqU1UsKwjAQBuAY3HQn3kDwLHVXdaV4ER8X0BN4hKorle68i3gCoSC0WyeSgTB2kpnAD02TfgzN0PZGx48JxhJyh7RGPzJIAbm4iQ0WNpAT5Oo3adEb5AxZh/ACsvfXEyWOaO7nB+chXEEewWYpTlHjnQrhBjJX4hzqnCZ8xxo8itLDk+JJtAtO4UMJysEx/ClBYzCHDyRoCkZ8BanJ/drfb7gHraBPS1IpVl7G+twqmz+sPPfrmQbmWmpM3jmLWwU6g7w7DrQTtwq0jXTLH26VqJHiITwVoim8oLD7SO+EKIdv8Q/SJxvdx/6l/D0hXvjifuMrwADc6WDSaVwquAAAAABJRU5ErkJggg==); }\n\n  .ico-lock { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAcCAYAAAB/E6/TAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo4OTg4M0UzMEJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo4OTg4M0UzMUJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjg5ODgzRTJFQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjg5ODgzRTJGQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+ZGIeAgAAAfFJREFUeNpiZCAMZIE4BogdgFgaiFmA+DYQ7wHief/////MQCFgAuI6IP4GxP9x4NdAHAm0jIEQxgXYgHgVHguQ8T8griRkESMOiyYAcT6Mw8jIyGBra8tgZGTE8OvXL4aDBw8yXL16FVk9yMIIoIGrSAkyfSD+C3OxpKTk/0OHDv1HBv/+/fu/YMGC/2xsbHCfcXJyfgXSPKQE3RyYZhYWlv9nzpyBmw/EB4G4H4inAvGV2bNnowRjeHj4TFIsug/TGBYWBrPkGRDbooTV//+Mf/78SVBSUvoHUx8UFPQTKI7VV0xYLJKDMezs7EDUHyD2BcbTYWRFQD7Ixwv4+PiOw8QeP34MSkSRuJIwTjFBQUEQtQ5o6FlcEXrhwoWLMPaPHz9AlAuxFqGDQyTmP0VyLXpPokUc2ASR8xGoiHEDZT6YgK+vL8P79+83Hzly5Boeg0F6DEEMUVFRhpiYmFf9/f0OwARwHZtiFWik/6cSfgoKLWypTh2ImRmoB6R27Nhhgk3Cm4q+AeN37949B/qECV8+ogpgYmKSAFK8pKQ66lg8atGoRQNm0Xcq5yEGYDWPVY5VRkbmFFABxSUCqB1RUVEBq5n5MVpBQI4TkNpLRY+BqngeWGghxxGoqt4KVUAp+AXEXchRwoivFUlNABBgAMOih6y6PH/+AAAAAElFTkSuQmCC); width: 13px; height: 14px; }\n  a.active .ico-lock { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAcCAYAAAB/E6/TAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpDM0E3NkI0QkJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpDM0E3NkI0Q0JBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkMzQTc2QjQ5QkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkMzQTc2QjRBQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+R5SWVwAAAglJREFUeNpiVJz2mYEAkAXiGCB2AGJpIGYB4ttAvAeI593L5CFoAAgw4rGICYhrgLgCiDlxqHkDxHlAy5YTsogJhzgbEK8A4kY8loCACBAvVZr+pZJci7qAOBTubSA2k2JmSNJjZYjRYWVQFULRBpJuBVoWRmrQ6QPxOZgjxLgYGSa7cTCYSjLDFfwH4nU3/zBUHfjB8PsfRIyDheHbjz8M4sBg/ILNIhYsYrkwS5iB5BwvTgYdUSaY+YdBjgB6gS1YncX+zz927coDP8GagJZw+aiw9AKZ6cRa5AxjeCiywCx5DsThwOA5DJMDupwxRIM1fvq53/MeffoHCj6Q7xKAVDEQfyEmjuRgDFC8AMEfIPZFtgQEgPz/qjO+LOBhYzgOE3v+5R8oEUUSmxjgYvzsYIeuAxp6FlckX3vz7yKM/fMvmHIhJdUhg0MMpAFFci16T6JFHIQSA6iIcUOW3HznD8OSq78jgEw9PAZbwBivv/1naDn2U3zexd+awMRyHVs+UgHiG6AUzUAd8AxURgIt+4cedOpUtAQEpBb4cJqQGkdkAX0xpo3I5tPMIiZGBgkgxUtzi8hJ3qMWjVpEG4u+UzkPMbAyMWK16LAED+NpNDmyACvQxDQDNlAbAmvp/ftYLDeo/baXih4DFai/sMURqKreClVAKfgFbbLBo4Tx////dEkMAAEGABHchhTziHgTAAAAAElFTkSuQmCC); }\n\n  .ico-color { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAeCAYAAABNChwpAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpDM0E3NkI0M0JBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpDM0E3NkI0NEJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjg5ODgzRTMyQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkMzQTc2QjQyQkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+HF+mwQAAAyxJREFUeNq0l89rE0EUx2fTiDHEJhIJgaSGUlEUrA1IaTVIaaSH9qD0UE9SoT0oHopQCurB9GD7N0hQPHjxoF5SaSFgRKlSMNLcCorGaCGa/jDWqE3d8ftgt0yXbXa32Q58mGV3Zt53Zue9eSOxOgvnvK7+koW2AXAenAGt4CDYB1ZBHrwFU+AVRMnMxnIIJMFfmrAJPoBh4KTVMcJoda6BNZOGtcyBYzsVsAfcNzIiSZKRiB/gnFUBNPOHegPGYjGeTCb5wsIC39jY4H19fdyEyHXU3VYE3NQOEolE+MzMDNcWMwIIp9P5E3XEjIDjYF3s3NnZyUulkmj3JRgGRzC7KbN7IhgMzpkR8Fjs1NLSwldWVlTDn0CPpn3KysaMx+MXawk4CmRxg83OzqrG6cGv87ssCWhvb/9eS0BCbNzf368afw9823iLJQEOh4P20gVRgEMY7Kw48tDQEFM6XsJqrNoR0WRZZvl8PiG+EwVE1YeGhgbW1dVFj09h/LWdYbVQKLQqYX2LgL1gc5nD4TBzu930eI/ZXIrFIsWZmFaAS2zU2NhI1T+QsVvA2hpFdnZSK6AiNlpeXqbqC5a/YrcAZXJBrYAqjJXUl4uLiyTiF9uFQr8XxaO3CbNikjE9PR3cDQFtbW1UlfW+XRd9trubzg/uNRjPUhxwuVy8XC7TuLf0AlEI7ieLHUZGRibtFDAwMLB5jumeBR0dHW/EDn6/n7KgsB0CKLRns1ky/hvs1xUwNjZ2yuv1buno8Xi+oj5cr4DBwUF19o9q5gPj4+MvdGI4bZorlOftREBTUxOHV5FxGURrCsDL8Ojo6J9tBvsI7oAeZVXSRsZpRXO5nDr7B6ZyQqRblxOJhJmcrybwedH4Z3DAdFaMj5OpVIqHQqEdGafjHHFfNb4KTlhKy/FRArfht/LExAQPBAKmdjpOUZ5Op8UUrrCdccLwZkQ+i+putVoNZTIZhiyJzc/Ps6WlJVapVJjP52PNzc0sGo2y3t5ehgRW7P4EXAXf6r3/kd/eAEVuXGinPwdxMzcjyeLlki4slKmcVo5UyhPdyv2QPOQdeKbcFU2V/wIMAB8kuOEdlGYQAAAAAElFTkSuQmCC); width: 16px; height: 15px; }\n  a.active .ico-color { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAeCAYAAABNChwpAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpDM0E3NkI0N0JBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpDM0E3NkI0OEJBNzYxMUU2QjcwQUM4MTUzRjQxOUU1QyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkMzQTc2QjQ1QkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkMzQTc2QjQ2QkE3NjExRTZCNzBBQzgxNTNGNDE5RTVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+EZEHUwAAA55JREFUeNq0l2lIVFEUx+9zVsdRI83GvaQQLbRcCrRlCikYiRYCESuKMpSkok8VRYKVfupDSCblgvTFghYliUIws7TFjISKpMLUNhU1dVzGmdf/vnkjz2mW95zxwI8Z7tx553/PPffc85jl10aJJ/Y1X+vR/+US5oaAnSAdJIBg4BtTNjaMz27QDh6CFoiyiH0oIyICUeA8OACUYoICikE1hMy4m+zjShw4Bj6AIyKdU4sBN8ALRCduvgIUoAKUAj9XCl1YKmiDiAypAuhzq8Ah+x9SQmWkWK8ijdka0pWnJfpotykUgIc1QMRWKUl4BuQIB8L9GXJ5s5psjJRJznIW0ZT5kAcQsRo50e0uAvGgUDiQtFRG6vZqhM5bQC6IbeqeaRAjwmwh2iUa5o6YCBTx+29N/wAfUpmpJgEqbrep+qNYyeO5CxRn/UY2dV/9RNatHb61ziIQC3YLE+FKhsrmvBUk2zmXbOPTXFI73YJsYWJvi5Fz4Yd9AQY4HyQeWme/OfhZj3mXMwGbhD9kxSlsId7PVzuPzYKn9Y1aCp0JWGv7IkMc1odxq78H563Ei/ZzjE3gy/ocASqwyDao0zLE15qeFcTLNjDB0m3eYC9ALZykVXKpYAZN3hYwbuIOTqK9AKNw0sgkN6kX4Td6W4C/dXE6ewEmDA/YBn+Ps2R4ih0nC2A6P06A1lESvhVWl+bvZt1CCIgP5lz+/U8AnD4STqz9aFqM2h3oTecqHKx11tPV6ygCt3H8Zktra5+ZFD2fOu1NARnL5MRPwW3BO0cC+hJCZK+Ef7j/eeYUPiK84Zy6zUvieppJusMOb0OEp4DPUs6GJlmlRsG8xNcVngrYEysnq6z7XwdGHQoo75h+czhR0SwcM5rYMB+GS9A8iU3srIWisJ1LV9nyu8RlR3Q8RZmTu0YxZVfD/fFRBrrAJXpX8VFRizn3lQZfEmi9VWtAh9uuGO3WwdL26aqrr6fFX/iOzjxWXgXnsUHcOnv4CjjktildeX2s+kSKsuSmQW0rHJJtO67zenRSvPMRkGnv3N2Lydkt0fLJJ9myCzWdJqbyvYkMTrBuM53eogXJSpIWMdvC0TNvoO3AvF5MUIyo8vIZCwlv+2Em7b/M5NOAhQxNsWQCFwvtmCLRutEM10fJuQZWYHdBPvjjyZsRFUGTsACcFN7lzhth8hRcBI1u6wPLSkoz2ibpQRqfUEFAA2jH9I3P8Aa+gRVl/wQYAICSAbXYakIpAAAAAElFTkSuQmCC); }\n");
+
+/***/ }),
+/* 24 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony default export */ __webpack_exports__["a"] = ("\n  /* ------------------------------------------------------------ *    Pixel Parallel Panel\n  * ------------------------------------------------------------ */\n\n  * { padding: 0; margin: 0; outline: 0; border: 0; box-sizing: border-box; }\n\n  body { font-family: Roboto, Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1; color: rgba(0,0,0,.85); overflow: hidden; font-weight: 500; }\n\n\n  /* ------------------------------------------------------------ *    Buttons\n  * ------------------------------------------------------------ */\n\n  .btn { display: inline-block; position: relative; overflow: hidden; background: #2196f3; padding: 0 15px; border-radius: 2px; font-size: 14px; line-height: 32px; color: #fff; text-transform: uppercase; text-decoration: none; text-align: center; cursor: pointer; transition: 200ms; }\n  .btn:hover { background: #2980b9; }\n  \n  .btn-block { display: block; width: 100%; padding-left: 0; padding-right: 0; }\n\n  .btn-success { background: #abdc28; }\n  .btn-success:hover { background: #9ac117; }\n\n  .btn-danger { background: #e85128; }\n  .btn-danger:hover { background: #e04a28; }\n\n  .btn[disabled] { background: #ccc; cursor: default; }\n\n  .btn-file input { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0.01; cursor: pointer; }\n\n\n  /* ------------------------------------------------------------ *    Grid\n  * ------------------------------------------------------------ */\n\n  .row { padding: 10px 15px; }\n  .row:after { content: ''; line-height: 0; display: table; clear: both; }\n\n  .row-head { border-bottom: 1px solid #ebebeb; padding-top: 18px; padding-bottom: 18px; margin-bottom: 10px; }\n  .row-head-large-gutter { padding-top: 21px; padding-bottom: 21px; }\n\n  .col { float: left; padding: 0 5px; display: table; width: 100%; }\n  .col-1-of-2 { width: 50%; }\n\n  .col-1-of-3 { width: 33.33%; }\n  .col-2-of-3 { width: 66.66%; }\n\n  .col-1-of-4 { width: 25%; }\n  .col-3-of-4 { width: 75%; }\n\n  .col-1-of-5 { width: 20%; }\n  .col-2-of-5 { width: 40%; }\n  .col-3-of-5 { width: 60%; }\n  .col-4-of-5 { width: 80%; }\n\n  @media (max-width: 372px) {\n    .row { padding-left: 5px; padding-right: 5px; }\n  }\n\n\n  /* ------------------------------------------------------------ *    Header\n  * ------------------------------------------------------------ */\n\n  .header { border-bottom: 1px solid #ebebeb; }\n\n\n  /* ------------------------------------------------------------ *    Panel Control\n  * ------------------------------------------------------------ */\n  \n  .panel-control { float: right; padding-right: 10px; }\n  .panel-control ul { list-style: none; }\n  .panel-control li { float: left; }\n  .panel-control li a { display: block; position: relative; height: 48px; width: 30px; line-height: 48px; text-align: center; }\n  .panel-control li a .ico { position: absolute; top: 50%; left: 50%; margin-top: -6px; margin-left: -5px; transition: 200ms; }\n  .panel-control li a .ico-minimize { margin-top: 1px; margin-left: -3px; }\n  .panel-control li a .ico-eye-slash-small { margin-left: -6px; }\n\n\n  /* ------------------------------------------------------------ *    Nav\n  * ------------------------------------------------------------ */\n  \n  .nav { overflow: hidden; margin-bottom: -1px; }\n  .nav ul { list-style: none outside none; overflow: hidden; }\n  .nav li { float: left; }\n  .nav li a { display: block; position: relative; height: 48px; padding: 0 20px; line-height: 50px; color: rgba(0,0,0,.5); font-size: 16px; text-decoration: none; text-transform: uppercase; transition: 200ms; }\n  .nav li a:after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 2px; background: #2196f3; transition: 200ms; }\n  .nav li.current a { color: #2196f3; }\n  .nav li.current a:after { width: 100%; }\n  .nav li a:hover { color: #2196f3; }\n\n  @media (max-width: 372px) {\n    .nav li a .ad { display: none; }\n  }\n\n\n  /* ------------------------------------------------------------ *    Number\n  * ------------------------------------------------------------ */\n  \n  .number { display: block; }\n\n  .number .number-field { display: block; position: relative; }\n  \n  .number .number-arrows { position: absolute; top: 50%; right: 2px; width: 10px; height: 16px; margin-top: -8px; }\n  .number .number-arrow { position: absolute; font-size: 0; line-height: 0; color: #bdbdbd; cursor: pointer; transition: 200ms; }\n  .number .number-arrow:nth-child(1) { top: 0; left: 0; }\n  .number .number-arrow:nth-child(2) { bottom: 0; left: 0; }\n  .number .number-arrow-up { border-width: 0 5px 5px; border-style: none outset solid; border-left-color: transparent; border-right-color: transparent; }\n  .number .number-arrow-down { border-width: 5px 5px 0; border-style: solid outset none; border-left-color: transparent; border-right-color: transparent; }\n  .number .number-arrow:hover { color: #2196f3; }\n\n  .number .number-input { display: block; width: 100%; border: 0 none; border-bottom: 2px solid #bdbdbd; font-family: inherit; font-size: 14px; font-weight: inherit; line-height: 30px; color: rgba(0,0,0,.5); transition: 200ms; -moz-appearance: textfield; }\n  .number .number-input::-webkit-outer-spin-button,\n  .number .number-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }\n\n  .number:active .number-input,\n  .number .number-input:focus { border-color: #2196f3; outline: 0 none; color: rgba(0,0,0,.85); }\n\n  .number .number-arrows + .number-input { padding-right: 20px; }\n\n\n  /* ------------------------------------------------------------ *    Toggle\n  * ------------------------------------------------------------ */\n  \n  .toggle { display: block; cursor: pointer; padding-bottom: 1px; }\n  .toggle .toggle-checkbox { position: absolute; opacity: 0; z-index: -999; }\n  \n  .toggle .toggle-title { display: block; margin-bottom: 10px; }\n  .toggle .toggle-title a { text-decoration: underline; color: inherit; font-size: .9em; }\n\n  .toggle .toggle-main,\n  .toggle .toggle-handle { transition: 200ms; }\n\n  .toggle .toggle-main { display: block; position: relative; width: 40px; height: 14px; border-radius: 100px; background: #898989; }\n  .toggle .toggle-handle { position: absolute; top: -3px; left: 0; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.2); transform: translateX(0%); }\n\n  .toggle-checked .toggle-main { background: #90caf9; }\n  .toggle-checked .toggle-handle { background: #2196f3; transform: translateX(100%); }\n\n\n  /* ------------------------------------------------------------ *    Icon Link\n  * ------------------------------------------------------------ */\n\n  .icon-link-group { margin: 0 -10px; }\n\n  .icon-link { display: inline-block; text-decoration: none; color: #000; opacity: .5; padding: 10px; transition: 200ms; font-weight: 400; text-transform: uppercase; }\n  .icon-link.active,\n  .icon-link:hover { opacity: 1; }\n  .icon-link.active { color: #2196f3; }\n\n  .icon-link .text { display: inline-block; vertical-align: middle; }\n  .icon-link .ico { transition: 200ms; margin-right: 5px; }\n\n\n  /* ------------------------------------------------------------ *    Paste Box\n  * ------------------------------------------------------------ */\n  \n  .paste-box { display: inline-block; position: relative; overflow: hidden; height: 32px; width: 100%; font-size: 0; line-height: 0; background: #fff; border: 2px dashed #2196f3; text-align: center; border-radius: 2px; vertical-align: middle; transition: 200ms; }\n  .paste-box > * { display: none; }\n  .paste-box:focus { border-style: solid; }\n  .paste-box:before { content: attr(title); display: block; line-height: 28px; font-size: 14px; text-transform: uppercase; color: #2196f3; }\n\n  /* ------------------------------------------------------------ *    Elements Divider\n  * ------------------------------------------------------------ */\n  \n  .elements-divider { display: block; text-align: center; color: #000; text-transform: uppercase; padding: 10px 0; }\n\n\n  /* ------------------------------------------------------------ *    Droparea\n  * ------------------------------------------------------------ */\n  \n  .droparea { display: none; position: absolute; top: 0; left: 0; z-index: 999; width: 100%; height: 100%; background: #fff; }\n  .droparea:after { content: ''; position: absolute; top: 10px; bottom: 10px; left: 10px; right: 10px; border: 4px dashed #2196f3; border-radius: 4px; }\n  .droparea input { position: absolute; top: 0; left: 0; z-index: 9; width: 100%; height: 100%; opacity: 0; }\n  .droparea .droparea-title { position: absolute; top: 50%; left: 0; right: 0; text-align: center; font-size: 26px; line-height: 30px; margin-top: -15px; color: #2196f3; font-weight: normal; }\n\n  .droparea.enabled { display: block; }\n\n\n  /* ------------------------------------------------------------ *    States\n  * ------------------------------------------------------------ */\n\n  .panel-control .ico-maximize { opacity: 0; }\n  \n  .nav,\n  .main { transition: 200ms 200ms; }\n\n  .pixelParallel-panel-content-minimized .nav,\n  .pixelParallel-panel-content-minimized .main { opacity: 0; transition: 200ms; }\n  .pixelParallel-panel-content-minimized .panel-control .ico-minimize { opacity: 0; transition: 200ms 200ms; }\n  .pixelParallel-panel-content-minimized .panel-control .ico-maximize { opacity: 1; transition: 200ms 200ms; }\n");
+
+/***/ }),
+/* 25 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_pouchdb__ = __webpack_require__(40);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_pouchdb___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_pouchdb__);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -10398,28 +11831,14 @@ var DB = function () {
   return DB;
 }();
 
-/* harmony default export */ exports["a"] = DB;
+/* harmony default export */ __webpack_exports__["a"] = (DB);
 ;
 
-/***/ },
-/* 24 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(0)();
-// imports
-
-
-// module
-exports.push([module.i, ".pixelParallel-overlay{position:absolute;left:0;top:0;width:100%;text-align:center;white-space:nowrap;display:none}.pixelParallel-overlay-enabled{display:block}", ""]);
-
-// exports
-
-
-/***/ },
-/* 25 */
-/***/ function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(0)();
+exports = module.exports = __webpack_require__(1)();
 // imports
 
 
@@ -10429,39 +11848,11 @@ exports.push([module.i, "", ""]);
 // exports
 
 
-/***/ },
-/* 26 */
-/***/ function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(0)();
-// imports
-
-
-// module
-exports.push([module.i, ".pixelParallel-panel[data-v-208daeb5]{position:fixed;right:10px;bottom:10px;z-index:2147483647;width:375px;height:265px;transform:translate(0);background:#fff;transition:width .2s ease-out,height .2s ease-out;will-change:top,left,width,height,transform;opacity:0}.pixelParallel-panel-inner[data-v-208daeb5]{position:relative;overflow:hidden;height:100%;border:1px solid #dddedf;box-shadow:0 2px 10px rgba(0,0,0,.1);box-sizing:border-box}.pixelParallel-panel-handle[data-v-208daeb5]{position:absolute;top:-10px;right:-10px;z-index:3;width:20px;height:20px;background:red;transform:rotate(45deg);background:linear-gradient(0deg,transparent,transparent 50%,#ccc 0,#ccc);background-size:100% 2px;cursor:move}.pixelParallel-panel-isolator[data-v-208daeb5]{border:0;width:100%;height:100%;overflow:hidden;position:relative}.pixelParallel-panel-dragging .pixelParallel-panel-inner[data-v-208daeb5]{pointer-events:none}.pixelParallel-panel-minimized[data-v-208daeb5]{width:112px;height:50px;transition:width .2s ease-out .15s,height .2s ease-out .15s}@media (max-width:395px){.pixelParallel-panel[data-v-208daeb5]{right:0;bottom:0;width:320px}.pixelParallel-panel-minimized[data-v-208daeb5]{width:112px}}", ""]);
-
-// exports
-
-
-/***/ },
+/***/ }),
 /* 27 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(0)();
-// imports
-
-
-// module
-exports.push([module.i, ".pixelParallel-grids{position:relative;z-index:2147483646;pointer-events:none}.pixelParallel-grid-horizontal,.pixelParallel-grid-vertical{position:fixed;z-index:1;pointer-events:none;visibility:hidden}.pixelParallel-grid-horizontal{top:50%;left:50%;display:table;width:100vw;height:200vh;opacity:.5;table-layout:fixed;border-spacing:30px;transform:translate(-50%,-50%)}.pixelParallel-grid-horizontal span{display:table-cell;background:red;height:200vh}.pixelParallel-grid-vertical{top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,transparent,transparent 90%,blue 0,blue);background-size:100% 10px;opacity:.5}.pixelParallel-grid-horizontal-enabled,.pixelParallel-grid-vertical-enabled{visibility:visible}", ""]);
-
-// exports
-
-
-/***/ },
-/* 28 */
-/***/ function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(0)();
+exports = module.exports = __webpack_require__(1)();
 // imports
 
 
@@ -10471,11 +11862,25 @@ exports.push([module.i, ".pixelParallel-image-outer{visibility:hidden;position:a
 // exports
 
 
-/***/ },
-/* 29 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(0)();
+exports = module.exports = __webpack_require__(1)();
+// imports
+
+
+// module
+exports.push([module.i, ".pixelParallel-panel[data-v-54cb82b4]{position:fixed;right:10px;bottom:10px;z-index:2147483647;width:375px;height:265px;transform:translate(0);background:#fff;transition:width .2s ease-out,height .2s ease-out;will-change:top,left,width,height,transform;opacity:0}.pixelParallel-panel-inner[data-v-54cb82b4]{position:relative;overflow:hidden;height:100%;border:1px solid #dddedf;box-shadow:0 2px 10px rgba(0,0,0,.1);box-sizing:border-box}.pixelParallel-panel-handle[data-v-54cb82b4]{position:absolute;top:-10px;right:-10px;z-index:3;width:20px;height:20px;background:red;transform:rotate(45deg);background:linear-gradient(0deg,transparent,transparent 50%,#ccc 0,#ccc);background-size:100% 2px;cursor:move}.pixelParallel-panel-isolator[data-v-54cb82b4]{border:0;width:100%;height:100%;overflow:hidden;position:relative}.pixelParallel-panel-dragging .pixelParallel-panel-inner[data-v-54cb82b4]{pointer-events:none}.pixelParallel-panel-minimized[data-v-54cb82b4]{width:112px;height:50px;transition:width .2s ease-out .15s,height .2s ease-out .15s}@media (max-width:395px){.pixelParallel-panel[data-v-54cb82b4]{right:0;bottom:0;width:320px}.pixelParallel-panel-minimized[data-v-54cb82b4]{width:112px}}", ""]);
+
+// exports
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(1)();
 // imports
 
 
@@ -10485,9 +11890,434 @@ exports.push([module.i, ".pixelParallel-rulers{position:relative;z-index:2147483
 // exports
 
 
-/***/ },
+/***/ }),
 /* 30 */
-/***/ function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(1)();
+// imports
+
+
+// module
+exports.push([module.i, ".pixelParallel-overlay{position:absolute;left:0;top:0;width:100%;text-align:center;white-space:nowrap;display:none}.pixelParallel-overlay-enabled{display:block}", ""]);
+
+// exports
+
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(1)();
+// imports
+
+
+// module
+exports.push([module.i, ".pixelParallel-grids{position:relative;z-index:2147483646;pointer-events:none}.pixelParallel-grid-horizontal,.pixelParallel-grid-vertical{position:fixed;z-index:1;pointer-events:none;visibility:hidden}.pixelParallel-grid-horizontal{top:50%;left:50%;display:table;width:100vw;height:200vh;opacity:.5;table-layout:fixed;border-spacing:30px;transform:translate(-50%,-50%)}.pixelParallel-grid-horizontal span{display:table-cell;background:red;height:200vh}.pixelParallel-grid-vertical{top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,transparent,transparent 90%,blue 0,blue);background-size:100% 10px;opacity:.5}.pixelParallel-grid-horizontal-enabled,.pixelParallel-grid-vertical-enabled{visibility:visible}", ""]);
+
+// exports
+
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {/**
+ * This is the web browser implementation of `debug()`.
+ *
+ * Expose `debug()` as the module.
+ */
+
+exports = module.exports = __webpack_require__(33);
+exports.log = log;
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.storage = 'undefined' != typeof chrome
+               && 'undefined' != typeof chrome.storage
+                  ? chrome.storage.local
+                  : localstorage();
+
+/**
+ * Colors.
+ */
+
+exports.colors = [
+  'lightseagreen',
+  'forestgreen',
+  'goldenrod',
+  'dodgerblue',
+  'darkorchid',
+  'crimson'
+];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+function useColors() {
+  // NB: In an Electron preload script, document will be defined but not fully
+  // initialized. Since we know we're in Chrome, we'll just detect this case
+  // explicitly
+  if (typeof window !== 'undefined' && window && typeof window.process !== 'undefined' && window.process.type === 'renderer') {
+    return true;
+  }
+
+  // is webkit? http://stackoverflow.com/a/16459606/376773
+  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+  return (typeof document !== 'undefined' && document && 'WebkitAppearance' in document.documentElement.style) ||
+    // is firebug? http://stackoverflow.com/a/398120/376773
+    (typeof window !== 'undefined' && window && window.console && (console.firebug || (console.exception && console.table))) ||
+    // is firefox >= v31?
+    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+    (typeof navigator !== 'undefined' && navigator && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
+    // double check webkit in userAgent just in case we are in a worker
+    (typeof navigator !== 'undefined' && navigator && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
+}
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+exports.formatters.j = function(v) {
+  try {
+    return JSON.stringify(v);
+  } catch (err) {
+    return '[UnexpectedJSONParseError]: ' + err.message;
+  }
+};
+
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs(args) {
+  var useColors = this.useColors;
+
+  args[0] = (useColors ? '%c' : '')
+    + this.namespace
+    + (useColors ? ' %c' : ' ')
+    + args[0]
+    + (useColors ? '%c ' : ' ')
+    + '+' + exports.humanize(this.diff);
+
+  if (!useColors) return;
+
+  var c = 'color: ' + this.color;
+  args.splice(1, 0, c, 'color: inherit')
+
+  // the final "%c" is somewhat tricky, because there could be other
+  // arguments passed either before or after the %c, so we need to
+  // figure out the correct index to insert the CSS into
+  var index = 0;
+  var lastC = 0;
+  args[0].replace(/%[a-zA-Z%]/g, function(match) {
+    if ('%%' === match) return;
+    index++;
+    if ('%c' === match) {
+      // we only are interested in the *last* %c
+      // (the user may have provided their own)
+      lastC = index;
+    }
+  });
+
+  args.splice(lastC, 0, c);
+}
+
+/**
+ * Invokes `console.log()` when available.
+ * No-op when `console.log` is not a "function".
+ *
+ * @api public
+ */
+
+function log() {
+  // this hackery is required for IE8/9, where
+  // the `console.log` function doesn't have 'apply'
+  return 'object' === typeof console
+    && console.log
+    && Function.prototype.apply.call(console.log, console, arguments);
+}
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+
+function save(namespaces) {
+  try {
+    if (null == namespaces) {
+      exports.storage.removeItem('debug');
+    } else {
+      exports.storage.debug = namespaces;
+    }
+  } catch(e) {}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+
+function load() {
+  try {
+    return exports.storage.debug;
+  } catch(e) {}
+
+  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+  if (typeof process !== 'undefined' && 'env' in process) {
+    return __webpack_require__.i({"NODE_ENV":"production"}).DEBUG;
+  }
+}
+
+/**
+ * Enable namespaces listed in `localStorage.debug` initially.
+ */
+
+exports.enable(load());
+
+/**
+ * Localstorage attempts to return the localstorage.
+ *
+ * This is necessary because safari throws
+ * when a user disables cookies/localstorage
+ * and you attempt to access it.
+ *
+ * @return {LocalStorage}
+ * @api private
+ */
+
+function localstorage() {
+  try {
+    return window.localStorage;
+  } catch (e) {}
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * This is the common logic for both the Node.js and web browser
+ * implementations of `debug()`.
+ *
+ * Expose `debug()` as the module.
+ */
+
+exports = module.exports = createDebug.debug = createDebug['default'] = createDebug;
+exports.coerce = coerce;
+exports.disable = disable;
+exports.enable = enable;
+exports.enabled = enabled;
+exports.humanize = __webpack_require__(39);
+
+/**
+ * The currently active debug mode names, and names to skip.
+ */
+
+exports.names = [];
+exports.skips = [];
+
+/**
+ * Map of special "%n" handling functions, for the debug "format" argument.
+ *
+ * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+ */
+
+exports.formatters = {};
+
+/**
+ * Previous log timestamp.
+ */
+
+var prevTime;
+
+/**
+ * Select a color.
+ * @param {String} namespace
+ * @return {Number}
+ * @api private
+ */
+
+function selectColor(namespace) {
+  var hash = 0, i;
+
+  for (i in namespace) {
+    hash  = ((hash << 5) - hash) + namespace.charCodeAt(i);
+    hash |= 0; // Convert to 32bit integer
+  }
+
+  return exports.colors[Math.abs(hash) % exports.colors.length];
+}
+
+/**
+ * Create a debugger with the given `namespace`.
+ *
+ * @param {String} namespace
+ * @return {Function}
+ * @api public
+ */
+
+function createDebug(namespace) {
+
+  function debug() {
+    // disabled?
+    if (!debug.enabled) return;
+
+    var self = debug;
+
+    // set `diff` timestamp
+    var curr = +new Date();
+    var ms = curr - (prevTime || curr);
+    self.diff = ms;
+    self.prev = prevTime;
+    self.curr = curr;
+    prevTime = curr;
+
+    // turn the `arguments` into a proper Array
+    var args = new Array(arguments.length);
+    for (var i = 0; i < args.length; i++) {
+      args[i] = arguments[i];
+    }
+
+    args[0] = exports.coerce(args[0]);
+
+    if ('string' !== typeof args[0]) {
+      // anything else let's inspect with %O
+      args.unshift('%O');
+    }
+
+    // apply any `formatters` transformations
+    var index = 0;
+    args[0] = args[0].replace(/%([a-zA-Z%])/g, function(match, format) {
+      // if we encounter an escaped % then don't increase the array index
+      if (match === '%%') return match;
+      index++;
+      var formatter = exports.formatters[format];
+      if ('function' === typeof formatter) {
+        var val = args[index];
+        match = formatter.call(self, val);
+
+        // now we need to remove `args[index]` since it's inlined in the `format`
+        args.splice(index, 1);
+        index--;
+      }
+      return match;
+    });
+
+    // apply env-specific formatting (colors, etc.)
+    exports.formatArgs.call(self, args);
+
+    var logFn = debug.log || exports.log || console.log.bind(console);
+    logFn.apply(self, args);
+  }
+
+  debug.namespace = namespace;
+  debug.enabled = exports.enabled(namespace);
+  debug.useColors = exports.useColors();
+  debug.color = selectColor(namespace);
+
+  // env-specific initialization logic for debug instances
+  if ('function' === typeof exports.init) {
+    exports.init(debug);
+  }
+
+  return debug;
+}
+
+/**
+ * Enables a debug mode by namespaces. This can include modes
+ * separated by a colon and wildcards.
+ *
+ * @param {String} namespaces
+ * @api public
+ */
+
+function enable(namespaces) {
+  exports.save(namespaces);
+
+  exports.names = [];
+  exports.skips = [];
+
+  var split = (namespaces || '').split(/[\s,]+/);
+  var len = split.length;
+
+  for (var i = 0; i < len; i++) {
+    if (!split[i]) continue; // ignore empty strings
+    namespaces = split[i].replace(/\*/g, '.*?');
+    if (namespaces[0] === '-') {
+      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+    } else {
+      exports.names.push(new RegExp('^' + namespaces + '$'));
+    }
+  }
+}
+
+/**
+ * Disable debug output.
+ *
+ * @api public
+ */
+
+function disable() {
+  exports.enable('');
+}
+
+/**
+ * Returns true if the given mode name is enabled, false otherwise.
+ *
+ * @param {String} name
+ * @return {Boolean}
+ * @api public
+ */
+
+function enabled(name) {
+  var i, len;
+  for (i = 0, len = exports.skips.length; i < len; i++) {
+    if (exports.skips[i].test(name)) {
+      return false;
+    }
+  }
+  for (i = 0, len = exports.names.length; i < len; i++) {
+    if (exports.names[i].test(name)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Coerce `val`.
+ *
+ * @param {Mixed} val
+ * @return {Mixed}
+ * @api private
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports) {
 
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -10793,9 +12623,9 @@ function isUndefined(arg) {
 }
 
 
-/***/ },
-/* 31 */
-/***/ function(module, exports) {
+/***/ }),
+/* 35 */
+/***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
@@ -10822,13 +12652,13 @@ if (typeof Object.create === 'function') {
 }
 
 
-/***/ },
-/* 32 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
-var immediate = __webpack_require__(5);
+
+var immediate = __webpack_require__(6);
 
 /* istanbul ignore next */
 function INTERNAL() {}
@@ -10945,7 +12775,7 @@ handlers.reject = function (self, error) {
 function getThen(obj) {
   // Make sure we only access the accessor once as required by the spec
   var then = obj && obj.then;
-  if (obj && typeof obj === 'object' && typeof then === 'function') {
+  if (obj && (typeof obj === 'object' || typeof obj === 'function') && typeof then === 'function') {
     return function appyThen() {
       then.apply(obj, arguments);
     };
@@ -11082,13 +12912,13 @@ function race(iterable) {
 }
 
 
-/***/ },
-/* 33 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
 /**
- * Copyright 2016 Craig Campbell
+ * Copyright 2012-2017 Craig Campbell
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11105,7 +12935,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
  * Mousetrap is a simple keyboard shortcut library for Javascript with
  * no external dependencies
  *
- * @version 1.6.0
+ * @version 1.6.1
  * @url craig.is/killing/mice
  */
 (function(window, document, undefined) {
@@ -11244,7 +13074,13 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
      * loop through to map numbers on the numeric keypad
      */
     for (i = 0; i <= 9; ++i) {
-        _MAP[i + 96] = i;
+
+        // This needs to use a string cause otherwise since 0 is falsey
+        // mousetrap will never fire for numpad 0 pressed as part of a keydown
+        // event.
+        //
+        // @see https://github.com/ccampbell/mousetrap/pull/258
+        _MAP[i + 96] = i.toString();
     }
 
     /**
@@ -12121,14 +13957,15 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
     if (true) {
         !(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
             return Mousetrap;
-        }.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+        }.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
     }
 }) (typeof window !== 'undefined' ? window : null, typeof  window !== 'undefined' ? document : null);
 
 
-/***/ },
-/* 34 */
-/***/ function(module, exports) {
+/***/ }),
+/* 38 */
+/***/ (function(module, exports) {
 
 /**
  * adds a pause and unpause method to Mousetrap
@@ -12163,9 +14000,9 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
 }) (Mousetrap);
 
 
-/***/ },
-/* 35 */
-/***/ function(module, exports) {
+/***/ }),
+/* 39 */
+/***/ (function(module, exports) {
 
 /**
  * Helpers.
@@ -12318,27 +14155,26 @@ function plural(ms, n, name) {
 }
 
 
-/***/ },
-/* 36 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(global) {'use strict';
+/* WEBPACK VAR INJECTION */(function(global) {
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var lie = _interopDefault(__webpack_require__(32));
-var getArguments = _interopDefault(__webpack_require__(8));
-var debug = _interopDefault(__webpack_require__(37));
-var events = __webpack_require__(30);
-var inherits = _interopDefault(__webpack_require__(31));
-var immediate = _interopDefault(__webpack_require__(5));
-var scopedEval = _interopDefault(__webpack_require__(40));
-var Md5 = _interopDefault(__webpack_require__(41));
-var vuvuzela = _interopDefault(__webpack_require__(69));
+var lie = _interopDefault(__webpack_require__(36));
+var getArguments = _interopDefault(__webpack_require__(9));
+var events = __webpack_require__(34);
+var inherits = _interopDefault(__webpack_require__(35));
+var nextTick = _interopDefault(__webpack_require__(6));
+var debug = _interopDefault(__webpack_require__(32));
+var Md5 = _interopDefault(__webpack_require__(42));
+var vuvuzela = _interopDefault(__webpack_require__(71));
 
 /* istanbul ignore next */
-var PouchPromise = typeof Promise === 'function' ? Promise : lie;
+var PouchPromise$1 = typeof Promise === 'function' ? Promise : lie;
 
 function isBinaryObject(object) {
   return (typeof ArrayBuffer !== 'undefined' && object instanceof ArrayBuffer) ||
@@ -12455,7 +14291,7 @@ function toPromise(func) {
     var self = this;
     // if the last argument is a function, assume its a callback
     var usedCB = (typeof args[args.length - 1] === 'function') ? args.pop() : false;
-    var promise = new PouchPromise(function (fulfill, reject) {
+    var promise = new PouchPromise$1(function (fulfill, reject) {
       var resp;
       try {
         var callback = once(function (err, mesg) {
@@ -12486,42 +14322,40 @@ function toPromise(func) {
   });
 }
 
-var log = debug('pouchdb:api');
+function logApiCall(self, name, args) {
+  /* istanbul ignore if */
+  if (self.constructor.listeners('debug').length) {
+    var logArgs = ['api', self.name, name];
+    for (var i = 0; i < args.length - 1; i++) {
+      logArgs.push(args[i]);
+    }
+    self.constructor.emit('debug', logArgs);
+
+    // override the callback itself to log the response
+    var origCallback = args[args.length - 1];
+    args[args.length - 1] = function (err, res) {
+      var responseArgs = ['api', self.name, name];
+      responseArgs = responseArgs.concat(
+        err ? ['error', err] : ['success', res]
+      );
+      self.constructor.emit('debug', responseArgs);
+      origCallback(err, res);
+    };
+  }
+}
 
 function adapterFun(name, callback) {
-  function logApiCall(self, name, args) {
-    /* istanbul ignore if */
-    if (log.enabled) {
-      var logArgs = [self.name, name];
-      for (var i = 0; i < args.length - 1; i++) {
-        logArgs.push(args[i]);
-      }
-      log.apply(null, logArgs);
-
-      // override the callback itself to log the response
-      var origCallback = args[args.length - 1];
-      args[args.length - 1] = function (err, res) {
-        var responseArgs = [self.name, name];
-        responseArgs = responseArgs.concat(
-          err ? ['error', err] : ['success', res]
-        );
-        log.apply(null, responseArgs);
-        origCallback(err, res);
-      };
-    }
-  }
-
   return toPromise(getArguments(function (args) {
     if (this._closed) {
-      return PouchPromise.reject(new Error('database is closed'));
+      return PouchPromise$1.reject(new Error('database is closed'));
     }
     if (this._destroyed) {
-      return PouchPromise.reject(new Error('database is destroyed'));
+      return PouchPromise$1.reject(new Error('database is destroyed'));
     }
     var self = this;
     logApiCall(self, name, args);
     if (!this.taskqueue.isReady) {
-      return new PouchPromise(function (fulfill, reject) {
+      return new PouchPromise$1(function (fulfill, reject) {
         self.taskqueue.addTask(function (failed) {
           if (failed) {
             reject(failed);
@@ -12535,6 +14369,104 @@ function adapterFun(name, callback) {
   }));
 }
 
+function mangle(key) {
+  return '$' + key;
+}
+function unmangle(key) {
+  return key.substring(1);
+}
+function Map$1() {
+  this._store = {};
+}
+Map$1.prototype.get = function (key) {
+  var mangled = mangle(key);
+  return this._store[mangled];
+};
+Map$1.prototype.set = function (key, value) {
+  var mangled = mangle(key);
+  this._store[mangled] = value;
+  return true;
+};
+Map$1.prototype.has = function (key) {
+  var mangled = mangle(key);
+  return mangled in this._store;
+};
+Map$1.prototype.delete = function (key) {
+  var mangled = mangle(key);
+  var res = mangled in this._store;
+  delete this._store[mangled];
+  return res;
+};
+Map$1.prototype.forEach = function (cb) {
+  var keys = Object.keys(this._store);
+  for (var i = 0, len = keys.length; i < len; i++) {
+    var key = keys[i];
+    var value = this._store[key];
+    key = unmangle(key);
+    cb(value, key);
+  }
+};
+Object.defineProperty(Map$1.prototype, 'size', {
+  get: function () {
+    return Object.keys(this._store).length;
+  }
+});
+
+function Set$1(array) {
+  this._store = new Map$1();
+
+  // init with an array
+  if (array && Array.isArray(array)) {
+    for (var i = 0, len = array.length; i < len; i++) {
+      this.add(array[i]);
+    }
+  }
+}
+Set$1.prototype.add = function (key) {
+  return this._store.set(key, true);
+};
+Set$1.prototype.has = function (key) {
+  return this._store.has(key);
+};
+Set$1.prototype.forEach = function (cb) {
+  this._store.forEach(function (value, key) {
+    cb(key);
+  });
+};
+Object.defineProperty(Set$1.prototype, 'size', {
+  get: function () {
+    return this._store.size;
+  }
+});
+
+/* global Map,Set,Symbol */
+// Based on https://kangax.github.io/compat-table/es6/ we can sniff out
+// incomplete Map/Set implementations which would otherwise cause our tests to fail.
+// Notably they fail in IE11 and iOS 8.4, which this prevents.
+function supportsMapAndSet() {
+  if (typeof Symbol === 'undefined' || typeof Map === 'undefined' || typeof Set === 'undefined') {
+    return false;
+  }
+  var prop = Object.getOwnPropertyDescriptor(Map, Symbol.species);
+  return prop && 'get' in prop && Map[Symbol.species] === Map;
+}
+
+// based on https://github.com/montagejs/collections
+/* global Map,Set */
+
+var ExportedSet;
+var ExportedMap;
+
+{
+  if (supportsMapAndSet()) { // prefer built-in Map/Set
+    ExportedSet = Set;
+    ExportedMap = Map;
+  } else { // fall back to our polyfill
+    ExportedSet = Set$1;
+    ExportedMap = Map$1;
+  }
+}
+
 // like underscore/lodash _.pick()
 function pick(obj, arr) {
   var res = {};
@@ -12546,67 +14478,6 @@ function pick(obj, arr) {
   }
   return res;
 }
-
-// based on https://github.com/montagejs/collections
-function mangle(key) {
-  return '$' + key;
-}
-function unmangle(key) {
-  return key.substring(1);
-}
-function _Map() {
-  this._store = {};
-}
-_Map.prototype.get = function (key) {
-  var mangled = mangle(key);
-  return this._store[mangled];
-};
-_Map.prototype.set = function (key, value) {
-  var mangled = mangle(key);
-  this._store[mangled] = value;
-  return true;
-};
-_Map.prototype.has = function (key) {
-  var mangled = mangle(key);
-  return mangled in this._store;
-};
-_Map.prototype.delete = function (key) {
-  var mangled = mangle(key);
-  var res = mangled in this._store;
-  delete this._store[mangled];
-  return res;
-};
-_Map.prototype.forEach = function (cb) {
-  var keys = Object.keys(this._store);
-  for (var i = 0, len = keys.length; i < len; i++) {
-    var key = keys[i];
-    var value = this._store[key];
-    key = unmangle(key);
-    cb(value, key);
-  }
-};
-Object.defineProperty(_Map.prototype, 'size', {
-  get: function () {
-    return Object.keys(this._store).length;
-  }
-});
-
-function _Set(array) {
-  this._store = new _Map();
-
-  // init with an array
-  if (array && Array.isArray(array)) {
-    for (var i = 0, len = array.length; i < len; i++) {
-      this.add(array[i]);
-    }
-  }
-}
-_Set.prototype.add = function (key) {
-  return this._store.set(key, true);
-};
-_Set.prototype.has = function (key) {
-  return this._store.has(key);
-};
 
 // Most browsers throttle concurrent requests at 6, so it's silly
 // to shim _bulk_get by trying to launch potentially hundreds of requests
@@ -12628,7 +14499,7 @@ function bulkGet(db, opts, callback) {
   var requests = opts.docs;
 
   // consolidate into one request per doc if possible
-  var requestsById = new _Map();
+  var requestsById = new ExportedMap();
   requests.forEach(function (request) {
     if (requestsById.has(request.id)) {
       requestsById.get(request.id).push(request);
@@ -12762,6 +14633,18 @@ function hasLocalStorage() {
   return hasLocal;
 }
 
+// Custom nextTick() shim for browsers. In node, this will just be process.nextTick(). We
+// avoid using process.nextTick() directly because the polyfill is very large and we don't
+// need all of it (see: https://github.com/defunctzombie/node-process).
+// "immediate" 3.0.8 is used by lie, and it's a smaller version of the latest "immediate"
+// package, so it's the one we use.
+// When we use nextTick() in our codebase, we only care about not releasing Zalgo
+// (see: http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony).
+// Microtask vs macrotask doesn't matter to us. So we're free to use the fastest
+// (least latency) option, which is "immediate" due to use of microtasks.
+// All of our nextTicks are isolated to this one function so we can easily swap out one
+// implementation for another.
+
 inherits(Changes, events.EventEmitter);
 
 /* istanbul ignore next */
@@ -12827,7 +14710,7 @@ Changes.prototype.addListener = function (dbName, id, db, opts) {
       }
     }).on('complete', function () {
       if (inprogress === 'waiting') {
-        immediate(eventFunction);
+        nextTick(eventFunction);
       }
       inprogress = false;
     }).on('error', onError);
@@ -12881,7 +14764,7 @@ function randomNumber(min, max) {
     max = max + 1;
   }
   // In order to not exceed maxTimeout, pick a random value between half of maxTimeout and maxTimeout
-  if(max > maxTimeout) {
+  if (max > maxTimeout) {
     min = maxTimeout >> 1; // divide by two
     max = maxTimeout;
   }
@@ -12905,34 +14788,34 @@ function explainError(status, str) {
   guardedConsole('info', 'The above ' + status + ' is totally normal. ' + str);
 }
 
-// forked from
-// https://github.com/vmattos/js-extend/blob/7023fd69a9e9552688086b8b8006b1fcf916a306/extend.js
-// TODO: I don't know why we have two different extend() functions in PouchDB
+var assign;
+{
+  if (typeof Object.assign === 'function') {
+    assign = Object.assign;
+  } else {
+    // lite Object.assign polyfill based on
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+    assign = function (target) {
+      var to = Object(target);
 
-var slice = Array.prototype.slice;
-var each = Array.prototype.forEach;
+      for (var index = 1; index < arguments.length; index++) {
+        var nextSource = arguments[index];
 
-function extend$1(obj) {
-  if (typeof obj !== 'object') {
-    throw obj + ' is not an object' ;
-  }
-
-  var sources = slice.call(arguments, 1);
-
-  each.call(sources, function (source) {
-    if (source) {
-      for (var prop in source) {
-        if (typeof source[prop] === 'object' && obj[prop]) {
-          extend$1.call(obj, obj[prop], source[prop]);
-        } else {
-          obj[prop] = source[prop];
+        if (nextSource != null) { // Skip over if undefined or null
+          for (var nextKey in nextSource) {
+            // Avoid bugs when hasOwnProperty is shadowed
+            if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+              to[nextKey] = nextSource[nextKey];
+            }
+          }
         }
       }
-    }
-  });
-
-  return obj;
+      return to;
+    };
+  }
 }
+
+var $inject_Object_assign = assign;
 
 inherits(PouchError, Error);
 
@@ -13078,6 +14961,27 @@ function flatten(arrs) {
   return res;
 }
 
+// shim for Function.prototype.name,
+// for browsers that don't support it like IE
+
+/* istanbul ignore next */
+function f() {}
+
+var hasName = f.name;
+var res;
+
+// We dont run coverage in IE
+/* istanbul ignore else */
+if (hasName) {
+  res = function (fun) {
+    return fun.name;
+  };
+} else {
+  res = function (fun) {
+    return fun.toString().match(/^\s*function\s*(\S*)\s*\(/)[1];
+  };
+}
+
 // Determine id an ID is valid
 //   - invalid IDs begin with an underescore that does not begin '_design' or
 //     '_local'
@@ -13097,22 +15001,35 @@ function invalidIdError(id) {
   }
 }
 
+// Checks if a PouchDB object is "remote" or not. This is
+// designed to opt-in to certain optimizations, such as
+// avoiding checks for "dependentDbs" and other things that
+// we know only apply to local databases. In general, "remote"
+// should be true for the http adapter, and for third-party
+// adapters with similar expensive boundaries to cross for
+// every API call, such as socket-pouch and worker-pouch.
+// Previously, this was handled via db.type() === 'http'
+// which is now deprecated.
+
+function isRemote(db) {
+  if (typeof db._remote === 'boolean') {
+    return db._remote;
+  }
+  /* istanbul ignore next */
+  if (typeof db.type === 'function') {
+    guardedConsole('warn',
+      'db.type() is deprecated and will be removed in ' +
+      'a future version of PouchDB');
+    return db.type() === 'http';
+  }
+  /* istanbul ignore next */
+  return false;
+}
+
 function listenerCount(ee, type) {
   return 'listenerCount' in ee ? ee.listenerCount(type) :
                                  events.EventEmitter.listenerCount(ee, type);
 }
-
-// Custom nextTick() shim for browsers. In node, this will just be process.nextTick(). We
-// avoid using process.nextTick() directly because the polyfill is very large and we don't
-// need all of it (see: https://github.com/defunctzombie/node-process).
-// "immediate" 3.0.8 is used by lie, and it's a smaller version of the latest "immediate"
-// package, so it's the one we use.
-// When we use nextTick() in our codebase, we only care about not releasing Zalgo
-// (see: http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony).
-// Microtask vs macrotask doesn't matter to us. So we're free to use the fastest
-// (least latency) option, which is "immediate" due to use of microtasks.
-// All of our nextTicks are isolated to this one function so we can easily swap out one
-// implementation for another.
 
 function parseDesignDocFunctionName(s) {
   if (!s) {
@@ -13167,11 +15084,28 @@ function parseUri(str) {
   return uri;
 }
 
+// Based on https://github.com/alexdavid/scope-eval v0.0.3
+// (source: https://unpkg.com/scope-eval@0.0.3/scope_eval.js)
+// This is basically just a wrapper around new Function()
+
+function scopeEval(source, scope) {
+  var keys = [];
+  var values = [];
+  for (var key in scope) {
+    if (scope.hasOwnProperty(key)) {
+      keys.push(key);
+      values.push(scope[key]);
+    }
+  }
+  keys.push(source);
+  return Function.apply(null, keys).apply(null, values);
+}
+
 // this is essentially the "update sugar" function from daleharvey/pouchdb#1388
 // the diffFun tells us what delta to apply to the doc.  it either returns
 // the doc, or false if it doesn't need to do an update after all
 function upsert(db, docId, diffFun) {
-  return new PouchPromise(function (fulfill, reject) {
+  return new PouchPromise$1(function (fulfill, reject) {
     db.get(docId, function (err, doc) {
       if (err) {
         /* istanbul ignore next */
@@ -13605,7 +15539,7 @@ function doMerge(tree, path, dontExpand) {
 function stem(tree, depth) {
   // First we break out the tree into a complete list of root to leaf paths
   var paths = rootToLeaf(tree);
-  var maybeStem = {};
+  var stemmedRevs;
 
   var result;
   for (var i = 0, len = paths.length; i < len; i++) {
@@ -13613,34 +15547,49 @@ function stem(tree, depth) {
     // `depth` to stem to, and generate a new set of flat trees
     var path = paths[i];
     var stemmed = path.ids;
-    var numStemmed = Math.max(0, stemmed.length - depth);
-    var stemmedNode = {
-      pos: path.pos + numStemmed,
-      ids: pathToTree(stemmed, numStemmed)
-    };
+    var node;
+    if (stemmed.length > depth) {
+      // only do the stemming work if we actually need to stem
+      if (!stemmedRevs) {
+        stemmedRevs = {}; // avoid allocating this object unnecessarily
+      }
+      var numStemmed = stemmed.length - depth;
+      node = {
+        pos: path.pos + numStemmed,
+        ids: pathToTree(stemmed, numStemmed)
+      };
 
-    for (var s = 0; s < numStemmed; s++) {
-      var rev = (path.pos + s) + '-' + stemmed[s].id;
-      maybeStem[rev] = true;
+      for (var s = 0; s < numStemmed; s++) {
+        var rev = (path.pos + s) + '-' + stemmed[s].id;
+        stemmedRevs[rev] = true;
+      }
+    } else { // no need to actually stem
+      node = {
+        pos: path.pos,
+        ids: pathToTree(stemmed, 0)
+      };
     }
 
     // Then we remerge all those flat trees together, ensuring that we dont
     // connect trees that would go beyond the depth limit
     if (result) {
-      result = doMerge(result, stemmedNode, true).tree;
+      result = doMerge(result, node, true).tree;
     } else {
-      result = [stemmedNode];
+      result = [node];
     }
   }
 
-  traverseRevTree(result, function (isLeaf, pos, revHash) {
-    // some revisions may have been removed in a branch but not in another
-    delete maybeStem[pos + '-' + revHash];
-  });
+  // this is memory-heavy per Chrome profiler, avoid unless we actually stemmed
+  if (stemmedRevs) {
+    traverseRevTree(result, function (isLeaf, pos, revHash) {
+      // some revisions may have been removed in a branch but not in another
+      delete stemmedRevs[pos + '-' + revHash];
+    });
+  }
 
   return {
     tree: result,
-    revs: Object.keys(maybeStem)
+    revs: stemmedRevs ? Object.keys(stemmedRevs) : []
   };
 }
 
@@ -13737,30 +15686,7 @@ function latest(rev, metadata) {
   throw new Error('Unable to resolve latest revision for id ' + metadata.id + ', rev ' + rev);
 }
 
-function evalFilter(input) {
-  return scopedEval('"use strict";\nreturn ' + input + ';', {});
-}
-
-function evalView(input) {
-  var code = [
-    'return function(doc) {',
-    '  "use strict";',
-    '  var emitted = false;',
-    '  var emit = function (a, b) {',
-    '    emitted = true;',
-    '  };',
-    '  var view = ' + input + ';',
-    '  view(doc);',
-    '  if (emitted) {',
-    '    return true;',
-    '  }',
-    '};'
-  ].join('\n');
-
-  return scopedEval(code, {});
-}
-
-inherits(Changes$1, events.EventEmitter);
+inherits(Changes$2, events.EventEmitter);
 
 function tryCatchInChangeListener(self, change) {
   // isolate try/catches to avoid V8 deoptimizations
@@ -13771,7 +15697,7 @@ function tryCatchInChangeListener(self, change) {
   }
 }
 
-function Changes$1(db, opts, callback) {
+function Changes$2(db, opts, callback) {
   events.EventEmitter.call(this);
   var self = this;
   this.db = db;
@@ -13800,13 +15726,13 @@ function Changes$1(db, opts, callback) {
 
   opts.onChange = function (change) {
     /* istanbul ignore if */
-    if (opts.isCancelled) {
+    if (self.isCancelled) {
       return;
     }
     tryCatchInChangeListener(self, change);
   };
 
-  var promise = new PouchPromise(function (fulfill, reject) {
+  var promise = new PouchPromise$1(function (fulfill, reject) {
     opts.complete = function (err, res) {
       if (err) {
         reject(err);
@@ -13834,14 +15760,14 @@ function Changes$1(db, opts, callback) {
       } else if (self.isCancelled) {
         self.emit('cancel');
       } else {
-        self.doChanges(opts);
+        self.validateChanges(opts);
       }
     });
   } else {
-    self.doChanges(opts);
+    self.validateChanges(opts);
   }
 }
-Changes$1.prototype.cancel = function () {
+Changes$2.prototype.cancel = function () {
   this.isCancelled = true;
   if (this.db.taskqueue.isReady) {
     this.emit('cancel');
@@ -13871,7 +15797,24 @@ function processChange(doc, metadata, opts) {
   return change;
 }
 
-Changes$1.prototype.doChanges = function (opts) {
+Changes$2.prototype.validateChanges = function (opts) {
+  var callback = opts.complete;
+  var self = this;
+
+  /* istanbul ignore else */
+  if (PouchDB$5._changesFilterPlugin) {
+    PouchDB$5._changesFilterPlugin.validate(opts, function (err) {
+      if (err) {
+        return callback(err);
+      }
+      self.doChanges(opts);
+    });
+  } else {
+    self.doChanges(opts);
+  }
+};
+
+Changes$2.prototype.doChanges = function (opts) {
   var self = this;
   var callback = opts.complete;
 
@@ -13900,21 +15843,22 @@ Changes$1.prototype.doChanges = function (opts) {
     return;
   }
 
-
-  if (opts.view && !opts.filter) {
-    opts.filter = '_view';
-  }
-
-  if (opts.filter && typeof opts.filter === 'string') {
-    if (opts.filter === '_view') {
-      opts.view = normalizeDesignDocFunctionName(opts.view);
-    } else {
-      opts.filter = normalizeDesignDocFunctionName(opts.filter);
+  /* istanbul ignore else */
+  if (PouchDB$5._changesFilterPlugin) {
+    PouchDB$5._changesFilterPlugin.normalize(opts);
+    if (PouchDB$5._changesFilterPlugin.shouldFilter(this, opts)) {
+      return PouchDB$5._changesFilterPlugin.filter(this, opts);
     }
-
-    if (this.db.type() !== 'http' && !opts.doc_ids) {
-      return this.filterChanges(opts);
-    }
+  } else {
+    ['doc_ids', 'filter', 'selector', 'view'].forEach(function (key) {
+      if (key in opts) {
+        guardedConsole('warn',
+          'The "' + key + '" option was passed in to changes/replicate, ' +
+          'but pouchdb-changes-filter plugin is not installed, so it ' +
+          'was ignored. Please install the plugin to enable filtering.'
+        );
+      }
+    });
   }
 
   if (!('descending' in opts)) {
@@ -13931,63 +15875,6 @@ Changes$1.prototype.doChanges = function (opts) {
     self.cancel = getArguments(function (args) {
       newPromise.cancel();
       cancel.apply(this, args);
-    });
-  }
-};
-
-Changes$1.prototype.filterChanges = function (opts) {
-  var self = this;
-  var callback = opts.complete;
-  if (opts.filter === '_view') {
-    if (!opts.view || typeof opts.view !== 'string') {
-      var err = createError(BAD_REQUEST,
-        '`view` filter parameter not found or invalid.');
-      return callback(err);
-    }
-    // fetch a view from a design doc, make it behave like a filter
-    var viewName = parseDesignDocFunctionName(opts.view);
-    this.db.get('_design/' + viewName[0], function (err, ddoc) {
-      /* istanbul ignore if */
-      if (self.isCancelled) {
-        return callback(null, {status: 'cancelled'});
-      }
-      /* istanbul ignore next */
-      if (err) {
-        return callback(generateErrorFromResponse(err));
-      }
-      var mapFun = ddoc && ddoc.views && ddoc.views[viewName[1]] &&
-        ddoc.views[viewName[1]].map;
-      if (!mapFun) {
-        return callback(createError(MISSING_DOC,
-          (ddoc.views ? 'missing json key: ' + viewName[1] :
-            'missing json key: views')));
-      }
-      opts.filter = evalView(mapFun);
-      self.doChanges(opts);
-    });
-  } else {
-    // fetch a filter from a design doc
-    var filterName = parseDesignDocFunctionName(opts.filter);
-    if (!filterName) {
-      return self.doChanges(opts);
-    }
-    this.db.get('_design/' + filterName[0], function (err, ddoc) {
-      /* istanbul ignore if */
-      if (self.isCancelled) {
-        return callback(null, {status: 'cancelled'});
-      }
-      /* istanbul ignore next */
-      if (err) {
-        return callback(generateErrorFromResponse(err));
-      }
-      var filterFun = ddoc && ddoc.filters && ddoc.filters[filterName[1]];
-      if (!filterFun) {
-        return callback(createError(MISSING_DOC,
-          ((ddoc && ddoc.filters) ? 'missing json key: ' + filterName[1]
-            : 'missing json key: filters')));
-      }
-      opts.filter = evalFilter(filterFun);
-      self.doChanges(opts);
     });
   }
 };
@@ -14081,12 +15968,12 @@ function allDocsKeysQuery(api, opts, callback) {
   var finalResults = {
     offset: opts.skip
   };
-  return PouchPromise.all(keys.map(function (key) {
-    var subOpts = extend$1({key: key, deleted: 'ok'}, opts);
+  return PouchPromise$1.all(keys.map(function (key) {
+    var subOpts = $inject_Object_assign({key: key, deleted: 'ok'}, opts);
     ['limit', 'skip', 'keys'].forEach(function (optKey) {
       delete subOpts[optKey];
     });
-    return new PouchPromise(function (resolve, reject) {
+    return new PouchPromise$1(function (resolve, reject) {
       api._allDocs(subOpts, function (err, res) {
         /* istanbul ignore if */
         if (err) {
@@ -14121,7 +16008,7 @@ function doNextCompaction(self) {
       } else {
         callback(null, res);
       }
-      immediate(function () {
+      nextTick(function () {
         self._compactionQueue.shift();
         if (self._compactionQueue.length) {
           doNextCompaction(self);
@@ -14133,7 +16020,7 @@ function doNextCompaction(self) {
 
 function attachmentNameError(name) {
   if (name.charAt(0) === '_') {
-    return name + 'is not a valid attachment name, attachment ' +
+    return name + ' is not a valid attachment name, attachment ' +
       'names cannot start with \'_\'';
   }
   return false;
@@ -14301,7 +16188,7 @@ AbstractPouchDB.prototype.revsDiff =
   }
 
   var count = 0;
-  var missing = new _Map();
+  var missing = new ExportedMap();
 
   function addToMissing(id, revId) {
     if (!missing.has(id)) {
@@ -14431,7 +16318,7 @@ AbstractPouchDB.prototype._compact = function (opts, callback) {
   }
   function onComplete(resp) {
     var lastSeq = resp.last_seq;
-    PouchPromise.all(promises).then(function () {
+    PouchPromise$1.all(promises).then(function () {
       return upsert(self, '_local/compaction', function deltaFunc(doc) {
         if (!doc.last_seq || doc.last_seq < lastSeq) {
           doc.last_seq = lastSeq;
@@ -14688,7 +16575,7 @@ AbstractPouchDB.prototype.allDocs =
       ));
       return;
     }
-    if (this.type() !== 'http') {
+    if (!isRemote(this)) {
       return allDocsKeysQuery(this, opts, callback);
     }
   }
@@ -14701,7 +16588,7 @@ AbstractPouchDB.prototype.changes = function (opts, callback) {
     callback = opts;
     opts = {};
   }
-  return new Changes$1(this, opts, callback);
+  return new Changes$2(this, opts, callback);
 };
 
 AbstractPouchDB.prototype.close = adapterFun('close', function (callback) {
@@ -14718,8 +16605,8 @@ AbstractPouchDB.prototype.info = adapterFun('info', function (callback) {
     }
     // assume we know better than the adapter, unless it informs us
     info.db_name = info.db_name || self.name;
-    info.auto_compaction = !!(self.auto_compaction && self.type() !== 'http');
-    info.adapter = self.type();
+    info.auto_compaction = !!(self.auto_compaction && !isRemote(self));
+    info.adapter = self.adapter;
     callback(null, info);
   });
 });
@@ -14782,13 +16669,21 @@ AbstractPouchDB.prototype.bulkDocs =
     }
   }
 
-  if (!opts.new_edits && this.type() !== 'http') {
+  var adapter = this;
+  if (!opts.new_edits && !isRemote(adapter)) {
     // ensure revisions of the same doc are sorted, so that
     // the local adapter processes them correctly (#2935)
     req.docs.sort(compareByIdThenRev);
   }
 
   cleanDocs(req.docs);
+
+  // in the case of conflicts, we want to return the _ids to the user
+  // however, the underlying adapter may destroy the docs array, so
+  // create a copy here
+  var ids = req.docs.map(function (doc) {
+    return doc._id;
+  });
 
   return this._bulkDocs(req, opts, function (err, res) {
     if (err) {
@@ -14800,6 +16695,13 @@ AbstractPouchDB.prototype.bulkDocs =
         return x.error;
       });
     }
+    // add ids for error/conflict responses (not required for CouchDB)
+    if (!isRemote(adapter)) {
+      for (var i = 0, l = res.length; i < l; i++) {
+        res[i].id = res[i].id || ids[i];
+      }
+    }
+
     callback(null, res);
   });
 });
@@ -14846,7 +16748,7 @@ AbstractPouchDB.prototype.destroy =
     });
   }
 
-  if (self.type() === 'http') {
+  if (isRemote(self)) {
     // no need to check for dependent DBs if it's a remote DB
     return destroyDb();
   }
@@ -14869,17 +16771,17 @@ AbstractPouchDB.prototype.destroy =
         name.replace(new RegExp('^' + PouchDB.prefix), '') : name;
       return new PouchDB(trueName, self.__opts).destroy();
     });
-    PouchPromise.all(deletedMap).then(destroyDb, callback);
+    PouchPromise$1.all(deletedMap).then(destroyDb, callback);
   });
 });
 
-function TaskQueue() {
+function TaskQueue$1() {
   this.isReady = false;
   this.failed = false;
   this.queue = [];
 }
 
-TaskQueue.prototype.execute = function () {
+TaskQueue$1.prototype.execute = function () {
   var fun;
   if (this.failed) {
     while ((fun = this.queue.shift())) {
@@ -14892,18 +16794,18 @@ TaskQueue.prototype.execute = function () {
   }
 };
 
-TaskQueue.prototype.fail = function (err) {
+TaskQueue$1.prototype.fail = function (err) {
   this.failed = err;
   this.execute();
 };
 
-TaskQueue.prototype.ready = function (db) {
+TaskQueue$1.prototype.ready = function (db) {
   this.isReady = true;
   this.db = db;
   this.execute();
 };
 
-TaskQueue.prototype.addTask = function (fun) {
+TaskQueue$1.prototype.addTask = function (fun) {
   this.queue.push(fun);
   if (this.failed) {
     this.execute();
@@ -14920,9 +16822,9 @@ function parseAdapter(name, opts) {
     };
   }
 
-  var adapters = PouchDB.adapters;
-  var preferredAdapters = PouchDB.preferredAdapters;
-  var prefix = PouchDB.prefix;
+  var adapters = PouchDB$5.adapters;
+  var preferredAdapters = PouchDB$5.preferredAdapters;
+  var prefix = PouchDB$5.prefix;
   var adapterName = opts.adapter;
 
   if (!adapterName) { // automatically determine adapter
@@ -14993,12 +16895,12 @@ function prepareForDestruction(self) {
   destructionListeners.get(self.name).push(onConstructorDestroyed);
 }
 
-inherits(PouchDB, AbstractPouchDB);
-function PouchDB(name, opts) {
+inherits(PouchDB$5, AbstractPouchDB);
+function PouchDB$5(name, opts) {
   // In Node our test suite only tests this for PouchAlt unfortunately
   /* istanbul ignore if */
-  if (!(this instanceof PouchDB)) {
-    return new PouchDB(name, opts);
+  if (!(this instanceof PouchDB$5)) {
+    return new PouchDB$5(name, opts);
   }
 
   var self = this;
@@ -15013,7 +16915,7 @@ function PouchDB(name, opts) {
   this.__opts = opts = clone(opts);
 
   self.auto_compaction = opts.auto_compaction;
-  self.prefix = PouchDB.prefix;
+  self.prefix = PouchDB$5.prefix;
 
   if (typeof name !== 'string') {
     throw new Error('Missing/invalid DB name');
@@ -15027,37 +16929,35 @@ function PouchDB(name, opts) {
 
   self.name = name;
   self._adapter = opts.adapter;
-  debug('pouchdb:adapter')('Picked adapter: ' + opts.adapter);
+  PouchDB$5.emit('debug', ['adapter', 'Picked adapter: ', opts.adapter]);
 
-  if (!PouchDB.adapters[opts.adapter] ||
-      !PouchDB.adapters[opts.adapter].valid()) {
+  if (!PouchDB$5.adapters[opts.adapter] ||
+      !PouchDB$5.adapters[opts.adapter].valid()) {
     throw new Error('Invalid Adapter: ' + opts.adapter);
   }
 
   AbstractPouchDB.call(self);
-  self.taskqueue = new TaskQueue();
+  self.taskqueue = new TaskQueue$1();
 
   self.adapter = opts.adapter;
 
-  PouchDB.adapters[opts.adapter].call(self, opts, function (err) {
+  PouchDB$5.adapters[opts.adapter].call(self, opts, function (err) {
     if (err) {
       return self.taskqueue.fail(err);
     }
     prepareForDestruction(self);
 
     self.emit('created', self);
-    PouchDB.emit('created', self.name);
+    PouchDB$5.emit('created', self.name);
     self.taskqueue.ready(self);
   });
 
 }
 
-PouchDB.debug = debug;
+PouchDB$5.adapters = {};
+PouchDB$5.preferredAdapters = [];
 
-PouchDB.adapters = {};
-PouchDB.preferredAdapters = [];
-
-PouchDB.prefix = '_pouch_';
+PouchDB$5.prefix = '_pouch_';
 
 var eventEmitter = new events.EventEmitter();
 
@@ -15070,7 +16970,7 @@ function setUpEventEmitter(Pouch) {
 
   // these are created in constructor.js, and allow us to notify each DB with
   // the same name that it was destroyed, via the constructor object
-  var destructListeners = Pouch._destructionListeners = new _Map();
+  var destructListeners = Pouch._destructionListeners = new ExportedMap();
   Pouch.on('destroyed', function onConstructorDestroyed(name) {
     destructListeners.get(name).forEach(function (callback) {
       callback();
@@ -15079,32 +16979,35 @@ function setUpEventEmitter(Pouch) {
   });
 }
 
-setUpEventEmitter(PouchDB);
+setUpEventEmitter(PouchDB$5);
 
-PouchDB.adapter = function (id, obj, addToPreferredAdapters) {
+PouchDB$5.adapter = function (id, obj, addToPreferredAdapters) {
   /* istanbul ignore else */
   if (obj.valid()) {
-    PouchDB.adapters[id] = obj;
+    PouchDB$5.adapters[id] = obj;
     if (addToPreferredAdapters) {
-      PouchDB.preferredAdapters.push(id);
+      PouchDB$5.preferredAdapters.push(id);
     }
   }
 };
 
-PouchDB.plugin = function (obj) {
+PouchDB$5.plugin = function (obj) {
   if (typeof obj === 'function') { // function style for plugins
-    obj(PouchDB);
-  } else if (typeof obj !== 'object' || Object.keys(obj).length === 0){
+    obj(PouchDB$5);
+  } else if (typeof obj !== 'object' || Object.keys(obj).length === 0) {
     throw new Error('Invalid plugin: got \"' + obj + '\", expected an object or a function');
   } else {
     Object.keys(obj).forEach(function (id) { // object style for plugins
-      PouchDB.prototype[id] = obj[id];
+      PouchDB$5.prototype[id] = obj[id];
     });
   }
-  return PouchDB;
+  if (this.__defaults) {
+    PouchDB$5.__defaults = $inject_Object_assign({}, this.__defaults);
+  }
+  return PouchDB$5;
 };
 
-PouchDB.defaults = function (defaultOpts) {
+PouchDB$5.defaults = function (defaultOpts) {
   function PouchAlt(name, opts) {
     if (!(this instanceof PouchAlt)) {
       return new PouchAlt(name, opts);
@@ -15118,30 +17021,1080 @@ PouchDB.defaults = function (defaultOpts) {
       delete opts.name;
     }
 
-    opts = extend$1({}, PouchAlt.__defaults, opts);
-    PouchDB.call(this, name, opts);
+    opts = $inject_Object_assign({}, PouchAlt.__defaults, opts);
+    PouchDB$5.call(this, name, opts);
   }
 
-  inherits(PouchAlt, PouchDB);
+  inherits(PouchAlt, PouchDB$5);
 
-  PouchAlt.preferredAdapters = PouchDB.preferredAdapters.slice();
-  Object.keys(PouchDB).forEach(function (key) {
+  PouchAlt.preferredAdapters = PouchDB$5.preferredAdapters.slice();
+  Object.keys(PouchDB$5).forEach(function (key) {
     if (!(key in PouchAlt)) {
-      PouchAlt[key] = PouchDB[key];
+      PouchAlt[key] = PouchDB$5[key];
     }
   });
 
   // make default options transitive
   // https://github.com/pouchdb/pouchdb/issues/5922
-  PouchAlt.__defaults = extend$1({}, this.__defaults, defaultOpts);
+  PouchAlt.__defaults = $inject_Object_assign({}, this.__defaults, defaultOpts);
 
   return PouchAlt;
 };
 
 // managed automatically by set-version.js
-var version = "6.1.0";
+var version = "6.2.0";
 
-PouchDB.version = version;
+function debugPouch(PouchDB) {
+  PouchDB.debug = debug;
+  var logs = {};
+  /* istanbul ignore next */
+  PouchDB.on('debug', function (args) {
+    // first argument is log identifier
+    var logId = args[0];
+    // rest should be passed verbatim to debug module
+    var logArgs = args.slice(1);
+    if (!logs[logId]) {
+      logs[logId] = debug('pouchdb:' + logId);
+    }
+    logs[logId].apply(null, logArgs);
+  });
+}
+
+// this would just be "return doc[field]", but fields
+// can be "deep" due to dot notation
+function getFieldFromDoc(doc, parsedField) {
+  var value = doc;
+  for (var i = 0, len = parsedField.length; i < len; i++) {
+    var key = parsedField[i];
+    value = value[key];
+    if (!value) {
+      break;
+    }
+  }
+  return value;
+}
+
+function compare$1(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+// Converts a string in dot notation to an array of its components, with backslash escaping
+function parseField(fieldName) {
+  // fields may be deep (e.g. "foo.bar.baz"), so parse
+  var fields = [];
+  var current = '';
+  for (var i = 0, len = fieldName.length; i < len; i++) {
+    var ch = fieldName[i];
+    if (ch === '.') {
+      if (i > 0 && fieldName[i - 1] === '\\') { // escaped delimiter
+        current = current.substring(0, current.length - 1) + '.';
+      } else { // not escaped, so delimiter
+        fields.push(current);
+        current = '';
+      }
+    } else { // normal character
+      current += ch;
+    }
+  }
+  fields.push(current);
+  return fields;
+}
+
+var combinationFields = ['$or', '$nor', '$not'];
+function isCombinationalField(field) {
+  return combinationFields.indexOf(field) > -1;
+}
+
+function getKey(obj) {
+  return Object.keys(obj)[0];
+}
+
+function getValue$1(obj) {
+  return obj[getKey(obj)];
+}
+
+
+// flatten an array of selectors joined by an $and operator
+function mergeAndedSelectors(selectors) {
+
+  // sort to ensure that e.g. if the user specified
+  // $and: [{$gt: 'a'}, {$gt: 'b'}], then it's collapsed into
+  // just {$gt: 'b'}
+  var res = {};
+
+  selectors.forEach(function (selector) {
+    Object.keys(selector).forEach(function (field) {
+      var matcher = selector[field];
+      if (typeof matcher !== 'object') {
+        matcher = {$eq: matcher};
+      }
+
+      if (isCombinationalField(field)) {
+        if (matcher instanceof Array) {
+          res[field] = matcher.map(function (m) {
+            return mergeAndedSelectors([m]);
+          });
+        } else {
+          res[field] = mergeAndedSelectors([matcher]);
+        }
+      } else {
+        var fieldMatchers = res[field] = res[field] || {};
+        Object.keys(matcher).forEach(function (operator) {
+          var value = matcher[operator];
+
+          if (operator === '$gt' || operator === '$gte') {
+            return mergeGtGte(operator, value, fieldMatchers);
+          } else if (operator === '$lt' || operator === '$lte') {
+            return mergeLtLte(operator, value, fieldMatchers);
+          } else if (operator === '$ne') {
+            return mergeNe(value, fieldMatchers);
+          } else if (operator === '$eq') {
+            return mergeEq(value, fieldMatchers);
+          }
+          fieldMatchers[operator] = value;
+        });
+      }
+    });
+  });
+
+  return res;
+}
+
+
+
+// collapse logically equivalent gt/gte values
+function mergeGtGte(operator, value, fieldMatchers) {
+  if (typeof fieldMatchers.$eq !== 'undefined') {
+    return; // do nothing
+  }
+  if (typeof fieldMatchers.$gte !== 'undefined') {
+    if (operator === '$gte') {
+      if (value > fieldMatchers.$gte) { // more specificity
+        fieldMatchers.$gte = value;
+      }
+    } else { // operator === '$gt'
+      if (value >= fieldMatchers.$gte) { // more specificity
+        delete fieldMatchers.$gte;
+        fieldMatchers.$gt = value;
+      }
+    }
+  } else if (typeof fieldMatchers.$gt !== 'undefined') {
+    if (operator === '$gte') {
+      if (value > fieldMatchers.$gt) { // more specificity
+        delete fieldMatchers.$gt;
+        fieldMatchers.$gte = value;
+      }
+    } else { // operator === '$gt'
+      if (value > fieldMatchers.$gt) { // more specificity
+        fieldMatchers.$gt = value;
+      }
+    }
+  } else {
+    fieldMatchers[operator] = value;
+  }
+}
+
+// collapse logically equivalent lt/lte values
+function mergeLtLte(operator, value, fieldMatchers) {
+  if (typeof fieldMatchers.$eq !== 'undefined') {
+    return; // do nothing
+  }
+  if (typeof fieldMatchers.$lte !== 'undefined') {
+    if (operator === '$lte') {
+      if (value < fieldMatchers.$lte) { // more specificity
+        fieldMatchers.$lte = value;
+      }
+    } else { // operator === '$gt'
+      if (value <= fieldMatchers.$lte) { // more specificity
+        delete fieldMatchers.$lte;
+        fieldMatchers.$lt = value;
+      }
+    }
+  } else if (typeof fieldMatchers.$lt !== 'undefined') {
+    if (operator === '$lte') {
+      if (value < fieldMatchers.$lt) { // more specificity
+        delete fieldMatchers.$lt;
+        fieldMatchers.$lte = value;
+      }
+    } else { // operator === '$gt'
+      if (value < fieldMatchers.$lt) { // more specificity
+        fieldMatchers.$lt = value;
+      }
+    }
+  } else {
+    fieldMatchers[operator] = value;
+  }
+}
+
+// combine $ne values into one array
+function mergeNe(value, fieldMatchers) {
+  if ('$ne' in fieldMatchers) {
+    // there are many things this could "not" be
+    fieldMatchers.$ne.push(value);
+  } else { // doesn't exist yet
+    fieldMatchers.$ne = [value];
+  }
+}
+
+// add $eq into the mix
+function mergeEq(value, fieldMatchers) {
+  // these all have less specificity than the $eq
+  // TODO: check for user errors here
+  delete fieldMatchers.$gt;
+  delete fieldMatchers.$gte;
+  delete fieldMatchers.$lt;
+  delete fieldMatchers.$lte;
+  delete fieldMatchers.$ne;
+  fieldMatchers.$eq = value;
+}
+
+
+//
+// normalize the selector
+//
+function massageSelector(input) {
+  var result = clone(input);
+  var wasAnded = false;
+  if ('$and' in result) {
+    result = mergeAndedSelectors(result['$and']);
+    wasAnded = true;
+  }
+
+  ['$or', '$nor'].forEach(function (orOrNor) {
+    if (orOrNor in result) {
+      // message each individual selector
+      // e.g. {foo: 'bar'} becomes {foo: {$eq: 'bar'}}
+      result[orOrNor].forEach(function (subSelector) {
+        var fields = Object.keys(subSelector);
+        for (var i = 0; i < fields.length; i++) {
+          var field = fields[i];
+          var matcher = subSelector[field];
+          if (typeof matcher !== 'object' || matcher === null) {
+            subSelector[field] = {$eq: matcher};
+          }
+        }
+      });
+    }
+  });
+
+  if ('$not' in result) {
+    //This feels a little like forcing, but it will work for now,
+    //I would like to come back to this and make the merging of selectors a little more generic
+    result['$not'] = mergeAndedSelectors([result['$not']]);
+  }
+
+  var fields = Object.keys(result);
+
+  for (var i = 0; i < fields.length; i++) {
+    var field = fields[i];
+    var matcher = result[field];
+
+    if (typeof matcher !== 'object' || matcher === null) {
+      matcher = {$eq: matcher};
+    } else if ('$ne' in matcher && !wasAnded) {
+      // I put these in an array, since there may be more than one
+      // but in the "mergeAnded" operation, I already take care of that
+      matcher.$ne = [matcher.$ne];
+    }
+    result[field] = matcher;
+  }
+
+  return result;
+}
+
+function pad(str, padWith, upToLength) {
+  var padding = '';
+  var targetLength = upToLength - str.length;
+  /* istanbul ignore next */
+  while (padding.length < targetLength) {
+    padding += padWith;
+  }
+  return padding;
+}
+
+function padLeft(str, padWith, upToLength) {
+  var padding = pad(str, padWith, upToLength);
+  return padding + str;
+}
+
+var MIN_MAGNITUDE = -324; // verified by -Number.MIN_VALUE
+var MAGNITUDE_DIGITS = 3; // ditto
+var SEP = ''; // set to '_' for easier debugging 
+
+function collate(a, b) {
+
+  if (a === b) {
+    return 0;
+  }
+
+  a = normalizeKey(a);
+  b = normalizeKey(b);
+
+  var ai = collationIndex(a);
+  var bi = collationIndex(b);
+  if ((ai - bi) !== 0) {
+    return ai - bi;
+  }
+  switch (typeof a) {
+    case 'number':
+      return a - b;
+    case 'boolean':
+      return a < b ? -1 : 1;
+    case 'string':
+      return stringCollate(a, b);
+  }
+  return Array.isArray(a) ? arrayCollate(a, b) : objectCollate(a, b);
+}
+
+// couch considers null/NaN/Infinity/-Infinity === undefined,
+// for the purposes of mapreduce indexes. also, dates get stringified.
+function normalizeKey(key) {
+  switch (typeof key) {
+    case 'undefined':
+      return null;
+    case 'number':
+      if (key === Infinity || key === -Infinity || isNaN(key)) {
+        return null;
+      }
+      return key;
+    case 'object':
+      var origKey = key;
+      if (Array.isArray(key)) {
+        var len = key.length;
+        key = new Array(len);
+        for (var i = 0; i < len; i++) {
+          key[i] = normalizeKey(origKey[i]);
+        }
+      /* istanbul ignore next */
+      } else if (key instanceof Date) {
+        return key.toJSON();
+      } else if (key !== null) { // generic object
+        key = {};
+        for (var k in origKey) {
+          if (origKey.hasOwnProperty(k)) {
+            var val = origKey[k];
+            if (typeof val !== 'undefined') {
+              key[k] = normalizeKey(val);
+            }
+          }
+        }
+      }
+  }
+  return key;
+}
+
+function indexify(key) {
+  if (key !== null) {
+    switch (typeof key) {
+      case 'boolean':
+        return key ? 1 : 0;
+      case 'number':
+        return numToIndexableString(key);
+      case 'string':
+        // We've to be sure that key does not contain \u0000
+        // Do order-preserving replacements:
+        // 0 -> 1, 1
+        // 1 -> 1, 2
+        // 2 -> 2, 2
+        return key
+          .replace(/\u0002/g, '\u0002\u0002')
+          .replace(/\u0001/g, '\u0001\u0002')
+          .replace(/\u0000/g, '\u0001\u0001');
+      case 'object':
+        var isArray = Array.isArray(key);
+        var arr = isArray ? key : Object.keys(key);
+        var i = -1;
+        var len = arr.length;
+        var result = '';
+        if (isArray) {
+          while (++i < len) {
+            result += toIndexableString(arr[i]);
+          }
+        } else {
+          while (++i < len) {
+            var objKey = arr[i];
+            result += toIndexableString(objKey) +
+                toIndexableString(key[objKey]);
+          }
+        }
+        return result;
+    }
+  }
+  return '';
+}
+
+// convert the given key to a string that would be appropriate
+// for lexical sorting, e.g. within a database, where the
+// sorting is the same given by the collate() function.
+function toIndexableString(key) {
+  var zero = '\u0000';
+  key = normalizeKey(key);
+  return collationIndex(key) + SEP + indexify(key) + zero;
+}
+
+function parseNumber(str, i) {
+  var originalIdx = i;
+  var num;
+  var zero = str[i] === '1';
+  if (zero) {
+    num = 0;
+    i++;
+  } else {
+    var neg = str[i] === '0';
+    i++;
+    var numAsString = '';
+    var magAsString = str.substring(i, i + MAGNITUDE_DIGITS);
+    var magnitude = parseInt(magAsString, 10) + MIN_MAGNITUDE;
+    /* istanbul ignore next */
+    if (neg) {
+      magnitude = -magnitude;
+    }
+    i += MAGNITUDE_DIGITS;
+    while (true) {
+      var ch = str[i];
+      if (ch === '\u0000') {
+        break;
+      } else {
+        numAsString += ch;
+      }
+      i++;
+    }
+    numAsString = numAsString.split('.');
+    if (numAsString.length === 1) {
+      num = parseInt(numAsString, 10);
+    } else {
+      /* istanbul ignore next */
+      num = parseFloat(numAsString[0] + '.' + numAsString[1]);
+    }
+    /* istanbul ignore next */
+    if (neg) {
+      num = num - 10;
+    }
+    /* istanbul ignore next */
+    if (magnitude !== 0) {
+      // parseFloat is more reliable than pow due to rounding errors
+      // e.g. Number.MAX_VALUE would return Infinity if we did
+      // num * Math.pow(10, magnitude);
+      num = parseFloat(num + 'e' + magnitude);
+    }
+  }
+  return {num: num, length : i - originalIdx};
+}
+
+// move up the stack while parsing
+// this function moved outside of parseIndexableString for performance
+function pop(stack, metaStack) {
+  var obj = stack.pop();
+
+  if (metaStack.length) {
+    var lastMetaElement = metaStack[metaStack.length - 1];
+    if (obj === lastMetaElement.element) {
+      // popping a meta-element, e.g. an object whose value is another object
+      metaStack.pop();
+      lastMetaElement = metaStack[metaStack.length - 1];
+    }
+    var element = lastMetaElement.element;
+    var lastElementIndex = lastMetaElement.index;
+    if (Array.isArray(element)) {
+      element.push(obj);
+    } else if (lastElementIndex === stack.length - 2) { // obj with key+value
+      var key = stack.pop();
+      element[key] = obj;
+    } else {
+      stack.push(obj); // obj with key only
+    }
+  }
+}
+
+function parseIndexableString(str) {
+  var stack = [];
+  var metaStack = []; // stack for arrays and objects
+  var i = 0;
+
+  /*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
+  while (true) {
+    var collationIndex = str[i++];
+    if (collationIndex === '\u0000') {
+      if (stack.length === 1) {
+        return stack.pop();
+      } else {
+        pop(stack, metaStack);
+        continue;
+      }
+    }
+    switch (collationIndex) {
+      case '1':
+        stack.push(null);
+        break;
+      case '2':
+        stack.push(str[i] === '1');
+        i++;
+        break;
+      case '3':
+        var parsedNum = parseNumber(str, i);
+        stack.push(parsedNum.num);
+        i += parsedNum.length;
+        break;
+      case '4':
+        var parsedStr = '';
+        /*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
+        while (true) {
+          var ch = str[i];
+          if (ch === '\u0000') {
+            break;
+          }
+          parsedStr += ch;
+          i++;
+        }
+        // perform the reverse of the order-preserving replacement
+        // algorithm (see above)
+        parsedStr = parsedStr.replace(/\u0001\u0001/g, '\u0000')
+          .replace(/\u0001\u0002/g, '\u0001')
+          .replace(/\u0002\u0002/g, '\u0002');
+        stack.push(parsedStr);
+        break;
+      case '5':
+        var arrayElement = { element: [], index: stack.length };
+        stack.push(arrayElement.element);
+        metaStack.push(arrayElement);
+        break;
+      case '6':
+        var objElement = { element: {}, index: stack.length };
+        stack.push(objElement.element);
+        metaStack.push(objElement);
+        break;
+      /* istanbul ignore next */
+      default:
+        throw new Error(
+          'bad collationIndex or unexpectedly reached end of input: ' +
+            collationIndex);
+    }
+  }
+}
+
+function arrayCollate(a, b) {
+  var len = Math.min(a.length, b.length);
+  for (var i = 0; i < len; i++) {
+    var sort = collate(a[i], b[i]);
+    if (sort !== 0) {
+      return sort;
+    }
+  }
+  return (a.length === b.length) ? 0 :
+    (a.length > b.length) ? 1 : -1;
+}
+function stringCollate(a, b) {
+  // See: https://github.com/daleharvey/pouchdb/issues/40
+  // This is incompatible with the CouchDB implementation, but its the
+  // best we can do for now
+  return (a === b) ? 0 : ((a > b) ? 1 : -1);
+}
+function objectCollate(a, b) {
+  var ak = Object.keys(a), bk = Object.keys(b);
+  var len = Math.min(ak.length, bk.length);
+  for (var i = 0; i < len; i++) {
+    // First sort the keys
+    var sort = collate(ak[i], bk[i]);
+    if (sort !== 0) {
+      return sort;
+    }
+    // if the keys are equal sort the values
+    sort = collate(a[ak[i]], b[bk[i]]);
+    if (sort !== 0) {
+      return sort;
+    }
+
+  }
+  return (ak.length === bk.length) ? 0 :
+    (ak.length > bk.length) ? 1 : -1;
+}
+// The collation is defined by erlangs ordered terms
+// the atoms null, true, false come first, then numbers, strings,
+// arrays, then objects
+// null/undefined/NaN/Infinity/-Infinity are all considered null
+function collationIndex(x) {
+  var id = ['boolean', 'number', 'string', 'object'];
+  var idx = id.indexOf(typeof x);
+  //false if -1 otherwise true, but fast!!!!1
+  if (~idx) {
+    if (x === null) {
+      return 1;
+    }
+    if (Array.isArray(x)) {
+      return 5;
+    }
+    return idx < 3 ? (idx + 2) : (idx + 3);
+  }
+  /* istanbul ignore next */
+  if (Array.isArray(x)) {
+    return 5;
+  }
+}
+
+// conversion:
+// x yyy zz...zz
+// x = 0 for negative, 1 for 0, 2 for positive
+// y = exponent (for negative numbers negated) moved so that it's >= 0
+// z = mantisse
+function numToIndexableString(num) {
+
+  if (num === 0) {
+    return '1';
+  }
+
+  // convert number to exponential format for easier and
+  // more succinct string sorting
+  var expFormat = num.toExponential().split(/e\+?/);
+  var magnitude = parseInt(expFormat[1], 10);
+
+  var neg = num < 0;
+
+  var result = neg ? '0' : '2';
+
+  // first sort by magnitude
+  // it's easier if all magnitudes are positive
+  var magForComparison = ((neg ? -magnitude : magnitude) - MIN_MAGNITUDE);
+  var magString = padLeft((magForComparison).toString(), '0', MAGNITUDE_DIGITS);
+
+  result += SEP + magString;
+
+  // then sort by the factor
+  var factor = Math.abs(parseFloat(expFormat[0])); // [1..10)
+  /* istanbul ignore next */
+  if (neg) { // for negative reverse ordering
+    factor = 10 - factor;
+  }
+
+  var factorStr = factor.toFixed(20);
+
+  // strip zeros from the end
+  factorStr = factorStr.replace(/\.?0+$/, '');
+
+  result += SEP + factorStr;
+
+  return result;
+}
+
+// create a comparator based on the sort object
+function createFieldSorter(sort) {
+
+  function getFieldValuesAsArray(doc) {
+    return sort.map(function (sorting) {
+      var fieldName = getKey(sorting);
+      var parsedField = parseField(fieldName);
+      var docFieldValue = getFieldFromDoc(doc, parsedField);
+      return docFieldValue;
+    });
+  }
+
+  return function (aRow, bRow) {
+    var aFieldValues = getFieldValuesAsArray(aRow.doc);
+    var bFieldValues = getFieldValuesAsArray(bRow.doc);
+    var collation = collate(aFieldValues, bFieldValues);
+    if (collation !== 0) {
+      return collation;
+    }
+    // this is what mango seems to do
+    return compare$1(aRow.doc._id, bRow.doc._id);
+  };
+}
+
+function filterInMemoryFields(rows, requestDef, inMemoryFields) {
+  rows = rows.filter(function (row) {
+    return rowFilter(row.doc, requestDef.selector, inMemoryFields);
+  });
+
+  if (requestDef.sort) {
+    // in-memory sort
+    var fieldSorter = createFieldSorter(requestDef.sort);
+    rows = rows.sort(fieldSorter);
+    if (typeof requestDef.sort[0] !== 'string' &&
+        getValue$1(requestDef.sort[0]) === 'desc') {
+      rows = rows.reverse();
+    }
+  }
+
+  if ('limit' in requestDef || 'skip' in requestDef) {
+    // have to do the limit in-memory
+    var skip = requestDef.skip || 0;
+    var limit = ('limit' in requestDef ? requestDef.limit : rows.length) + skip;
+    rows = rows.slice(skip, limit);
+  }
+  return rows;
+}
+
+function rowFilter(doc, selector, inMemoryFields) {
+  return inMemoryFields.every(function (field) {
+    if (isDesignDoc(doc)) {
+      return false;
+    }
+
+    var matcher = selector[field];
+    var parsedField = parseField(field);
+    var docFieldValue = getFieldFromDoc(doc, parsedField);
+    if (isCombinationalField(field)) {
+      return matchCominationalSelector(field, matcher, doc);
+    }
+
+    return matchSelector(matcher, doc, parsedField, docFieldValue);
+  });
+}
+
+function isDesignDoc(doc) {
+  return /^_design\//.test(doc._id);
+}
+
+function matchSelector(matcher, doc, parsedField, docFieldValue) {
+  if (!matcher) {
+    // no filtering necessary; this field is just needed for sorting
+    return true;
+  }
+
+  return Object.keys(matcher).every(function (userOperator) {
+    var userValue = matcher[userOperator];
+    return match(userOperator, doc, userValue, parsedField, docFieldValue);
+  });
+}
+
+function matchCominationalSelector(field, matcher, doc) {
+
+  if (field === '$or') {
+    return matcher.some(function (orMatchers) {
+      return rowFilter(doc, orMatchers, Object.keys(orMatchers));
+    });
+  }
+
+  if (field === '$not') {
+    return !rowFilter(doc, matcher, Object.keys(matcher));
+  }
+
+  //`$nor`
+  return !matcher.find(function (orMatchers) {
+    return rowFilter(doc, orMatchers, Object.keys(orMatchers));
+  });
+
+}
+
+function match(userOperator, doc, userValue, parsedField, docFieldValue) {
+  if (!matchers[userOperator]) {
+    throw new Error('unknown operator "' + userOperator +
+      '" - should be one of $eq, $lte, $lt, $gt, $gte, $exists, $ne, $in, ' +
+      '$nin, $size, $mod, $regex, $elemMatch, $type or $all');
+  }
+  return matchers[userOperator](doc, userValue, parsedField, docFieldValue);
+}
+
+function fieldExists(docFieldValue) {
+  return typeof docFieldValue !== 'undefined' && docFieldValue !== null;
+}
+
+function fieldIsNotUndefined(docFieldValue) {
+  return typeof docFieldValue !== 'undefined';
+}
+
+function modField(docFieldValue, userValue) {
+  var divisor = userValue[0];
+  var mod = userValue[1];
+  if (divisor === 0) {
+    throw new Error('Bad divisor, cannot divide by zero');
+  }
+
+  if (parseInt(divisor, 10) !== divisor ) {
+    throw new Error('Divisor is not an integer');
+  }
+
+  if (parseInt(mod, 10) !== mod ) {
+    throw new Error('Modulus is not an integer');
+  }
+
+  if (parseInt(docFieldValue, 10) !== docFieldValue) {
+    return false;
+  }
+
+  return docFieldValue % divisor === mod;
+}
+
+function arrayContainsValue(docFieldValue, userValue) {
+  return userValue.some(function (val) {
+    if (docFieldValue instanceof Array) {
+      return docFieldValue.indexOf(val) > -1;
+    }
+
+    return docFieldValue === val;
+  });
+}
+
+function arrayContainsAllValues(docFieldValue, userValue) {
+  return userValue.every(function (val) {
+    return docFieldValue.indexOf(val) > -1;
+  });
+}
+
+function arraySize(docFieldValue, userValue) {
+  return docFieldValue.length === userValue;
+}
+
+function regexMatch(docFieldValue, userValue) {
+  var re = new RegExp(userValue);
+
+  return re.test(docFieldValue);
+}
+
+function typeMatch(docFieldValue, userValue) {
+
+  switch (userValue) {
+    case 'null':
+      return docFieldValue === null;
+    case 'boolean':
+      return typeof (docFieldValue) === 'boolean';
+    case 'number':
+      return typeof (docFieldValue) === 'number';
+    case 'string':
+      return typeof (docFieldValue) === 'string';
+    case 'array':
+      return docFieldValue instanceof Array;
+    case 'object':
+      return ({}).toString.call(docFieldValue) === '[object Object]';
+  }
+
+  throw new Error(userValue + ' not supported as a type.' +
+                  'Please use one of object, string, array, number, boolean or null.');
+
+}
+
+var matchers = {
+
+  '$elemMatch': function (doc, userValue, parsedField, docFieldValue) {
+    if (!Array.isArray(docFieldValue)) {
+      return false;
+    }
+
+    if (docFieldValue.length === 0) {
+      return false;
+    }
+
+    if (typeof docFieldValue[0] === 'object') {
+      return docFieldValue.some(function (val) {
+        return rowFilter(val, userValue, Object.keys(userValue));
+      });
+    }
+
+    return docFieldValue.some(function (val) {
+      return matchSelector(userValue, doc, parsedField, val);
+    });
+  },
+
+  '$eq': function (doc, userValue, parsedField, docFieldValue) {
+    return fieldIsNotUndefined(docFieldValue) && collate(docFieldValue, userValue) === 0;
+  },
+
+  '$gte': function (doc, userValue, parsedField, docFieldValue) {
+    return fieldIsNotUndefined(docFieldValue) && collate(docFieldValue, userValue) >= 0;
+  },
+
+  '$gt': function (doc, userValue, parsedField, docFieldValue) {
+    return fieldIsNotUndefined(docFieldValue) && collate(docFieldValue, userValue) > 0;
+  },
+
+  '$lte': function (doc, userValue, parsedField, docFieldValue) {
+    return fieldIsNotUndefined(docFieldValue) && collate(docFieldValue, userValue) <= 0;
+  },
+
+  '$lt': function (doc, userValue, parsedField, docFieldValue) {
+    return fieldIsNotUndefined(docFieldValue) && collate(docFieldValue, userValue) < 0;
+  },
+
+  '$exists': function (doc, userValue, parsedField, docFieldValue) {
+    //a field that is null is still considered to exist
+    if (userValue) {
+      return fieldIsNotUndefined(docFieldValue);
+    }
+
+    return !fieldIsNotUndefined(docFieldValue);
+  },
+
+  '$mod': function (doc, userValue, parsedField, docFieldValue) {
+    return fieldExists(docFieldValue) && modField(docFieldValue, userValue);
+  },
+
+  '$ne': function (doc, userValue, parsedField, docFieldValue) {
+    return userValue.every(function (neValue) {
+      return collate(docFieldValue, neValue) !== 0;
+    });
+  },
+  '$in': function (doc, userValue, parsedField, docFieldValue) {
+    return fieldExists(docFieldValue) && arrayContainsValue(docFieldValue, userValue);
+  },
+
+  '$nin': function (doc, userValue, parsedField, docFieldValue) {
+    return fieldExists(docFieldValue) && !arrayContainsValue(docFieldValue, userValue);
+  },
+
+  '$size': function (doc, userValue, parsedField, docFieldValue) {
+    return fieldExists(docFieldValue) && arraySize(docFieldValue, userValue);
+  },
+
+  '$all': function (doc, userValue, parsedField, docFieldValue) {
+    return Array.isArray(docFieldValue) && arrayContainsAllValues(docFieldValue, userValue);
+  },
+
+  '$regex': function (doc, userValue, parsedField, docFieldValue) {
+    return fieldExists(docFieldValue) && regexMatch(docFieldValue, userValue);
+  },
+
+  '$type': function (doc, userValue, parsedField, docFieldValue) {
+    return typeMatch(docFieldValue, userValue);
+  }
+};
+
+// return true if the given doc matches the supplied selector
+function matchesSelector(doc, selector) {
+  /* istanbul ignore if */
+  if (typeof selector !== 'object') {
+    // match the CouchDB error message
+    throw 'Selector error: expected a JSON object';
+  }
+
+  selector = massageSelector(selector);
+  var row = {
+    'doc': doc
+  };
+
+  var rowsMatched = filterInMemoryFields([row], { 'selector': selector }, Object.keys(selector));
+  return rowsMatched && rowsMatched.length === 1;
+}
+
+function evalFilter(input) {
+  return scopeEval('"use strict";\nreturn ' + input + ';', {});
+}
+
+function evalView(input) {
+  var code = [
+    'return function(doc) {',
+    '  "use strict";',
+    '  var emitted = false;',
+    '  var emit = function (a, b) {',
+    '    emitted = true;',
+    '  };',
+    '  var view = ' + input + ';',
+    '  view(doc);',
+    '  if (emitted) {',
+    '    return true;',
+    '  }',
+    '};'
+  ].join('\n');
+
+  return scopeEval(code, {});
+}
+
+function validate(opts, callback) {
+  if (opts.selector) {
+    if (opts.filter && opts.filter !== '_selector') {
+      var filterName = typeof opts.filter === 'string' ?
+        opts.filter : 'function';
+      return callback(new Error('selector invalid for filter "' + filterName + '"'));
+    }
+  }
+  callback();
+}
+
+function normalize(opts) {
+  if (opts.view && !opts.filter) {
+    opts.filter = '_view';
+  }
+
+  if (opts.selector && !opts.filter) {
+    opts.filter = '_selector';
+  }
+
+  if (opts.filter && typeof opts.filter === 'string') {
+    if (opts.filter === '_view') {
+      opts.view = normalizeDesignDocFunctionName(opts.view);
+    } else {
+      opts.filter = normalizeDesignDocFunctionName(opts.filter);
+    }
+  }
+}
+
+function shouldFilter(changesHandler$$1, opts) {
+  return opts.filter && typeof opts.filter === 'string' &&
+    !opts.doc_ids && !isRemote(changesHandler$$1.db);
+}
+
+function filter(changesHandler$$1, opts) {
+  var callback = opts.complete;
+  if (opts.filter === '_view') {
+    if (!opts.view || typeof opts.view !== 'string') {
+      var err = createError(BAD_REQUEST,
+        '`view` filter parameter not found or invalid.');
+      return callback(err);
+    }
+    // fetch a view from a design doc, make it behave like a filter
+    var viewName = parseDesignDocFunctionName(opts.view);
+    changesHandler$$1.db.get('_design/' + viewName[0], function (err, ddoc) {
+      /* istanbul ignore if */
+      if (changesHandler$$1.isCancelled) {
+        return callback(null, {status: 'cancelled'});
+      }
+      /* istanbul ignore next */
+      if (err) {
+        return callback(generateErrorFromResponse(err));
+      }
+      var mapFun = ddoc && ddoc.views && ddoc.views[viewName[1]] &&
+        ddoc.views[viewName[1]].map;
+      if (!mapFun) {
+        return callback(createError(MISSING_DOC,
+          (ddoc.views ? 'missing json key: ' + viewName[1] :
+            'missing json key: views')));
+      }
+      opts.filter = evalView(mapFun);
+      changesHandler$$1.doChanges(opts);
+    });
+  } else if (opts.selector) {
+    opts.filter = function (doc) {
+      return matchesSelector(doc, opts.selector);
+    };
+    changesHandler$$1.doChanges(opts);
+  } else {
+    // fetch a filter from a design doc
+    var filterName = parseDesignDocFunctionName(opts.filter);
+    changesHandler$$1.db.get('_design/' + filterName[0], function (err, ddoc) {
+      /* istanbul ignore if */
+      if (changesHandler$$1.isCancelled) {
+        return callback(null, {status: 'cancelled'});
+      }
+      /* istanbul ignore next */
+      if (err) {
+        return callback(generateErrorFromResponse(err));
+      }
+      var filterFun = ddoc && ddoc.filters && ddoc.filters[filterName[1]];
+      if (!filterFun) {
+        return callback(createError(MISSING_DOC,
+          ((ddoc && ddoc.filters) ? 'missing json key: ' + filterName[1]
+            : 'missing json key: filters')));
+      }
+      opts.filter = evalFilter(filterFun);
+      changesHandler$$1.doChanges(opts);
+    });
+  }
+}
+
+function applyChangesFilterPlugin(PouchDB) {
+  PouchDB._changesFilterPlugin = {
+    validate: validate,
+    normalize: normalize,
+    shouldFilter: shouldFilter,
+    filter: filter
+  };
+}
+
+// TODO: remove from pouchdb-core (breaking)
+PouchDB$5.plugin(debugPouch);
+
+// TODO: remove from pouchdb-core (breaking)
+PouchDB$5.plugin(applyChangesFilterPlugin);
+
+PouchDB$5.version = version;
 
 function toObject(array) {
   return array.reduce(function (obj, item) {
@@ -15288,11 +18241,11 @@ function parseDoc(doc, newEdits) {
   return result;
 }
 
-var atob$1 = function (str) {
+var thisAtob = function (str) {
   return atob(str);
 };
 
-var btoa$1 = function (str) {
+var thisBtoa = function (str) {
   return btoa(str);
 };
 
@@ -15338,7 +18291,7 @@ function binStringToBluffer(binString, type) {
 }
 
 function b64ToBluffer(b64, type) {
-  return binStringToBluffer(atob$1(b64), type);
+  return binStringToBluffer(thisAtob(b64), type);
 }
 
 //Can't find original post, but this is close
@@ -15387,7 +18340,7 @@ function blobToBinaryString(blobOrBuffer, callback) {
 
 function blobToBase64(blobOrBuffer, callback) {
   blobToBinaryString(blobOrBuffer, function (base64) {
-    callback(btoa$1(base64));
+    callback(thisBtoa(base64));
   });
 }
 
@@ -15407,26 +18360,28 @@ function readAsArrayBuffer(blob, callback) {
   reader.readAsArrayBuffer(blob);
 }
 
+// this is not used in the browser
+
 var setImmediateShim = global.setImmediate || global.setTimeout;
 var MD5_CHUNK_SIZE = 32768;
 
 function rawToBase64(raw) {
-  return btoa$1(raw);
+  return thisBtoa(raw);
 }
 
-function sliceBlob(blob, start, end) {
-  if (blob.webkitSlice) {
-    return blob.webkitSlice(start, end);
+function sliceBlob(blob$$1, start, end) {
+  if (blob$$1.webkitSlice) {
+    return blob$$1.webkitSlice(start, end);
   }
-  return blob.slice(start, end);
+  return blob$$1.slice(start, end);
 }
 
-function appendBlob(buffer, blob, start, end, callback) {
-  if (start > 0 || end < blob.size) {
+function appendBlob(buffer, blob$$1, start, end, callback) {
+  if (start > 0 || end < blob$$1.size) {
     // only slice blob if we really need to
-    blob = sliceBlob(blob, start, end);
+    blob$$1 = sliceBlob(blob$$1, start, end);
   }
-  readAsArrayBuffer(blob, function (arrayBuffer) {
+  readAsArrayBuffer(blob$$1, function (arrayBuffer) {
     buffer.append(arrayBuffer);
     callback();
   });
@@ -15481,7 +18436,7 @@ function stringMd5(string) {
 
 function parseBase64(data) {
   try {
-    return atob$1(data);
+    return thisAtob(data);
   } catch (e) {
     var err = createError(BAD_ARG,
       'Attachment is not a valid base64 string');
@@ -15499,7 +18454,7 @@ function preprocessString(att, blobType, callback) {
   if (blobType === 'blob') {
     att.data = binStringToBluffer(asBinary, att.content_type);
   } else if (blobType === 'base64') {
-    att.data = btoa$1(asBinary);
+    att.data = thisBtoa(asBinary);
   } else { // binary
     att.data = asBinary;
   }
@@ -15612,7 +18567,8 @@ function updateDoc(revLimit, prev, docInfo, results,
 
   var merged = merge(prev.rev_tree, docInfo.metadata.rev_tree[0], revLimit);
 
-  var inConflict = newEdits && (((previouslyDeleted && deleted) ||
+  var inConflict = newEdits && ((
+    (previouslyDeleted && deleted && merged.conflicts !== 'new_leaf') ||
     (!previouslyDeleted && merged.conflicts !== 'new_leaf') ||
     (previouslyDeleted && !deleted && merged.conflicts === 'new_branch')));
 
@@ -15631,8 +18587,8 @@ function updateDoc(revLimit, prev, docInfo, results,
   }
 
   // recalculate
-  var winningRev$$ = winningRev(docInfo.metadata);
-  var winningRevIsDeleted = isDeleted(docInfo.metadata, winningRev$$);
+  var winningRev$$1 = winningRev(docInfo.metadata);
+  var winningRevIsDeleted = isDeleted(docInfo.metadata, winningRev$$1);
 
   // calculate the total number of documents that were added/removed,
   // from the perspective of total_rows/doc_count
@@ -15640,7 +18596,7 @@ function updateDoc(revLimit, prev, docInfo, results,
     previouslyDeleted < winningRevIsDeleted ? -1 : 1;
 
   var newRevIsDeleted;
-  if (newRev === winningRev$$) {
+  if (newRev === winningRev$$1) {
     // if the new rev is the same as the winning rev, we can reuse that value
     newRevIsDeleted = winningRevIsDeleted;
   } else {
@@ -15648,7 +18604,7 @@ function updateDoc(revLimit, prev, docInfo, results,
     newRevIsDeleted = isDeleted(docInfo.metadata, newRev);
   }
 
-  writeDoc(docInfo, winningRev$$, winningRevIsDeleted, newRevIsDeleted,
+  writeDoc(docInfo, winningRev$$1, winningRevIsDeleted, newRevIsDeleted,
     true, delta, i, cb);
 }
 
@@ -15664,8 +18620,8 @@ function processDocs(revLimit, docInfos, api, fetchedDocs, tx, results,
 
   function insertDoc(docInfo, resultsIdx, callback) {
     // Cant insert new deleted documents
-    var winningRev$$ = winningRev(docInfo.metadata);
-    var deleted = isDeleted(docInfo.metadata, winningRev$$);
+    var winningRev$$1 = winningRev(docInfo.metadata);
+    var deleted = isDeleted(docInfo.metadata, winningRev$$1);
     if ('was_delete' in opts && deleted) {
       results[resultsIdx] = createError(MISSING_DOC, 'deleted');
       return callback();
@@ -15682,12 +18638,12 @@ function processDocs(revLimit, docInfos, api, fetchedDocs, tx, results,
 
     var delta = deleted ? 0 : 1;
 
-    writeDoc(docInfo, winningRev$$, deleted, deleted, false,
+    writeDoc(docInfo, winningRev$$1, deleted, deleted, false,
       delta, resultsIdx, callback);
   }
 
   var newEdits = opts.new_edits;
-  var idsToDocs = new _Map();
+  var idsToDocs = new ExportedMap();
 
   var docsDone = 0;
   var docsToDo = docInfos.length;
@@ -15864,7 +18820,7 @@ function readBlobData(body, type, asBlob, callback) {
       callback('');
     } else if (typeof body !== 'string') { // we have blob support
       readAsBinaryString(body, function (binary) {
-        callback(btoa$1(binary));
+        callback(thisBtoa(binary));
       });
     } else { // no blob support
       callback(body);
@@ -15910,19 +18866,19 @@ function fetchAttachmentsIfNecessary(doc, opts, txn, cb) {
 // a base64-encoded string, and if it's a Blob it
 // needs to be read outside of the transaction context
 function postProcessAttachments(results, asBlob) {
-  return PouchPromise.all(results.map(function (row) {
+  return PouchPromise$1.all(results.map(function (row) {
     if (row.doc && row.doc._attachments) {
       var attNames = Object.keys(row.doc._attachments);
-      return PouchPromise.all(attNames.map(function (att) {
+      return PouchPromise$1.all(attNames.map(function (att) {
         var attObj = row.doc._attachments[att];
         if (!('body' in attObj)) { // already processed
           return;
         }
         var body = attObj.body;
         var type = attObj.content_type;
-        return new PouchPromise(function (resolve) {
+        return new PouchPromise$1(function (resolve) {
           readBlobData(body, type, asBlob, function (data) {
-            row.doc._attachments[att] = extend$1(
+            row.doc._attachments[att] = $inject_Object_assign(
               pick(attObj, ['digest', 'content_type']),
               {data: data}
             );
@@ -16007,15 +18963,18 @@ function openTransactionSafely(idb, stores, mode) {
   }
 }
 
-function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
+var changesHandler$$1 = new Changes();
+
+function idbBulkDocs(dbOpts, req, opts, api, idb, callback) {
   var docInfos = req.docs;
   var txn;
   var docStore;
   var bySeqStore;
   var attachStore;
   var attachAndSeqStore;
+  var metaStore;
   var docInfoError;
-  var docCountDelta = 0;
+  var metaDoc;
 
   for (var i = 0, len = docInfos.length; i < len; i++) {
     var doc = docInfos[i];
@@ -16032,8 +18991,10 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
     return callback(docInfoError);
   }
 
+  var allDocsProcessed = false;
+  var docCountDelta = 0;
   var results = new Array(docInfos.length);
-  var fetchedDocs = new _Map();
+  var fetchedDocs = new ExportedMap();
   var preconditionErrored = false;
   var blobType = api._meta.blobSupport ? 'blob' : 'base64';
 
@@ -16049,7 +19010,8 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
     var stores = [
       DOC_STORE, BY_SEQ_STORE,
       ATTACH_STORE,
-      LOCAL_STORE, ATTACH_AND_SEQ_STORE
+      LOCAL_STORE, ATTACH_AND_SEQ_STORE,
+      META_STORE
     ];
     var txnResult = openTransactionSafely(idb, stores, 'readwrite');
     if (txnResult.error) {
@@ -16063,6 +19025,12 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
     bySeqStore = txn.objectStore(BY_SEQ_STORE);
     attachStore = txn.objectStore(ATTACH_STORE);
     attachAndSeqStore = txn.objectStore(ATTACH_AND_SEQ_STORE);
+    metaStore = txn.objectStore(META_STORE);
+
+    metaStore.get(META_STORE).onsuccess = function (e) {
+      metaDoc = e.target.result;
+      updateDocCountIfReady();
+    };
 
     verifyAttachments(function (err) {
       if (err) {
@@ -16073,9 +19041,24 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
     });
   }
 
+  function onAllDocsProcessed() {
+    allDocsProcessed = true;
+    updateDocCountIfReady();
+  }
+
   function idbProcessDocs() {
     processDocs(dbOpts.revs_limit, docInfos, api, fetchedDocs,
-                txn, results, writeDoc, opts);
+                txn, results, writeDoc, opts, onAllDocsProcessed);
+  }
+
+  function updateDocCountIfReady() {
+    if (!metaDoc || !allDocsProcessed) {
+      return;
+    }
+    // caching the docCount saves a lot of time in allDocs() and
+    // info(), which is why we go to all the trouble of doing this
+    metaDoc.docCount += docCountDelta;
+    metaStore.put(metaDoc);
   }
 
   function fetchExistingDocs() {
@@ -16117,8 +19100,7 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
       return;
     }
 
-    idbChanges.notify(api._meta.name);
-    api._meta.docCount += docCountDelta;
+    changesHandler$$1.notify(api._meta.name);
     callback(null, results);
   }
 
@@ -16173,12 +19155,10 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
     });
   }
 
-  function writeDoc(docInfo, winningRev, winningRevIsDeleted, newRevIsDeleted,
+  function writeDoc(docInfo, winningRev$$1, winningRevIsDeleted, newRevIsDeleted,
                     isUpdate, delta, resultsIdx, callback) {
 
-    docCountDelta += delta;
-
-    docInfo.metadata.winningRev = winningRev;
+    docInfo.metadata.winningRev = winningRev$$1;
     docInfo.metadata.deleted = winningRevIsDeleted;
 
     var doc = docInfo.data;
@@ -16192,15 +19172,18 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
     var hasAttachments = doc._attachments &&
       Object.keys(doc._attachments).length;
     if (hasAttachments) {
-      return writeAttachments(docInfo, winningRev, winningRevIsDeleted,
+      return writeAttachments(docInfo, winningRev$$1, winningRevIsDeleted,
         isUpdate, resultsIdx, callback);
     }
 
-    finishDoc(docInfo, winningRev, winningRevIsDeleted,
+    docCountDelta += delta;
+    updateDocCountIfReady();
+
+    finishDoc(docInfo, winningRev$$1, winningRevIsDeleted,
       isUpdate, resultsIdx, callback);
   }
 
-  function finishDoc(docInfo, winningRev, winningRevIsDeleted,
+  function finishDoc(docInfo, winningRev$$1, winningRevIsDeleted,
                      isUpdate, resultsIdx, callback) {
 
     var doc = docInfo.data;
@@ -16224,7 +19207,7 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
       metadata.seq = e.target.result;
       // Current _rev is calculated from _rev_tree on read
       // delete metadata.rev;
-      var metadataToStore = encodeMetadata(metadata, winningRev,
+      var metadataToStore = encodeMetadata(metadata, winningRev$$1,
         winningRevIsDeleted);
       var metaDataReq = docStore.put(metadataToStore);
       metaDataReq.onsuccess = afterPutMetadata;
@@ -16258,7 +19241,7 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
     putReq.onerror = afterPutDocError;
   }
 
-  function writeAttachments(docInfo, winningRev, winningRevIsDeleted,
+  function writeAttachments(docInfo, winningRev$$1, winningRevIsDeleted,
                             isUpdate, resultsIdx, callback) {
 
 
@@ -16269,7 +19252,7 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
 
     function collectResults() {
       if (numDone === attachments.length) {
-        finishDoc(docInfo, winningRev, winningRevIsDeleted,
+        finishDoc(docInfo, winningRev$$1, winningRevIsDeleted,
           isUpdate, resultsIdx, callback);
       }
     }
@@ -16284,7 +19267,7 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
       if (!att.stub) {
         var data = att.data;
         delete att.data;
-        att.revpos = parseInt(winningRev, 10);
+        att.revpos = parseInt(winningRev$$1, 10);
         var digest = att.digest;
         saveAttachment(digest, data, attachmentSaved);
       } else {
@@ -16352,6 +19335,114 @@ function idbBulkDocs(dbOpts, req, opts, api, idb, idbChanges, callback) {
   }
 }
 
+// Abstraction over IDBCursor and getAll()/getAllKeys() that allows us to batch our operations
+// while falling back to a normal IDBCursor operation on browsers that don't support getAll() or
+// getAllKeys(). This allows for a much faster implementation than just straight-up cursors, because
+// we're not processing each document one-at-a-time.
+function runBatchedCursor(objectStore, keyRange, descending, batchSize, onBatch) {
+
+  // Bail out of getAll()/getAllKeys() in the following cases:
+  // 1) either method is unsupported - we need both
+  // 2) batchSize is 1 (might as well use IDBCursor), or batchSize is -1 (i.e. batchSize unlimited,
+  //    not really clear the user wants a batched approach where the entire DB is read into memory,
+  //    perhaps they are filtering on a per-doc basis)
+  // 3) descending – no real way to do this via getAll()/getAllKeys()
+
+  var useGetAll = typeof objectStore.getAll === 'function' &&
+    typeof objectStore.getAllKeys === 'function' &&
+    batchSize > 1 && !descending;
+
+  var keysBatch;
+  var valuesBatch;
+  var pseudoCursor;
+
+  function onGetAll(e) {
+    valuesBatch = e.target.result;
+    if (keysBatch) {
+      onBatch(keysBatch, valuesBatch, pseudoCursor);
+    }
+  }
+
+  function onGetAllKeys(e) {
+    keysBatch = e.target.result;
+    if (valuesBatch) {
+      onBatch(keysBatch, valuesBatch, pseudoCursor);
+    }
+  }
+
+  function continuePseudoCursor() {
+    if (!keysBatch.length) { // no more results
+      return onBatch();
+    }
+    // fetch next batch, exclusive start
+    var lastKey = keysBatch[keysBatch.length - 1];
+    var newKeyRange;
+    if (keyRange && keyRange.upper) {
+      try {
+        newKeyRange = IDBKeyRange.bound(lastKey, keyRange.upper,
+          true, keyRange.upperOpen);
+      } catch (e) {
+        if (e.name === "DataError" && e.code === 0) {
+          return onBatch(); // we're done, startkey and endkey are equal
+        }
+      }
+    } else {
+      newKeyRange = IDBKeyRange.lowerBound(lastKey, true);
+    }
+    keyRange = newKeyRange;
+    keysBatch = null;
+    valuesBatch = null;
+    objectStore.getAll(keyRange, batchSize).onsuccess = onGetAll;
+    objectStore.getAllKeys(keyRange, batchSize).onsuccess = onGetAllKeys;
+  }
+
+  function onCursor(e) {
+    var cursor = e.target.result;
+    if (!cursor) { // done
+      return onBatch();
+    }
+    // regular IDBCursor acts like a batch where batch size is always 1
+    onBatch([cursor.key], [cursor.value], cursor);
+  }
+
+  if (useGetAll) {
+    pseudoCursor = {"continue": continuePseudoCursor};
+    objectStore.getAll(keyRange, batchSize).onsuccess = onGetAll;
+    objectStore.getAllKeys(keyRange, batchSize).onsuccess = onGetAllKeys;
+  } else if (descending) {
+    objectStore.openCursor(keyRange, 'prev').onsuccess = onCursor;
+  } else {
+    objectStore.openCursor(keyRange).onsuccess = onCursor;
+  }
+}
+
+// simple shim for objectStore.getAll(), falling back to IDBCursor
+function getAll(objectStore, keyRange, onSuccess) {
+  if (typeof objectStore.getAll === 'function') {
+    // use native getAll
+    objectStore.getAll(keyRange).onsuccess = onSuccess;
+    return;
+  }
+  // fall back to cursors
+  var values = [];
+
+  function onCursor(e) {
+    var cursor = e.target.result;
+    if (cursor) {
+      values.push(cursor.value);
+      cursor.continue();
+    } else {
+      onSuccess({
+        target: {
+          result: values
+        }
+      });
+    }
+  }
+
+  objectStore.openCursor(keyRange).onsuccess = onCursor;
+}
+
 function createKeyRange(start, end, inclusiveEnd, key, descending) {
   try {
     if (start && end) {
@@ -16381,144 +19472,145 @@ function createKeyRange(start, end, inclusiveEnd, key, descending) {
   return null;
 }
 
-function handleKeyRangeError(api, opts, err, callback) {
-  if (err.name === "DataError" && err.code === 0) {
-    // data error, start is less than end
-    return callback(null, {
-      total_rows: api._meta.docCount,
-      offset: opts.skip,
-      rows: []
-    });
+function idbAllDocs(opts, idb, callback) {
+  var start = 'startkey' in opts ? opts.startkey : false;
+  var end = 'endkey' in opts ? opts.endkey : false;
+  var key = 'key' in opts ? opts.key : false;
+  var skip = opts.skip || 0;
+  var limit = typeof opts.limit === 'number' ? opts.limit : -1;
+  var inclusiveEnd = opts.inclusive_end !== false;
+
+  var keyRange = createKeyRange(start, end, inclusiveEnd, key, opts.descending);
+  var keyRangeError = keyRange && keyRange.error;
+  if (keyRangeError && !(keyRangeError.name === "DataError" &&
+      keyRangeError.code === 0)) {
+    // DataError with error code 0 indicates start is less than end, so
+    // can just do an empty query. Else need to throw
+    return callback(createError(IDB_ERROR,
+      keyRangeError.name, keyRangeError.message));
   }
-  callback(createError(IDB_ERROR, err.name, err.message));
-}
 
-function idbAllDocs(opts, api, idb, callback) {
+  var stores = [DOC_STORE, BY_SEQ_STORE, META_STORE];
 
-  function allDocsQuery(opts, callback) {
-    var start = 'startkey' in opts ? opts.startkey : false;
-    var end = 'endkey' in opts ? opts.endkey : false;
-    var key = 'key' in opts ? opts.key : false;
-    var skip = opts.skip || 0;
-    var limit = typeof opts.limit === 'number' ? opts.limit : -1;
-    var inclusiveEnd = opts.inclusive_end !== false;
-    var descending = 'descending' in opts && opts.descending ? 'prev' : null;
+  if (opts.attachments) {
+    stores.push(ATTACH_STORE);
+  }
+  var txnResult = openTransactionSafely(idb, stores, 'readonly');
+  if (txnResult.error) {
+    return callback(txnResult.error);
+  }
+  var txn = txnResult.txn;
+  txn.oncomplete = onTxnComplete;
+  txn.onabort = idbError(callback);
+  var docStore = txn.objectStore(DOC_STORE);
+  var seqStore = txn.objectStore(BY_SEQ_STORE);
+  var metaStore = txn.objectStore(META_STORE);
+  var docIdRevIndex = seqStore.index('_doc_id_rev');
+  var results = [];
+  var docCount;
 
-    var keyRange = createKeyRange(start, end, inclusiveEnd, key, descending);
-    if (keyRange && keyRange.error) {
-      return handleKeyRangeError(api, opts, keyRange.error, callback);
-    }
+  metaStore.get(META_STORE).onsuccess = function (e) {
+    docCount = e.target.result.docCount;
+  };
 
-    var stores = [DOC_STORE, BY_SEQ_STORE];
-
-    if (opts.attachments) {
-      stores.push(ATTACH_STORE);
-    }
-    var txnResult = openTransactionSafely(idb, stores, 'readonly');
-    if (txnResult.error) {
-      return callback(txnResult.error);
-    }
-    var txn = txnResult.txn;
-    var docStore = txn.objectStore(DOC_STORE);
-    var seqStore = txn.objectStore(BY_SEQ_STORE);
-    var cursor = descending ?
-      docStore.openCursor(keyRange, descending) :
-      docStore.openCursor(keyRange);
-    var docIdRevIndex = seqStore.index('_doc_id_rev');
-    var results = [];
-    var docCount = 0;
-
-    // if the user specifies include_docs=true, then we don't
-    // want to block the main cursor while we're fetching the doc
-    function fetchDocAsynchronously(metadata, row, winningRev) {
-      var key = metadata.id + "::" + winningRev;
-      docIdRevIndex.get(key).onsuccess =  function onGetDoc(e) {
-        row.doc = decodeDoc(e.target.result);
-        if (opts.conflicts) {
-          var conflicts = collectConflicts(metadata);
-          if (conflicts.length) {
-            row.doc._conflicts = conflicts;
-          }
-        }
-        fetchAttachmentsIfNecessary(row.doc, opts, txn);
-      };
-    }
-
-    function allDocsInner(cursor, winningRev, metadata) {
-      var row = {
-        id: metadata.id,
-        key: metadata.id,
-        value: {
-          rev: winningRev
-        }
-      };
-      var deleted = metadata.deleted;
-      if (opts.deleted === 'ok') {
-        results.push(row);
-        // deleted docs are okay with "keys" requests
-        if (deleted) {
-          row.value.deleted = true;
-          row.doc = null;
-        } else if (opts.include_docs) {
-          fetchDocAsynchronously(metadata, row, winningRev);
-        }
-      } else if (!deleted && skip-- <= 0) {
-        results.push(row);
-        if (opts.include_docs) {
-          fetchDocAsynchronously(metadata, row, winningRev);
-        }
-        if (--limit === 0) {
-          return;
+  // if the user specifies include_docs=true, then we don't
+  // want to block the main cursor while we're fetching the doc
+  function fetchDocAsynchronously(metadata, row, winningRev$$1) {
+    var key = metadata.id + "::" + winningRev$$1;
+    docIdRevIndex.get(key).onsuccess =  function onGetDoc(e) {
+      row.doc = decodeDoc(e.target.result);
+      if (opts.conflicts) {
+        var conflicts = collectConflicts(metadata);
+        if (conflicts.length) {
+          row.doc._conflicts = conflicts;
         }
       }
+      fetchAttachmentsIfNecessary(row.doc, opts, txn);
+    };
+  }
+
+  function allDocsInner(winningRev$$1, metadata) {
+    var row = {
+      id: metadata.id,
+      key: metadata.id,
+      value: {
+        rev: winningRev$$1
+      }
+    };
+    var deleted = metadata.deleted;
+    if (opts.deleted === 'ok') {
+      results.push(row);
+      // deleted docs are okay with "keys" requests
+      if (deleted) {
+        row.value.deleted = true;
+        row.doc = null;
+      } else if (opts.include_docs) {
+        fetchDocAsynchronously(metadata, row, winningRev$$1);
+      }
+    } else if (!deleted && skip-- <= 0) {
+      results.push(row);
+      if (opts.include_docs) {
+        fetchDocAsynchronously(metadata, row, winningRev$$1);
+      }
+    }
+  }
+
+  function processBatch(batchValues) {
+    for (var i = 0, len = batchValues.length; i < len; i++) {
+      if (results.length === limit) {
+        break;
+      }
+      var batchValue = batchValues[i];
+      var metadata = decodeMetadata(batchValue);
+      var winningRev$$1 = metadata.winningRev;
+      allDocsInner(winningRev$$1, metadata);
+    }
+  }
+
+  function onBatch(batchKeys, batchValues, cursor) {
+    if (!cursor) {
+      return;
+    }
+    processBatch(batchValues);
+    if (results.length < limit) {
       cursor.continue();
     }
-
-    function onGetCursor(e) {
-      docCount = api._meta.docCount; // do this within the txn for consistency
-      var cursor = e.target.result;
-      if (!cursor) {
-        return;
-      }
-      var metadata = decodeMetadata(cursor.value);
-      var winningRev = metadata.winningRev;
-
-      allDocsInner(cursor, winningRev, metadata);
-    }
-
-    function onResultsReady() {
-      callback(null, {
-        total_rows: docCount,
-        offset: opts.skip,
-        rows: results
-      });
-    }
-
-    function onTxnComplete() {
-      if (opts.attachments) {
-        postProcessAttachments(results, opts.binary).then(onResultsReady);
-      } else {
-        onResultsReady();
-      }
-    }
-
-    txn.oncomplete = onTxnComplete;
-    cursor.onsuccess = onGetCursor;
   }
 
-  function allDocs(opts, callback) {
-
-    if (opts.limit === 0) {
-      return callback(null, {
-        total_rows: api._meta.docCount,
-        offset: opts.skip,
-        rows: []
-      });
+  function onGetAll(e) {
+    var values = e.target.result;
+    if (opts.descending) {
+      values = values.reverse();
     }
-    allDocsQuery(opts, callback);
+    processBatch(values);
   }
 
-  allDocs(opts, callback);
+  function onResultsReady() {
+    callback(null, {
+      total_rows: docCount,
+      offset: opts.skip,
+      rows: results
+    });
+  }
+
+  function onTxnComplete() {
+    if (opts.attachments) {
+      postProcessAttachments(results, opts.binary).then(onResultsReady);
+    } else {
+      onResultsReady();
+    }
+  }
+
+  // don't bother doing any requests if start > end or limit === 0
+  if (keyRangeError || limit === 0) {
+    return;
+  }
+  if (limit === -1) { // just fetch everything
+    return getAll(docStore, keyRange, onGetAll);
+  }
+  // else do a cursor
+  // choose a batch size based on the skip, since we'll need to skip that many
+  runBatchedCursor(docStore, keyRange, opts.descending, limit + skip, onBatch);
 }
 
 //
@@ -16534,9 +19626,18 @@ function idbAllDocs(opts, api, idb, callback) {
 // FileReader bug: https://code.google.com/p/chromium/issues/detail?id=447836
 //
 function checkBlobSupport(txn) {
-  return new PouchPromise(function (resolve) {
-    var blob = createBlob(['']);
-    txn.objectStore(DETECT_BLOB_SUPPORT_STORE).put(blob, 'key');
+  return new PouchPromise$1(function (resolve) {
+    var blob$$1 = createBlob(['']);
+    var req = txn.objectStore(DETECT_BLOB_SUPPORT_STORE).put(blob$$1, 'key');
+
+    req.onsuccess = function () {
+      var matchedChrome = navigator.userAgent.match(/Chrome\/(\d+)/);
+      var matchedEdge = navigator.userAgent.match(/Edge\//);
+      // MS Edge pretends to be Chrome 42:
+      // https://msdn.microsoft.com/en-us/library/hh869301%28v=vs.85%29.aspx
+      resolve(matchedEdge || !matchedChrome ||
+        parseInt(matchedChrome[1], 10) >= 43);
+    };
 
     txn.onabort = function (e) {
       // If the transaction aborts now its due to not being able to
@@ -16545,18 +19646,16 @@ function checkBlobSupport(txn) {
       e.stopPropagation();
       resolve(false);
     };
-
-    txn.oncomplete = function () {
-      var matchedChrome = navigator.userAgent.match(/Chrome\/(\d+)/);
-      var matchedEdge = navigator.userAgent.match(/Edge\//);
-      // MS Edge pretends to be Chrome 42:
-      // https://msdn.microsoft.com/en-us/library/hh869301%28v=vs.85%29.aspx
-      resolve(matchedEdge || !matchedChrome ||
-        parseInt(matchedChrome[1], 10) >= 43);
-    };
   }).catch(function () {
     return false; // error, so assume unsupported
   });
+}
+
+function countDocs(txn, cb) {
+  var index = txn.objectStore(DOC_STORE).index('deletedOrLocal');
+  index.count(IDBKeyRange.only('0')).onsuccess = function (e) {
+    cb(e.target.result);
+  };
 }
 
 // This task queue ensures that IDB open calls are done in their own tick
@@ -16590,7 +19689,7 @@ function enqueueTask(action, callback, PouchDB) {
     action(function runCallback(err, res) {
       tryCode(callback, err, res, PouchDB);
       running = false;
-      immediate(function runNext() {
+      nextTick(function runNext() {
         applyNext(PouchDB);
       });
     });
@@ -16598,10 +19697,198 @@ function enqueueTask(action, callback, PouchDB) {
   applyNext();
 }
 
-var cachedDBs = new _Map();
+function changes(opts, api, dbName, idb) {
+  opts = clone(opts);
+
+  if (opts.continuous) {
+    var id = dbName + ':' + uuid();
+    changesHandler$$1.addListener(dbName, id, api, opts);
+    changesHandler$$1.notify(dbName);
+    return {
+      cancel: function () {
+        changesHandler$$1.removeListener(dbName, id);
+      }
+    };
+  }
+
+  var docIds = opts.doc_ids && new ExportedSet(opts.doc_ids);
+
+  opts.since = opts.since || 0;
+  var lastSeq = opts.since;
+
+  var limit = 'limit' in opts ? opts.limit : -1;
+  if (limit === 0) {
+    limit = 1; // per CouchDB _changes spec
+  }
+  var returnDocs;
+  if ('return_docs' in opts) {
+    returnDocs = opts.return_docs;
+  } else if ('returnDocs' in opts) {
+    // TODO: Remove 'returnDocs' in favor of 'return_docs' in a future release
+    returnDocs = opts.returnDocs;
+  } else {
+    returnDocs = true;
+  }
+
+  var results = [];
+  var numResults = 0;
+  var filter = filterChange(opts);
+  var docIdsToMetadata = new ExportedMap();
+
+  var txn;
+  var bySeqStore;
+  var docStore;
+  var docIdRevIndex;
+
+  function onBatch(batchKeys, batchValues, cursor) {
+    if (!cursor || !batchKeys.length) { // done
+      return;
+    }
+
+    var winningDocs = new Array(batchKeys.length);
+    var metadatas = new Array(batchKeys.length);
+
+    function processMetadataAndWinningDoc(metadata, winningDoc) {
+      var change = opts.processChange(winningDoc, metadata, opts);
+      lastSeq = change.seq = metadata.seq;
+
+      var filtered = filter(change);
+      if (typeof filtered === 'object') { // anything but true/false indicates error
+        return opts.complete(filtered);
+      }
+
+      if (filtered) {
+        numResults++;
+        if (returnDocs) {
+          results.push(change);
+        }
+        // process the attachment immediately
+        // for the benefit of live listeners
+        if (opts.attachments && opts.include_docs) {
+          fetchAttachmentsIfNecessary(winningDoc, opts, txn, function () {
+            postProcessAttachments([change], opts.binary).then(function () {
+              opts.onChange(change);
+            });
+          });
+        } else {
+          opts.onChange(change);
+        }
+      }
+    }
+
+    function onBatchDone() {
+      for (var i = 0, len = winningDocs.length; i < len; i++) {
+        if (numResults === limit) {
+          break;
+        }
+        var winningDoc = winningDocs[i];
+        if (!winningDoc) {
+          continue;
+        }
+        var metadata = metadatas[i];
+        processMetadataAndWinningDoc(metadata, winningDoc);
+      }
+
+      if (numResults !== limit) {
+        cursor.continue();
+      }
+    }
+
+    // Fetch all metadatas/winningdocs from this batch in parallel, then process
+    // them all only once all data has been collected. This is done in parallel
+    // because it's faster than doing it one-at-a-time.
+    var numDone = 0;
+    batchValues.forEach(function (value, i) {
+      var doc = decodeDoc(value);
+      var seq = batchKeys[i];
+      fetchWinningDocAndMetadata(doc, seq, function (metadata, winningDoc) {
+        metadatas[i] = metadata;
+        winningDocs[i] = winningDoc;
+        if (++numDone === batchKeys.length) {
+          onBatchDone();
+        }
+      });
+    });
+  }
+
+  function onGetMetadata(doc, seq, metadata, cb) {
+    if (metadata.seq !== seq) {
+      // some other seq is later
+      return cb();
+    }
+
+    if (metadata.winningRev === doc._rev) {
+      // this is the winning doc
+      return cb(metadata, doc);
+    }
+
+    // fetch winning doc in separate request
+    var docIdRev = doc._id + '::' + metadata.winningRev;
+    var req = docIdRevIndex.get(docIdRev);
+    req.onsuccess = function (e) {
+      cb(metadata, decodeDoc(e.target.result));
+    };
+  }
+
+  function fetchWinningDocAndMetadata(doc, seq, cb) {
+    if (docIds && !docIds.has(doc._id)) {
+      return cb();
+    }
+
+    var metadata = docIdsToMetadata.get(doc._id);
+    if (metadata) { // cached
+      return onGetMetadata(doc, seq, metadata, cb);
+    }
+    // metadata not cached, have to go fetch it
+    docStore.get(doc._id).onsuccess = function (e) {
+      metadata = decodeMetadata(e.target.result);
+      docIdsToMetadata.set(doc._id, metadata);
+      onGetMetadata(doc, seq, metadata, cb);
+    };
+  }
+
+  function finish() {
+    opts.complete(null, {
+      results: results,
+      last_seq: lastSeq
+    });
+  }
+
+  function onTxnComplete() {
+    if (!opts.continuous && opts.attachments) {
+      // cannot guarantee that postProcessing was already done,
+      // so do it again
+      postProcessAttachments(results).then(finish);
+    } else {
+      finish();
+    }
+  }
+
+  var objectStores = [DOC_STORE, BY_SEQ_STORE];
+  if (opts.attachments) {
+    objectStores.push(ATTACH_STORE);
+  }
+  var txnResult = openTransactionSafely(idb, objectStores, 'readonly');
+  if (txnResult.error) {
+    return opts.complete(txnResult.error);
+  }
+  txn = txnResult.txn;
+  txn.onabort = idbError(opts.complete);
+  txn.oncomplete = onTxnComplete;
+
+  bySeqStore = txn.objectStore(BY_SEQ_STORE);
+  docStore = txn.objectStore(DOC_STORE);
+  docIdRevIndex = bySeqStore.index('_doc_id_rev');
+
+  var keyRange = (opts.since && !opts.descending) ?
+    IDBKeyRange.lowerBound(opts.since, true) : null;
+
+  runBatchedCursor(bySeqStore, keyRange, opts.descending, limit, onBatch);
+}
+
+var cachedDBs = new ExportedMap();
 var blobSupportPromise;
-var idbChanges = new Changes();
-var openReqList = new _Map();
+var openReqList = new ExportedMap();
 
 function IdbPouch(opts, callback) {
   var api = this;
@@ -16838,6 +20125,7 @@ function init(api, opts, callback) {
 
   }
 
+  api._remote = false;
   api.type = function () {
     return 'idb';
   };
@@ -16847,7 +20135,7 @@ function init(api, opts, callback) {
   });
 
   api._bulkDocs = function idb_bulkDocs(req, reqOpts, callback) {
-    idbBulkDocs(opts, req, reqOpts, api, idb, idbChanges, callback);
+    idbBulkDocs(opts, req, reqOpts, api, idb, callback);
   };
 
   // First we look up the metadata in the ids database, then we fetch the
@@ -16883,7 +20171,7 @@ function init(api, opts, callback) {
       }
 
       var rev;
-      if(!opts.rev) {
+      if (!opts.rev) {
         rev = metadata.winningRev;
         var deleted = isDeleted(metadata);
         if (deleted) {
@@ -16935,26 +20223,20 @@ function init(api, opts, callback) {
   };
 
   api._info = function idb_info(callback) {
-
-    if (idb === null || !cachedDBs.has(dbName)) {
-      var error = new Error('db isn\'t open');
-      error.id = 'idbNull';
-      return callback(error);
-    }
     var updateSeq;
     var docCount;
 
-    var txnResult = openTransactionSafely(idb, [BY_SEQ_STORE], 'readonly');
+    var txnResult = openTransactionSafely(idb, [META_STORE, BY_SEQ_STORE], 'readonly');
     if (txnResult.error) {
       return callback(txnResult.error);
     }
     var txn = txnResult.txn;
-    var cursor = txn.objectStore(BY_SEQ_STORE).openCursor(null, 'prev');
-    cursor.onsuccess = function (event) {
-      var cursor = event.target.result;
+    txn.objectStore(META_STORE).get(META_STORE).onsuccess = function (e) {
+      docCount = e.target.result.docCount;
+    };
+    txn.objectStore(BY_SEQ_STORE).openCursor(null, 'prev').onsuccess = function (e) {
+      var cursor = e.target.result;
       updateSeq = cursor ? cursor.key : 0;
-      // count within the same txn for consistency
-      docCount = api._meta.docCount;
     };
 
     txn.oncomplete = function () {
@@ -16968,198 +20250,18 @@ function init(api, opts, callback) {
   };
 
   api._allDocs = function idb_allDocs(opts, callback) {
-    idbAllDocs(opts, api, idb, callback);
+    idbAllDocs(opts, idb, callback);
   };
 
-  api._changes = function (opts) {
-    opts = clone(opts);
-
-    if (opts.continuous) {
-      var id = dbName + ':' + uuid();
-      idbChanges.addListener(dbName, id, api, opts);
-      idbChanges.notify(dbName);
-      return {
-        cancel: function () {
-          idbChanges.removeListener(dbName, id);
-        }
-      };
-    }
-
-    var docIds = opts.doc_ids && new _Set(opts.doc_ids);
-
-    opts.since = opts.since || 0;
-    var lastSeq = opts.since;
-
-    var limit = 'limit' in opts ? opts.limit : -1;
-    if (limit === 0) {
-      limit = 1; // per CouchDB _changes spec
-    }
-    var returnDocs;
-    if ('return_docs' in opts) {
-      returnDocs = opts.return_docs;
-    } else if ('returnDocs' in opts) {
-      // TODO: Remove 'returnDocs' in favor of 'return_docs' in a future release
-      returnDocs = opts.returnDocs;
-    } else {
-      returnDocs = true;
-    }
-
-    var results = [];
-    var numResults = 0;
-    var filter = filterChange(opts);
-    var docIdsToMetadata = new _Map();
-
-    var txn;
-    var bySeqStore;
-    var docStore;
-    var docIdRevIndex;
-
-    function onGetCursor(cursor) {
-
-      var doc = decodeDoc(cursor.value);
-      var seq = cursor.key;
-
-      if (docIds && !docIds.has(doc._id)) {
-        return cursor.continue();
-      }
-
-      var metadata;
-
-      function onGetMetadata() {
-        if (metadata.seq !== seq) {
-          // some other seq is later
-          return cursor.continue();
-        }
-
-        lastSeq = seq;
-
-        if (metadata.winningRev === doc._rev) {
-          return onGetWinningDoc(doc);
-        }
-
-        fetchWinningDoc();
-      }
-
-      function fetchWinningDoc() {
-        var docIdRev = doc._id + '::' + metadata.winningRev;
-        var req = docIdRevIndex.get(docIdRev);
-        req.onsuccess = function (e) {
-          onGetWinningDoc(decodeDoc(e.target.result));
-        };
-      }
-
-      function onGetWinningDoc(winningDoc) {
-
-        var change = opts.processChange(winningDoc, metadata, opts);
-        change.seq = metadata.seq;
-
-        var filtered = filter(change);
-        if (typeof filtered === 'object') {
-          return opts.complete(filtered);
-        }
-
-        if (filtered) {
-          numResults++;
-          if (returnDocs) {
-            results.push(change);
-          }
-          // process the attachment immediately
-          // for the benefit of live listeners
-          if (opts.attachments && opts.include_docs) {
-            fetchAttachmentsIfNecessary(winningDoc, opts, txn, function () {
-              postProcessAttachments([change], opts.binary).then(function () {
-                opts.onChange(change);
-              });
-            });
-          } else {
-            opts.onChange(change);
-          }
-        }
-        if (numResults !== limit) {
-          cursor.continue();
-        }
-      }
-
-      metadata = docIdsToMetadata.get(doc._id);
-      if (metadata) { // cached
-        return onGetMetadata();
-      }
-      // metadata not cached, have to go fetch it
-      docStore.get(doc._id).onsuccess = function (event) {
-        metadata = decodeMetadata(event.target.result);
-        docIdsToMetadata.set(doc._id, metadata);
-        onGetMetadata();
-      };
-    }
-
-    function onsuccess(event) {
-      var cursor = event.target.result;
-
-      if (!cursor) {
-        return;
-      }
-      onGetCursor(cursor);
-    }
-
-    function fetchChanges() {
-      var objectStores = [DOC_STORE, BY_SEQ_STORE];
-      if (opts.attachments) {
-        objectStores.push(ATTACH_STORE);
-      }
-      var txnResult = openTransactionSafely(idb, objectStores, 'readonly');
-      if (txnResult.error) {
-        return opts.complete(txnResult.error);
-      }
-      txn = txnResult.txn;
-      txn.onabort = idbError(opts.complete);
-      txn.oncomplete = onTxnComplete;
-
-      bySeqStore = txn.objectStore(BY_SEQ_STORE);
-      docStore = txn.objectStore(DOC_STORE);
-      docIdRevIndex = bySeqStore.index('_doc_id_rev');
-
-      var req;
-
-      if (opts.descending) {
-        req = bySeqStore.openCursor(null, 'prev');
-      } else {
-        req = bySeqStore.openCursor(IDBKeyRange.lowerBound(opts.since, true));
-      }
-
-      req.onsuccess = onsuccess;
-    }
-
-    fetchChanges();
-
-    function onTxnComplete() {
-
-      function finish() {
-        opts.complete(null, {
-          results: results,
-          last_seq: lastSeq
-        });
-      }
-
-      if (!opts.continuous && opts.attachments) {
-        // cannot guarantee that postProcessing was already done,
-        // so do it again
-        postProcessAttachments(results).then(finish);
-      } else {
-        finish();
-      }
-    }
+  api._changes = function idbChanges(opts) {
+    changes(opts, api, dbName, idb);
   };
 
   api._close = function (callback) {
-    if (idb === null) {
-      return callback(createError(NOT_OPEN));
-    }
-
     // https://developer.mozilla.org/en-US/docs/IndexedDB/IDBDatabase#close
     // "Returns immediately and closes the connection in a separate thread..."
     idb.close();
     cachedDBs.delete(dbName);
-    idb = null;
     callback();
   };
 
@@ -17208,10 +20310,10 @@ function init(api, opts, callback) {
         }
       });
       compactRevs(revs, docId, txn);
-      var winningRev = metadata.winningRev;
+      var winningRev$$1 = metadata.winningRev;
       var deleted = metadata.deleted;
       txn.objectStore(DOC_STORE).put(
-        encodeMetadata(metadata, winningRev, deleted));
+        encodeMetadata(metadata, winningRev$$1, deleted));
     };
     txn.onabort = idbError(callback);
     txn.oncomplete = function () {
@@ -17344,7 +20446,7 @@ function init(api, opts, callback) {
   };
 
   api._destroy = function (opts, callback) {
-    idbChanges.removeAllListeners(dbName);
+    changesHandler$$1.removeAllListeners(dbName);
 
     //Close open request for "dbName" database to fix ie delay.
     var openReq = openReqList.get(dbName);
@@ -17371,7 +20473,7 @@ function init(api, opts, callback) {
   if (cached) {
     idb = cached.idb;
     api._meta = cached.global;
-    return immediate(function () {
+    return nextTick(function () {
       callback(null, api);
     });
   }
@@ -17438,80 +20540,90 @@ function init(api, opts, callback) {
       cachedDBs.delete(dbName);
     };
 
+    // Do a few setup operations (in parallel as much as possible):
+    // 1. Fetch meta doc
+    // 2. Check blob support
+    // 3. Calculate docCount
+    // 4. Generate an instanceId if necessary
+    // 5. Store docCount and instanceId on meta doc
+
     var txn = idb.transaction([
       META_STORE,
       DETECT_BLOB_SUPPORT_STORE,
       DOC_STORE
     ], 'readwrite');
 
-    var req = txn.objectStore(META_STORE).get(META_STORE);
+    var storedMetaDoc = false;
+    var metaDoc;
+    var docCount;
+    var blobSupport;
+    var instanceId;
 
-    var blobSupport = null;
-    var docCount = null;
-    var instanceId = null;
-
-    req.onsuccess = function (e) {
-
-      var checkSetupComplete = function () {
-        if (blobSupport === null || docCount === null ||
-            instanceId === null) {
-          return;
-        } else {
-          api._meta = {
-            name: dbName,
-            instanceId: instanceId,
-            blobSupport: blobSupport,
-            docCount: docCount
-          };
-
-          cachedDBs.set(dbName, {
-            idb: idb,
-            global: api._meta
-          });
-          callback(null, api);
-        }
+    function completeSetup() {
+      if (typeof blobSupport === 'undefined' || !storedMetaDoc) {
+        return;
+      }
+      api._meta = {
+        name: dbName,
+        instanceId: instanceId,
+        blobSupport: blobSupport
       };
 
-      //
-      // fetch/store the id
-      //
-
-      var meta = e.target.result || {id: META_STORE};
-      if (dbName  + '_id' in meta) {
-        instanceId = meta[dbName + '_id'];
-        checkSetupComplete();
-      } else {
-        instanceId = uuid();
-        meta[dbName + '_id'] = instanceId;
-        txn.objectStore(META_STORE).put(meta).onsuccess = function () {
-          checkSetupComplete();
-        };
-      }
-
-      //
-      // check blob support
-      //
-
-      if (!blobSupportPromise) {
-        // make sure blob support is only checked once
-        blobSupportPromise = checkBlobSupport(txn);
-      }
-
-      blobSupportPromise.then(function (val) {
-        blobSupport = val;
-        checkSetupComplete();
+      cachedDBs.set(dbName, {
+        idb: idb,
+        global: api._meta
       });
+      callback(null, api);
+    }
 
-      //
-      // count docs
-      //
+    function storeMetaDocIfReady() {
+      if (typeof docCount === 'undefined' || typeof metaDoc === 'undefined') {
+        return;
+      }
+      var instanceKey = dbName + '_id';
+      if (instanceKey in metaDoc) {
+        instanceId = metaDoc[instanceKey];
+      } else {
+        metaDoc[instanceKey] = instanceId = uuid();
+      }
+      metaDoc.docCount = docCount;
+      txn.objectStore(META_STORE).put(metaDoc);
+    }
 
-      var index = txn.objectStore(DOC_STORE).index('deletedOrLocal');
-      index.count(IDBKeyRange.only('0')).onsuccess = function (e) {
-        docCount = e.target.result;
-        checkSetupComplete();
-      };
+    //
+    // fetch or generate the instanceId
+    //
+    txn.objectStore(META_STORE).get(META_STORE).onsuccess = function (e) {
+      metaDoc = e.target.result || { id: META_STORE };
+      storeMetaDocIfReady();
+    };
 
+    //
+    // countDocs
+    //
+    countDocs(txn, function (count) {
+      docCount = count;
+      storeMetaDocIfReady();
+    });
+
+    //
+    // check blob support
+    //
+    if (!blobSupportPromise) {
+      // make sure blob support is only checked once
+      blobSupportPromise = checkBlobSupport(txn);
+    }
+
+    blobSupportPromise.then(function (val) {
+      blobSupport = val;
+      completeSetup();
+    });
+
+    // only when the metadata put transaction has completed,
+    // consider the setup done
+    txn.oncomplete = function () {
+      storedMetaDoc = true;
+      completeSetup();
     };
   };
 
@@ -17543,14 +20655,14 @@ function tryStorageOption(dbName, storage) {
       version: ADAPTER_VERSION,
       storage: storage
     });
-  } catch(err) {
+  } catch (err) {
       return indexedDB.open(dbName, ADAPTER_VERSION);
   }
 }
 
-function IDBPouch (PouchDB) {
+var IDBPouch = function (PouchDB) {
   PouchDB.adapter('idb', IdbPouch, true);
-}
+};
 
 //
 // Parsing hex strings. Yeah.
@@ -17737,7 +20849,7 @@ function compactRevs$1(revs, docId, tx) {
           digestsToCheck.map(function () { return '?'; }).join(',') +
           ')';
         tx.executeSql(sql, digestsToCheck, function (tx, res) {
-          var nonOrphanedDigests = new _Set();
+          var nonOrphanedDigests = new ExportedSet();
           for (var i = 0; i < res.rows.length; i++) {
             nonOrphanedDigests.add(res.rows.item(i).digest);
           }
@@ -17825,7 +20937,7 @@ function websqlBulkDocs(dbOpts, req, opts, api, db, websqlChanges, callback) {
 
   var tx;
   var results = new Array(docInfos.length);
-  var fetchedDocs = new _Map();
+  var fetchedDocs = new ExportedMap();
 
   var preconditionErrored;
   function complete() {
@@ -17833,7 +20945,6 @@ function websqlBulkDocs(dbOpts, req, opts, api, db, websqlChanges, callback) {
       return callback(preconditionErrored);
     }
     websqlChanges.notify(api._name);
-    api._docCount = -1; // invalidate
     callback(null, results);
   }
 
@@ -17885,7 +20996,7 @@ function websqlBulkDocs(dbOpts, req, opts, api, db, websqlChanges, callback) {
     });
   }
 
-  function writeDoc(docInfo, winningRev, winningRevIsDeleted, newRevIsDeleted,
+  function writeDoc(docInfo, winningRev$$1, winningRevIsDeleted, newRevIsDeleted,
                     isUpdate, delta, resultsIdx, callback) {
 
     function finish() {
@@ -17985,7 +21096,7 @@ function websqlBulkDocs(dbOpts, req, opts, api, db, websqlChanges, callback) {
       if (!att.stub) {
         var data = att.data;
         delete att.data;
-        att.revpos = parseInt(winningRev, 10);
+        att.revpos = parseInt(winningRev$$1, 10);
         var digest = att.digest;
         saveAttachment(digest, data, attachmentSaved);
       } else {
@@ -18022,7 +21133,7 @@ function websqlBulkDocs(dbOpts, req, opts, api, db, websqlChanges, callback) {
       ' (id, winningseq, max_seq, json) VALUES (?,?,?,?);';
       var metadataStr = safeJsonStringify(docInfo.metadata);
       var params = isUpdate ?
-        [metadataStr, seq, winningRev, id] :
+        [metadataStr, seq, winningRev$$1, id] :
         [id, seq, seq, metadataStr];
       tx.executeSql(sql, params, function () {
         results[resultsIdx] = {
@@ -18108,7 +21219,7 @@ function websqlBulkDocs(dbOpts, req, opts, api, db, websqlChanges, callback) {
   });
 }
 
-var cachedDatabases = new _Map();
+var cachedDatabases = new ExportedMap();
 
 // openDatabase passed in through opts (e.g. for node-websql)
 function openDatabaseWithOpts(opts) {
@@ -18155,7 +21266,7 @@ function fetchAttachmentsIfNecessary$1(doc, opts, api, txn, cb) {
     var attObj = doc._attachments[att];
     var attOpts = {binary: opts.binary, ctx: txn};
     api._getAttachment(doc._id, att, attObj, attOpts, function (_, data) {
-      doc._attachments[att] = extend$1(
+      doc._attachments[att] = $inject_Object_assign(
         pick(attObj, ['digest', 'content_type']),
         { data: data }
       );
@@ -18208,12 +21319,11 @@ function WebSqlPouch$1(opts, callback) {
   var idRequests = [];
   var encoding;
 
-  api._docCount = -1; // cache sqlite count(*) for performance
   api._name = opts.name;
 
   // extend the options here, because sqlite plugin has a ton of options
   // and they are constantly changing, so it's more prudent to allow anything
-  var websqlOpts = extend$1({}, opts, {
+  var websqlOpts = $inject_Object_assign({}, opts, {
     version: POUCH_VERSION,
     description: opts.name,
     size: size
@@ -18610,6 +21720,28 @@ function WebSqlPouch$1(opts, callback) {
 
   setup();
 
+  function getMaxSeq(tx, callback) {
+    var sql = 'SELECT MAX(seq) AS seq FROM ' + BY_SEQ_STORE$1;
+    tx.executeSql(sql, [], function (tx, res) {
+      var updateSeq = res.rows.item(0).seq || 0;
+      callback(updateSeq);
+    });
+  }
+
+  function countDocs(tx, callback) {
+    // count the total rows
+    var sql = select(
+      'COUNT(' + DOC_STORE$1 + '.id) AS \'num\'',
+      [DOC_STORE$1, BY_SEQ_STORE$1],
+      DOC_STORE_AND_BY_SEQ_JOINER,
+      BY_SEQ_STORE$1 + '.deleted=0');
+
+    tx.executeSql(sql, [], function (tx, result) {
+      callback(result.rows.item(0).num);
+    });
+  }
+
+  api._remote = false;
   api.type = function () {
     return 'websql';
   };
@@ -18619,26 +21751,29 @@ function WebSqlPouch$1(opts, callback) {
   });
 
   api._info = function (callback) {
+    var seq;
+    var docCount;
     db.readTransaction(function (tx) {
-      countDocs(tx, function (docCount) {
-        var sql = 'SELECT MAX(seq) AS seq FROM ' + BY_SEQ_STORE$1;
-        tx.executeSql(sql, [], function (tx, res) {
-          var updateSeq = res.rows.item(0).seq || 0;
-          callback(null, {
-            doc_count: docCount,
-            update_seq: updateSeq,
-            websql_encoding: encoding
-          });
-        });
+      getMaxSeq(tx, function (theSeq) {
+        seq = theSeq;
       });
-    }, websqlError(callback));
+      countDocs(tx, function (theDocCount) {
+        docCount = theDocCount;
+      });
+    }, websqlError(callback), function () {
+      callback(null, {
+        doc_count: docCount,
+        update_seq: seq,
+        websql_encoding: encoding
+      });
+    });
   };
 
   api._bulkDocs = function (req, reqOpts, callback) {
     websqlBulkDocs(opts, req, reqOpts, api, db, websqlChanges, callback);
   };
 
-  function latest$$(tx, id, rev, callback, finish) {
+  function latest$$1(tx, id, rev, callback, finish) {
     var sql = select(
         SELECT_DOCS,
         [DOC_STORE$1, BY_SEQ_STORE$1],
@@ -18663,7 +21798,7 @@ function WebSqlPouch$1(opts, callback) {
     var tx = opts.ctx;
     if (!tx) {
       return db.readTransaction(function (txn) {
-        api._get(id, extend$1({ctx: txn}, opts), callback);
+        api._get(id, $inject_Object_assign({ctx: txn}, opts), callback);
       });
     }
 
@@ -18674,7 +21809,7 @@ function WebSqlPouch$1(opts, callback) {
     var sql;
     var sqlArgs;
 
-    if(!opts.rev) {
+    if (!opts.rev) {
       sql = select(
         SELECT_DOCS,
         [DOC_STORE$1, BY_SEQ_STORE$1],
@@ -18682,7 +21817,7 @@ function WebSqlPouch$1(opts, callback) {
         DOC_STORE$1 + '.id=?');
       sqlArgs = [id];
     } else if (opts.latest) {
-      latest$$(tx, id, opts.rev, function (latestRev) {
+      latest$$1(tx, id, opts.rev, function (latestRev) {
         opts.latest = false;
         opts.rev = latestRev;
         api._get(id, opts, callback);
@@ -18712,25 +21847,6 @@ function WebSqlPouch$1(opts, callback) {
       finish();
     });
   };
-
-  function countDocs(tx, callback) {
-
-    if (api._docCount !== -1) {
-      return callback(api._docCount);
-    }
-
-    // count the total rows
-    var sql = select(
-      'COUNT(' + DOC_STORE$1 + '.id) AS \'num\'',
-      [DOC_STORE$1, BY_SEQ_STORE$1],
-      DOC_STORE_AND_BY_SEQ_JOINER,
-      BY_SEQ_STORE$1 + '.deleted=0');
-
-    tx.executeSql(sql, [], function (tx, result) {
-      api._docCount = result.rows.item(0).num;
-      callback(api._docCount);
-    });
-  }
 
   api._allDocs = function (opts, callback) {
     var results = [];
@@ -18775,59 +21891,58 @@ function WebSqlPouch$1(opts, callback) {
     }
 
     db.readTransaction(function (tx) {
+      // count the docs in parallel to other operations
+      countDocs(tx, function (docCount) {
+        totalRows = docCount;
+      });
 
-      // first count up the total rows
-      countDocs(tx, function (count) {
-        totalRows = count;
+      if (limit === 0) {
+        return;
+      }
 
-        if (limit === 0) {
-          return;
-        }
+      // do a single query to fetch the documents
+      var sql = select(
+        SELECT_DOCS,
+        [DOC_STORE$1, BY_SEQ_STORE$1],
+        DOC_STORE_AND_BY_SEQ_JOINER,
+        criteria,
+        DOC_STORE$1 + '.id ' + (descending ? 'DESC' : 'ASC')
+        );
+      sql += ' LIMIT ' + limit + ' OFFSET ' + offset;
 
-        // then actually fetch the documents
-        var sql = select(
-          SELECT_DOCS,
-          [DOC_STORE$1, BY_SEQ_STORE$1],
-          DOC_STORE_AND_BY_SEQ_JOINER,
-          criteria,
-          DOC_STORE$1 + '.id ' + (descending ? 'DESC' : 'ASC')
-          );
-        sql += ' LIMIT ' + limit + ' OFFSET ' + offset;
-
-        tx.executeSql(sql, sqlArgs, function (tx, result) {
-          for (var i = 0, l = result.rows.length; i < l; i++) {
-            var item = result.rows.item(i);
-            var metadata = safeJsonParse(item.metadata);
-            var id = metadata.id;
-            var data = unstringifyDoc(item.data, id, item.rev);
-            var winningRev = data._rev;
-            var doc = {
-              id: id,
-              key: id,
-              value: {rev: winningRev}
-            };
-            if (opts.include_docs) {
-              doc.doc = data;
-              doc.doc._rev = winningRev;
-              if (opts.conflicts) {
-                var conflicts = collectConflicts(metadata);
-                if (conflicts.length) {
-                  doc.doc._conflicts = conflicts;
-                }
-              }
-              fetchAttachmentsIfNecessary$1(doc.doc, opts, api, tx);
-            }
-            if (item.deleted) {
-              if (opts.deleted === 'ok') {
-                doc.value.deleted = true;
-                doc.doc = null;
-              } else {
-                continue;
+      tx.executeSql(sql, sqlArgs, function (tx, result) {
+        for (var i = 0, l = result.rows.length; i < l; i++) {
+          var item = result.rows.item(i);
+          var metadata = safeJsonParse(item.metadata);
+          var id = metadata.id;
+          var data = unstringifyDoc(item.data, id, item.rev);
+          var winningRev$$1 = data._rev;
+          var doc = {
+            id: id,
+            key: id,
+            value: {rev: winningRev$$1}
+          };
+          if (opts.include_docs) {
+            doc.doc = data;
+            doc.doc._rev = winningRev$$1;
+            if (opts.conflicts) {
+              var conflicts = collectConflicts(metadata);
+              if (conflicts.length) {
+                doc.doc._conflicts = conflicts;
               }
             }
-            results.push(doc);
+            fetchAttachmentsIfNecessary$1(doc.doc, opts, api, tx);
           }
-        });
+          if (item.deleted) {
+            if (opts.deleted === 'ok') {
+              doc.value.deleted = true;
+              doc.doc = null;
+            } else {
+              continue;
+            }
+          }
+          results.push(doc);
+        }
       });
     }, websqlError(callback), function () {
       callback(null, {
@@ -18984,7 +22099,7 @@ function WebSqlPouch$1(opts, callback) {
       if (opts.binary) {
         res = binStringToBluffer(data, type);
       } else {
-        res = btoa$1(data);
+        res = thisBtoa(data);
       }
       callback(null, res);
     });
@@ -19213,7 +22328,7 @@ function openDB(name, version, description, size) {
 }
 
 function WebSQLPouch(opts, callback) {
-  var _opts = extend$1({
+  var _opts = $inject_Object_assign({
     websql: openDB
   }, opts);
 
@@ -19224,16 +22339,16 @@ WebSQLPouch.valid = valid;
 
 WebSQLPouch.use_prefix = true;
 
-function WebSqlPouch (PouchDB) {
+var WebSqlPouch = function (PouchDB) {
   PouchDB.adapter('websql', WebSQLPouch, true);
-}
+};
 
 /* global fetch */
 /* global Headers */
 function wrappedFetch() {
   var wrappedPromise = {};
 
-  var promise = new PouchPromise(function (resolve, reject) {
+  var promise = new PouchPromise$1(function (resolve, reject) {
     wrappedPromise.resolve = resolve;
     wrappedPromise.reject = reject;
   });
@@ -19246,7 +22361,7 @@ function wrappedFetch() {
 
   wrappedPromise.promise = promise;
 
-  PouchPromise.resolve().then(function () {
+  PouchPromise$1.resolve().then(function () {
     return fetch.apply(null, args);
   }).then(function (response) {
     wrappedPromise.resolve(response);
@@ -19408,7 +22523,7 @@ function xhRequest(options, callback) {
     timer = setTimeout(timeoutReq, options.timeout);
     xhr.onprogress = function () {
       clearTimeout(timer);
-      if(xhr.readyState !== 4) {
+      if (xhr.readyState !== 4) {
         timer = setTimeout(timeoutReq, options.timeout);
       }
     };
@@ -19444,7 +22559,7 @@ function xhRequest(options, callback) {
       } else if (typeof xhr.response === 'string') {
         try {
           err = JSON.parse(xhr.response);
-        } catch(e) {}
+        } catch (e) {}
       }
       err.status = xhr.status;
       callback(err);
@@ -19489,7 +22604,7 @@ function defaultBody() {
   return '';
 }
 
-function ajaxCore(options, callback) {
+function ajaxCore$1(options, callback) {
 
   options = clone(options);
 
@@ -19502,7 +22617,7 @@ function ajaxCore(options, callback) {
     cache: false
   };
 
-  options = extend$1(defaultOptions, options);
+  options = $inject_Object_assign(defaultOptions, options);
 
   function onSuccess(obj, resp, cb) {
     if (!options.binary && options.json && typeof obj === 'string') {
@@ -19603,14 +22718,15 @@ function ajax(opts, callback) {
     opts.url += (hasArgs ? '&' : '?') + '_nonce=' + Date.now();
   }
 
-  return ajaxCore(opts, callback);
+  return ajaxCore$1(opts, callback);
 }
 
 // dead simple promise pool, inspired by https://github.com/timdp/es6-promise-pool
 // but much smaller in code size. limits the number of concurrent promises that are executed
 
+
 function pool(promiseFactories, limit) {
-  return new PouchPromise(function (resolve, reject) {
+  return new PouchPromise$1(function (resolve, reject) {
     var running = 0;
     var current = 0;
     var done = 0;
@@ -19662,8 +22778,6 @@ var MAX_SIMULTANEOUS_REVS = 50;
 
 var supportsBulkGetMap = {};
 
-var log$1 = debug('pouchdb:http');
-
 function readAttachmentsAsBlobOrBuffer(row) {
   var atts = row.doc && row.doc._attachments;
   if (!atts) {
@@ -19685,15 +22799,15 @@ function encodeDocId(id) {
   return encodeURIComponent(id);
 }
 
-function preprocessAttachments$1(doc) {
+function preprocessAttachments$2(doc) {
   if (!doc._attachments || !Object.keys(doc._attachments)) {
-    return PouchPromise.resolve();
+    return PouchPromise$1.resolve();
   }
 
-  return PouchPromise.all(Object.keys(doc._attachments).map(function (key) {
+  return PouchPromise$1.all(Object.keys(doc._attachments).map(function (key) {
     var attachment = doc._attachments[key];
     if (attachment.data && typeof attachment.data !== 'string') {
-      return new PouchPromise(function (resolve) {
+      return new PouchPromise$1(function (resolve) {
         blobToBase64(attachment.data, resolve);
       }).then(function (b64) {
         attachment.data = b64;
@@ -19788,7 +22902,7 @@ function HttpPouch(opts, callback) {
   if (opts.auth || host.auth) {
     var nAuth = opts.auth || host.auth;
     var str = nAuth.username + ':' + nAuth.password;
-    var token = btoa$1(unescape(encodeURIComponent(str)));
+    var token = thisBtoa(unescape(encodeURIComponent(str)));
     ajaxOpts.headers = ajaxOpts.headers || {};
     ajaxOpts.headers.Authorization = 'Basic ' + token;
   }
@@ -19797,16 +22911,22 @@ function HttpPouch(opts, callback) {
   // rely on swapping ajax in and out.
   api._ajax = ajax;
 
-  function ajax$$(userOpts, options, callback) {
+  function ajax$$1(userOpts, options, callback) {
     var reqAjax = userOpts.ajax || {};
-    var reqOpts = extend$1(clone(ajaxOpts), reqAjax, options);
-    log$1(reqOpts.method + ' ' + reqOpts.url);
+    var reqOpts = $inject_Object_assign(clone(ajaxOpts), reqAjax, options);
+    var defaultHeaders = clone(ajaxOpts.headers || {});
+    reqOpts.headers = $inject_Object_assign(defaultHeaders, reqAjax.headers,
+      options.headers || {});
+    /* istanbul ignore if */
+    if (api.constructor.listeners('debug').length) {
+      api.constructor.emit('debug', ['http', reqOpts.method, reqOpts.url]);
+    }
     return api._ajax(reqOpts, callback);
   }
 
   function ajaxPromise(userOpts, opts) {
-    return new PouchPromise(function (resolve, reject) {
-      ajax$$(userOpts, opts, function (err, res) {
+    return new PouchPromise$1(function (resolve, reject) {
+      ajax$$1(userOpts, opts, function (err, res) {
         /* istanbul ignore if */
         if (err) {
           return reject(err);
@@ -19816,7 +22936,7 @@ function HttpPouch(opts, callback) {
     });
   }
 
-  function adapterFun$$(name, fun) {
+  function adapterFun$$1(name, fun) {
     return adapterFun(name, getArguments(function (args) {
       setup().then(function () {
         return fun.apply(this, args);
@@ -19832,7 +22952,7 @@ function HttpPouch(opts, callback) {
   function setup() {
     // TODO: Remove `skipSetup` in favor of `skip_setup` in a future release
     if (opts.skipSetup || opts.skip_setup) {
-      return PouchPromise.resolve();
+      return PouchPromise$1.resolve();
     }
 
     // If there is a setup in process or previous successful setup
@@ -19849,7 +22969,7 @@ function HttpPouch(opts, callback) {
         explainError(404, 'PouchDB is just detecting if the remote exists.');
         return ajaxPromise({}, {method: 'PUT', url: dbUrl});
       } else {
-        return PouchPromise.reject(err);
+        return PouchPromise$1.reject(err);
       }
     }).catch(function (err) {
       // If we try to create a database that already exists, skipped in
@@ -19858,7 +22978,7 @@ function HttpPouch(opts, callback) {
       if (err && err.status && err.status === 412) {
         return true;
       }
-      return PouchPromise.reject(err);
+      return PouchPromise$1.reject(err);
     });
 
     setupPromise.catch(function () {
@@ -19868,41 +22988,46 @@ function HttpPouch(opts, callback) {
     return setupPromise;
   }
 
-  immediate(function () {
+  nextTick(function () {
     callback(null, api);
   });
 
+  api._remote = true;
+  /* istanbul ignore next */
   api.type = function () {
     return 'http';
   };
 
-  api.id = adapterFun$$('id', function (callback) {
-    ajax$$({}, {method: 'GET', url: genUrl(host, '')}, function (err, result) {
-      var uuid = (result && result.uuid) ?
+  api.id = adapterFun$$1('id', function (callback) {
+    ajax$$1({}, {method: 'GET', url: genUrl(host, '')}, function (err, result) {
+      var uuid$$1 = (result && result.uuid) ?
         (result.uuid + host.db) : genDBUrl(host, '');
-      callback(null, uuid);
+      callback(null, uuid$$1);
     });
   });
 
-  api.request = adapterFun$$('request', function (options, callback) {
+  api.request = adapterFun$$1('request', function (options, callback) {
     options.url = genDBUrl(host, options.url);
-    ajax$$({}, options, callback);
+    ajax$$1({}, options, callback);
   });
 
   // Sends a POST request to the host calling the couchdb _compact function
   //    version: The version of CouchDB it is running
-  api.compact = adapterFun$$('compact', function (opts, callback) {
+  api.compact = adapterFun$$1('compact', function (opts, callback) {
     if (typeof opts === 'function') {
       callback = opts;
       opts = {};
     }
     opts = clone(opts);
-    ajax$$(opts, {
+    ajax$$1(opts, {
       url: genDBUrl(host, '_compact'),
       method: 'POST'
     }, function () {
       function ping() {
         api.info(function (err, res) {
+          // CouchDB may send a "compact_running:true" if it's
+          // already compacting. PouchDB Server doesn't.
+          /* istanbul ignore else */
           if (res && !res.compact_running) {
             callback(null, {ok: true});
           } else {
@@ -19930,13 +23055,14 @@ function HttpPouch(opts, callback) {
       if (opts.latest) {
         params.latest = true;
       }
-      ajax$$(opts, {
+      ajax$$1(opts, {
         url: genDBUrl(host, '_bulk_get' + paramsToStr(params)),
         method: 'POST',
         body: { docs: opts.docs}
       }, cb);
     }
 
+    /* istanbul ignore next */
     function doBulkGetShim() {
       // avoid "url too long error" by splitting up into multiple requests
       var batchSize = MAX_SIMULTANEOUS_REVS;
@@ -19967,31 +23093,24 @@ function HttpPouch(opts, callback) {
     var dbUrl = genUrl(host, '');
     var supportsBulkGet = supportsBulkGetMap[dbUrl];
 
+    /* istanbul ignore next */
     if (typeof supportsBulkGet !== 'boolean') {
       // check if this database supports _bulk_get
       doBulkGet(function (err, res) {
-        /* istanbul ignore else */
         if (err) {
-          var status = Math.floor(err.status / 100);
-          /* istanbul ignore else */
-          if (status === 4 || status === 5) { // 40x or 50x
-            supportsBulkGetMap[dbUrl] = false;
-            explainError(
-              err.status,
-              'PouchDB is just detecting if the remote ' +
-              'supports the _bulk_get API.'
-            );
-            doBulkGetShim();
-          } else {
-            callback(err);
-          }
+          supportsBulkGetMap[dbUrl] = false;
+          explainError(
+            err.status,
+            'PouchDB is just detecting if the remote ' +
+            'supports the _bulk_get API.'
+          );
+          doBulkGetShim();
         } else {
           supportsBulkGetMap[dbUrl] = true;
           callback(null, res);
         }
       });
     } else if (supportsBulkGet) {
-      /* istanbul ignore next */
       doBulkGet(callback);
     } else {
       doBulkGetShim();
@@ -20003,7 +23122,7 @@ function HttpPouch(opts, callback) {
   //    version: The version of CouchDB it is running
   api._info = function (callback) {
     setup().then(function () {
-      ajax$$({}, {
+      ajax$$1({}, {
         method: 'GET',
         url: genDBUrl(host, '')
       }, function (err, res) {
@@ -20020,7 +23139,7 @@ function HttpPouch(opts, callback) {
   // Get the document with the given id from the database given by host.
   // The id could be solely the _id in the database, or it may be a
   // _design/ID or _local/ID path
-  api.get = adapterFun$$('get', function (id, opts, callback) {
+  api.get = adapterFun$$1('get', function (id, opts, callback) {
     // If no options were given, set the callback to the second parameter
     if (typeof opts === 'function') {
       callback = opts;
@@ -20084,12 +23203,12 @@ function HttpPouch(opts, callback) {
           method: 'GET',
           url: genDBUrl(host, path),
           binary: true
-        }).then(function (blob) {
+        }).then(function (blob$$1) {
           if (opts.binary) {
-            return blob;
+            return blob$$1;
           }
-          return new PouchPromise(function (resolve) {
-            blobToBase64(blob, resolve);
+          return new PouchPromise$1(function (resolve) {
+            blobToBase64(blob$$1, resolve);
           });
         }).then(function (data) {
           delete att.stub;
@@ -20111,7 +23230,7 @@ function HttpPouch(opts, callback) {
 
     function fetchAllAttachments(docOrDocs) {
       if (Array.isArray(docOrDocs)) {
-        return PouchPromise.all(docOrDocs.map(function (doc) {
+        return PouchPromise$1.all(docOrDocs.map(function (doc) {
           if (doc.ok) {
             return fetchAttachments(doc.ok);
           }
@@ -20121,7 +23240,7 @@ function HttpPouch(opts, callback) {
     }
 
     ajaxPromise(opts, options).then(function (res) {
-      return PouchPromise.resolve().then(function () {
+      return PouchPromise$1.resolve().then(function () {
         if (opts.attachments) {
           return fetchAllAttachments(res);
         }
@@ -20132,7 +23251,7 @@ function HttpPouch(opts, callback) {
   });
 
   // Delete the document given by doc from the database given by host.
-  api.remove = adapterFun$$('remove',
+  api.remove = adapterFun$$1('remove',
       function (docOrId, optsOrRev, opts, callback) {
     var doc;
     if (typeof optsOrRev === 'string') {
@@ -20160,7 +23279,7 @@ function HttpPouch(opts, callback) {
     var rev = (doc._rev || opts.rev);
 
     // Delete the document
-    ajax$$(opts, {
+    ajax$$1(opts, {
       method: 'DELETE',
       url: genDBUrl(host, encodeDocId(doc._id)) + '?rev=' + rev
     }, callback);
@@ -20172,7 +23291,7 @@ function HttpPouch(opts, callback) {
 
   // Get the attachment
   api.getAttachment =
-    adapterFun$$('getAttachment', function (docId, attachmentId, opts,
+    adapterFun$$1('getAttachment', function (docId, attachmentId, opts,
                                                 callback) {
     if (typeof opts === 'function') {
       callback = opts;
@@ -20181,7 +23300,7 @@ function HttpPouch(opts, callback) {
     var params = opts.rev ? ('?rev=' + opts.rev) : '';
     var url = genDBUrl(host, encodeDocId(docId)) + '/' +
       encodeAttachmentId(attachmentId) + params;
-    ajax$$(opts, {
+    ajax$$1(opts, {
       method: 'GET',
       url: url,
       binary: true
@@ -20190,13 +23309,13 @@ function HttpPouch(opts, callback) {
 
   // Remove the attachment given by the id and rev
   api.removeAttachment =
-    adapterFun$$('removeAttachment', function (docId, attachmentId, rev,
+    adapterFun$$1('removeAttachment', function (docId, attachmentId, rev,
                                                    callback) {
 
     var url = genDBUrl(host, encodeDocId(docId) + '/' +
       encodeAttachmentId(attachmentId)) + '?rev=' + rev;
 
-    ajax$$({}, {
+    ajax$$1({}, {
       method: 'DELETE',
       url: url
     }, callback);
@@ -20206,12 +23325,12 @@ function HttpPouch(opts, callback) {
   // to the document with the given id, the revision given by rev, and
   // add it to the database given by host.
   api.putAttachment =
-    adapterFun$$('putAttachment', function (docId, attachmentId, rev, blob,
+    adapterFun$$1('putAttachment', function (docId, attachmentId, rev, blob$$1,
                                                 type, callback) {
     if (typeof type === 'function') {
       callback = type;
-      type = blob;
-      blob = rev;
+      type = blob$$1;
+      blob$$1 = rev;
       rev = null;
     }
     var id = encodeDocId(docId) + '/' + encodeAttachmentId(attachmentId);
@@ -20220,16 +23339,16 @@ function HttpPouch(opts, callback) {
       url += '?rev=' + rev;
     }
 
-    if (typeof blob === 'string') {
+    if (typeof blob$$1 === 'string') {
       // input is assumed to be a base64 string
       var binary;
       try {
-        binary = atob$1(blob);
+        binary = thisAtob(blob$$1);
       } catch (err) {
         return callback(createError(BAD_ARG,
                         'Attachment is not a valid base64 string'));
       }
-      blob = binary ? binStringToBluffer(binary, type) : '';
+      blob$$1 = binary ? binStringToBluffer(binary, type) : '';
     }
 
     var opts = {
@@ -20237,11 +23356,11 @@ function HttpPouch(opts, callback) {
       method: 'PUT',
       url: url,
       processData: false,
-      body: blob,
+      body: blob$$1,
       timeout: ajaxOpts.timeout || 60000
     };
     // Add the attachment
-    ajax$$({}, opts, callback);
+    ajax$$1({}, opts, callback);
   });
 
   // Update/create multiple documents given by req in the database
@@ -20253,10 +23372,10 @@ function HttpPouch(opts, callback) {
     req.new_edits = opts.new_edits;
 
     setup().then(function () {
-      return PouchPromise.all(req.docs.map(preprocessAttachments$1));
+      return PouchPromise$1.all(req.docs.map(preprocessAttachments$2));
     }).then(function () {
       // Update/create the documents
-      ajax$$(opts, {
+      ajax$$1(opts, {
         method: 'POST',
         url: genDBUrl(host, '_bulk_docs'),
         timeout: opts.timeout,
@@ -20277,10 +23396,10 @@ function HttpPouch(opts, callback) {
   // Update/create document
   api._put = function (doc, opts, callback) {
     setup().then(function () {
-      return preprocessAttachments$1(doc);
+      return preprocessAttachments$2(doc);
     }).then(function () {
       // Update/create the document
-      ajax$$(opts, {
+      ajax$$1(opts, {
         method: 'PUT',
         url: genDBUrl(host, encodeDocId(doc._id)),
         body: doc
@@ -20296,7 +23415,7 @@ function HttpPouch(opts, callback) {
 
   // Get a listing of the documents in the database given
   // by host and ordered by increasing id.
-  api.allDocs = adapterFun$$('allDocs', function (opts, callback) {
+  api.allDocs = adapterFun$$1('allDocs', function (opts, callback) {
     if (typeof opts === 'function') {
       callback = opts;
       opts = {};
@@ -20438,7 +23557,7 @@ function HttpPouch(opts, callback) {
       if (opts.heartbeat) {
         params.heartbeat = opts.heartbeat;
       }
-    } else {
+    } else if (opts.continuous) {
       // Default heartbeat to 10 seconds
       params.heartbeat = 10000;
     }
@@ -20472,6 +23591,13 @@ function HttpPouch(opts, callback) {
       params.filter = '_doc_ids';
       method = 'POST';
       body = {doc_ids: opts.doc_ids };
+    }
+    /* istanbul ignore next */
+    else if (opts.selector) {
+      // set this automagically for the user, similar to above
+      params.filter = '_selector';
+      method = 'POST';
+      body = {selector: opts.selector };
     }
 
     var xhr;
@@ -20515,7 +23641,7 @@ function HttpPouch(opts, callback) {
 
       // Get the changes
       setup().then(function () {
-        xhr = ajax$$(opts, xhrOpts, callback);
+        xhr = ajax$$1(opts, xhrOpts, callback);
       }).catch(callback);
     };
 
@@ -20570,7 +23696,7 @@ function HttpPouch(opts, callback) {
 
       if ((opts.continuous && !(limit && leftToFetch <= 0)) || !finished) {
         // Queue a call to fetch again with the newest sequence number
-        immediate(function () { fetch(lastFetchedSeq, fetched); });
+        nextTick(function () { fetch(lastFetchedSeq, fetched); });
       } else {
         // We're done, call the callback
         opts.complete(null, results);
@@ -20593,7 +23719,7 @@ function HttpPouch(opts, callback) {
   // Given a set of document/revision IDs (given by req), tets the subset of
   // those that do NOT correspond to revisions stored in the database.
   // See http://wiki.apache.org/couchdb/HttpPostRevsDiff
-  api.revsDiff = adapterFun$$('revsDiff', function (req, opts, callback) {
+  api.revsDiff = adapterFun$$1('revsDiff', function (req, opts, callback) {
     // If no options were given, set the callback to be the second parameter
     if (typeof opts === 'function') {
       callback = opts;
@@ -20601,7 +23727,7 @@ function HttpPouch(opts, callback) {
     }
 
     // Get the missing document/revision IDs
-    ajax$$(opts, {
+    ajax$$1(opts, {
       method: 'POST',
       url: genDBUrl(host, '_revs_diff'),
       body: req
@@ -20613,7 +23739,7 @@ function HttpPouch(opts, callback) {
   };
 
   api._destroy = function (options, callback) {
-    ajax$$(options, {
+    ajax$$1(options, {
       url: genDBUrl(host, ''),
       method: 'DELETE'
     }, function (err, resp) {
@@ -20630,483 +23756,10 @@ HttpPouch.valid = function () {
   return true;
 };
 
-function HttpPouch$1 (PouchDB) {
+var HttpPouch$1 = function (PouchDB) {
   PouchDB.adapter('http', HttpPouch, false);
   PouchDB.adapter('https', HttpPouch, false);
-}
-
-function pad(str, padWith, upToLength) {
-  var padding = '';
-  var targetLength = upToLength - str.length;
-  /* istanbul ignore next */
-  while (padding.length < targetLength) {
-    padding += padWith;
-  }
-  return padding;
-}
-
-function padLeft(str, padWith, upToLength) {
-  var padding = pad(str, padWith, upToLength);
-  return padding + str;
-}
-
-var MIN_MAGNITUDE = -324; // verified by -Number.MIN_VALUE
-var MAGNITUDE_DIGITS = 3; // ditto
-var SEP = ''; // set to '_' for easier debugging 
-
-function collate(a, b) {
-
-  if (a === b) {
-    return 0;
-  }
-
-  a = normalizeKey(a);
-  b = normalizeKey(b);
-
-  var ai = collationIndex(a);
-  var bi = collationIndex(b);
-  if ((ai - bi) !== 0) {
-    return ai - bi;
-  }
-  if (a === null) {
-    return 0;
-  }
-  switch (typeof a) {
-    case 'number':
-      return a - b;
-    case 'boolean':
-      return a === b ? 0 : (a < b ? -1 : 1);
-    case 'string':
-      return stringCollate(a, b);
-  }
-  return Array.isArray(a) ? arrayCollate(a, b) : objectCollate(a, b);
-}
-
-// couch considers null/NaN/Infinity/-Infinity === undefined,
-// for the purposes of mapreduce indexes. also, dates get stringified.
-function normalizeKey(key) {
-  switch (typeof key) {
-    case 'undefined':
-      return null;
-    case 'number':
-      if (key === Infinity || key === -Infinity || isNaN(key)) {
-        return null;
-      }
-      return key;
-    case 'object':
-      var origKey = key;
-      if (Array.isArray(key)) {
-        var len = key.length;
-        key = new Array(len);
-        for (var i = 0; i < len; i++) {
-          key[i] = normalizeKey(origKey[i]);
-        }
-      /* istanbul ignore next */
-      } else if (key instanceof Date) {
-        return key.toJSON();
-      } else if (key !== null) { // generic object
-        key = {};
-        for (var k in origKey) {
-          if (origKey.hasOwnProperty(k)) {
-            var val = origKey[k];
-            if (typeof val !== 'undefined') {
-              key[k] = normalizeKey(val);
-            }
-          }
-        }
-      }
-  }
-  return key;
-}
-
-function indexify(key) {
-  if (key !== null) {
-    switch (typeof key) {
-      case 'boolean':
-        return key ? 1 : 0;
-      case 'number':
-        return numToIndexableString(key);
-      case 'string':
-        // We've to be sure that key does not contain \u0000
-        // Do order-preserving replacements:
-        // 0 -> 1, 1
-        // 1 -> 1, 2
-        // 2 -> 2, 2
-        return key
-          .replace(/\u0002/g, '\u0002\u0002')
-          .replace(/\u0001/g, '\u0001\u0002')
-          .replace(/\u0000/g, '\u0001\u0001');
-      case 'object':
-        var isArray = Array.isArray(key);
-        var arr = isArray ? key : Object.keys(key);
-        var i = -1;
-        var len = arr.length;
-        var result = '';
-        if (isArray) {
-          while (++i < len) {
-            result += toIndexableString(arr[i]);
-          }
-        } else {
-          while (++i < len) {
-            var objKey = arr[i];
-            result += toIndexableString(objKey) +
-                toIndexableString(key[objKey]);
-          }
-        }
-        return result;
-    }
-  }
-  return '';
-}
-
-// convert the given key to a string that would be appropriate
-// for lexical sorting, e.g. within a database, where the
-// sorting is the same given by the collate() function.
-function toIndexableString(key) {
-  var zero = '\u0000';
-  key = normalizeKey(key);
-  return collationIndex(key) + SEP + indexify(key) + zero;
-}
-
-function parseNumber(str, i) {
-  var originalIdx = i;
-  var num;
-  var zero = str[i] === '1';
-  if (zero) {
-    num = 0;
-    i++;
-  } else {
-    var neg = str[i] === '0';
-    i++;
-    var numAsString = '';
-    var magAsString = str.substring(i, i + MAGNITUDE_DIGITS);
-    var magnitude = parseInt(magAsString, 10) + MIN_MAGNITUDE;
-    /* istanbul ignore next */
-    if (neg) {
-      magnitude = -magnitude;
-    }
-    i += MAGNITUDE_DIGITS;
-    while (true) {
-      var ch = str[i];
-      if (ch === '\u0000') {
-        break;
-      } else {
-        numAsString += ch;
-      }
-      i++;
-    }
-    numAsString = numAsString.split('.');
-    if (numAsString.length === 1) {
-      num = parseInt(numAsString, 10);
-    } else {
-      /* istanbul ignore next */
-      num = parseFloat(numAsString[0] + '.' + numAsString[1]);
-    }
-    /* istanbul ignore next */
-    if (neg) {
-      num = num - 10;
-    }
-    /* istanbul ignore next */
-    if (magnitude !== 0) {
-      // parseFloat is more reliable than pow due to rounding errors
-      // e.g. Number.MAX_VALUE would return Infinity if we did
-      // num * Math.pow(10, magnitude);
-      num = parseFloat(num + 'e' + magnitude);
-    }
-  }
-  return {num: num, length : i - originalIdx};
-}
-
-// move up the stack while parsing
-// this function moved outside of parseIndexableString for performance
-function pop(stack, metaStack) {
-  var obj = stack.pop();
-
-  if (metaStack.length) {
-    var lastMetaElement = metaStack[metaStack.length - 1];
-    if (obj === lastMetaElement.element) {
-      // popping a meta-element, e.g. an object whose value is another object
-      metaStack.pop();
-      lastMetaElement = metaStack[metaStack.length - 1];
-    }
-    var element = lastMetaElement.element;
-    var lastElementIndex = lastMetaElement.index;
-    if (Array.isArray(element)) {
-      element.push(obj);
-    } else if (lastElementIndex === stack.length - 2) { // obj with key+value
-      var key = stack.pop();
-      element[key] = obj;
-    } else {
-      stack.push(obj); // obj with key only
-    }
-  }
-}
-
-function parseIndexableString(str) {
-  var stack = [];
-  var metaStack = []; // stack for arrays and objects
-  var i = 0;
-
-  /*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
-  while (true) {
-    var collationIndex = str[i++];
-    if (collationIndex === '\u0000') {
-      if (stack.length === 1) {
-        return stack.pop();
-      } else {
-        pop(stack, metaStack);
-        continue;
-      }
-    }
-    switch (collationIndex) {
-      case '1':
-        stack.push(null);
-        break;
-      case '2':
-        stack.push(str[i] === '1');
-        i++;
-        break;
-      case '3':
-        var parsedNum = parseNumber(str, i);
-        stack.push(parsedNum.num);
-        i += parsedNum.length;
-        break;
-      case '4':
-        var parsedStr = '';
-        /*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
-        while (true) {
-          var ch = str[i];
-          if (ch === '\u0000') {
-            break;
-          }
-          parsedStr += ch;
-          i++;
-        }
-        // perform the reverse of the order-preserving replacement
-        // algorithm (see above)
-        parsedStr = parsedStr.replace(/\u0001\u0001/g, '\u0000')
-          .replace(/\u0001\u0002/g, '\u0001')
-          .replace(/\u0002\u0002/g, '\u0002');
-        stack.push(parsedStr);
-        break;
-      case '5':
-        var arrayElement = { element: [], index: stack.length };
-        stack.push(arrayElement.element);
-        metaStack.push(arrayElement);
-        break;
-      case '6':
-        var objElement = { element: {}, index: stack.length };
-        stack.push(objElement.element);
-        metaStack.push(objElement);
-        break;
-      /* istanbul ignore next */
-      default:
-        throw new Error(
-          'bad collationIndex or unexpectedly reached end of input: ' +
-            collationIndex);
-    }
-  }
-}
-
-function arrayCollate(a, b) {
-  var len = Math.min(a.length, b.length);
-  for (var i = 0; i < len; i++) {
-    var sort = collate(a[i], b[i]);
-    if (sort !== 0) {
-      return sort;
-    }
-  }
-  return (a.length === b.length) ? 0 :
-    (a.length > b.length) ? 1 : -1;
-}
-function stringCollate(a, b) {
-  // See: https://github.com/daleharvey/pouchdb/issues/40
-  // This is incompatible with the CouchDB implementation, but its the
-  // best we can do for now
-  return (a === b) ? 0 : ((a > b) ? 1 : -1);
-}
-function objectCollate(a, b) {
-  var ak = Object.keys(a), bk = Object.keys(b);
-  var len = Math.min(ak.length, bk.length);
-  for (var i = 0; i < len; i++) {
-    // First sort the keys
-    var sort = collate(ak[i], bk[i]);
-    if (sort !== 0) {
-      return sort;
-    }
-    // if the keys are equal sort the values
-    sort = collate(a[ak[i]], b[bk[i]]);
-    if (sort !== 0) {
-      return sort;
-    }
-
-  }
-  return (ak.length === bk.length) ? 0 :
-    (ak.length > bk.length) ? 1 : -1;
-}
-// The collation is defined by erlangs ordered terms
-// the atoms null, true, false come first, then numbers, strings,
-// arrays, then objects
-// null/undefined/NaN/Infinity/-Infinity are all considered null
-function collationIndex(x) {
-  var id = ['boolean', 'number', 'string', 'object'];
-  var idx = id.indexOf(typeof x);
-  //false if -1 otherwise true, but fast!!!!1
-  if (~idx) {
-    if (x === null) {
-      return 1;
-    }
-    if (Array.isArray(x)) {
-      return 5;
-    }
-    return idx < 3 ? (idx + 2) : (idx + 3);
-  }
-  /* istanbul ignore next */
-  if (Array.isArray(x)) {
-    return 5;
-  }
-}
-
-// conversion:
-// x yyy zz...zz
-// x = 0 for negative, 1 for 0, 2 for positive
-// y = exponent (for negative numbers negated) moved so that it's >= 0
-// z = mantisse
-function numToIndexableString(num) {
-
-  if (num === 0) {
-    return '1';
-  }
-
-  // convert number to exponential format for easier and
-  // more succinct string sorting
-  var expFormat = num.toExponential().split(/e\+?/);
-  var magnitude = parseInt(expFormat[1], 10);
-
-  var neg = num < 0;
-
-  var result = neg ? '0' : '2';
-
-  // first sort by magnitude
-  // it's easier if all magnitudes are positive
-  var magForComparison = ((neg ? -magnitude : magnitude) - MIN_MAGNITUDE);
-  var magString = padLeft((magForComparison).toString(), '0', MAGNITUDE_DIGITS);
-
-  result += SEP + magString;
-
-  // then sort by the factor
-  var factor = Math.abs(parseFloat(expFormat[0])); // [1..10)
-  /* istanbul ignore next */
-  if (neg) { // for negative reverse ordering
-    factor = 10 - factor;
-  }
-
-  var factorStr = factor.toFixed(20);
-
-  // strip zeros from the end
-  factorStr = factorStr.replace(/\.?0+$/, '');
-
-  result += SEP + factorStr;
-
-  return result;
-}
-
-/*
- * Simple task queue to sequentialize actions. Assumes
- * callbacks will eventually fire (once).
- */
-
-function TaskQueue$1() {
-  this.promise = new PouchPromise(function (fulfill) {fulfill(); });
-}
-TaskQueue$1.prototype.add = function (promiseFactory) {
-  this.promise = this.promise.catch(function () {
-    // just recover
-  }).then(function () {
-    return promiseFactory();
-  });
-  return this.promise;
 };
-TaskQueue$1.prototype.finish = function () {
-  return this.promise;
-};
-
-function createView(opts) {
-  var sourceDB = opts.db;
-  var viewName = opts.viewName;
-  var mapFun = opts.map;
-  var reduceFun = opts.reduce;
-  var temporary = opts.temporary;
-
-  // the "undefined" part is for backwards compatibility
-  var viewSignature = mapFun.toString() + (reduceFun && reduceFun.toString()) +
-    'undefined';
-
-  var cachedViews;
-  if (!temporary) {
-    // cache this to ensure we don't try to update the same view twice
-    cachedViews = sourceDB._cachedViews = sourceDB._cachedViews || {};
-    if (cachedViews[viewSignature]) {
-      return cachedViews[viewSignature];
-    }
-  }
-
-  var promiseForView = sourceDB.info().then(function (info) {
-
-    var depDbName = info.db_name + '-mrview-' +
-      (temporary ? 'temp' : stringMd5(viewSignature));
-
-    // save the view name in the source db so it can be cleaned up if necessary
-    // (e.g. when the _design doc is deleted, remove all associated view data)
-    function diffFunction(doc) {
-      doc.views = doc.views || {};
-      var fullViewName = viewName;
-      if (fullViewName.indexOf('/') === -1) {
-        fullViewName = viewName + '/' + viewName;
-      }
-      var depDbs = doc.views[fullViewName] = doc.views[fullViewName] || {};
-      /* istanbul ignore if */
-      if (depDbs[depDbName]) {
-        return; // no update necessary
-      }
-      depDbs[depDbName] = true;
-      return doc;
-    }
-    return upsert(sourceDB, '_local/mrviews', diffFunction).then(function () {
-      return sourceDB.registerDependentDatabase(depDbName).then(function (res) {
-        var db = res.db;
-        db.auto_compaction = true;
-        var view = {
-          name: depDbName,
-          db: db,
-          sourceDB: sourceDB,
-          adapter: sourceDB.adapter,
-          mapFun: mapFun,
-          reduceFun: reduceFun
-        };
-        return view.db.get('_local/lastSeq').catch(function (err) {
-          /* istanbul ignore if */
-          if (err.status !== 404) {
-            throw err;
-          }
-        }).then(function (lastSeqDoc) {
-          view.seq = lastSeqDoc ? lastSeqDoc.seq : 0;
-          if (cachedViews) {
-            view.db.once('destroyed', function () {
-              delete cachedViews[viewSignature];
-            });
-          }
-          return view;
-        });
-      });
-    });
-  });
-
-  if (cachedViews) {
-    cachedViews[viewSignature] = promiseForView;
-  }
-  return promiseForView;
-}
 
 function QueryParseError(message) {
   this.status = 400;
@@ -21143,6 +23796,76 @@ function BuiltInError(message) {
 }
 
 inherits(BuiltInError, Error);
+
+function promisedCallback(promise, callback) {
+  if (callback) {
+    promise.then(function (res) {
+      nextTick(function () {
+        callback(null, res);
+      });
+    }, function (reason) {
+      nextTick(function () {
+        callback(reason);
+      });
+    });
+  }
+  return promise;
+}
+
+function callbackify(fun) {
+  return getArguments(function (args) {
+    var cb = args.pop();
+    var promise = fun.apply(this, args);
+    if (typeof cb === 'function') {
+      promisedCallback(promise, cb);
+    }
+    return promise;
+  });
+}
+
+// Promise finally util similar to Q.finally
+function fin(promise, finalPromiseFactory) {
+  return promise.then(function (res) {
+    return finalPromiseFactory().then(function () {
+      return res;
+    });
+  }, function (reason) {
+    return finalPromiseFactory().then(function () {
+      throw reason;
+    });
+  });
+}
+
+function sequentialize(queue, promiseFactory) {
+  return function () {
+    var args = arguments;
+    var that = this;
+    return queue.add(function () {
+      return promiseFactory.apply(that, args);
+    });
+  };
+}
+
+// uniq an array of strings, order not guaranteed
+// similar to underscore/lodash _.uniq
+function uniq(arr) {
+  var theSet = new ExportedSet(arr);
+  var result = new Array(theSet.size);
+  var index = -1;
+  theSet.forEach(function (value) {
+    result[++index] = value;
+  });
+  return result;
+}
+
+function mapToKeysArray(map) {
+  var result = new Array(map.size);
+  var index = -1;
+  map.forEach(function (value, key) {
+    result[++index] = key;
+  });
+  return result;
+}
 
 function createBuiltInError(name) {
   var message = 'builtin ' + name +
@@ -21181,92 +23904,140 @@ function sum(values) {
   return result;
 }
 
-var log$2 = guardedConsole.bind(null, 'log');
+var log = guardedConsole.bind(null, 'log');
 var isArray = Array.isArray;
 var toJSON = JSON.parse;
 
 function evalFunctionWithEval(func, emit) {
-  return scopedEval(
+  return scopeEval(
     "return (" + func.replace(/;\s*$/, "") + ");",
     {
       emit: emit,
       sum: sum,
-      log: log$2,
+      log: log,
       isArray: isArray,
       toJSON: toJSON
     }
   );
 }
 
-var promisedCallback = function (promise, callback) {
-  if (callback) {
-    promise.then(function (res) {
-      immediate(function () {
-        callback(null, res);
-      });
-    }, function (reason) {
-      immediate(function () {
-        callback(reason);
-      });
-    });
-  }
-  return promise;
+/*
+ * Simple task queue to sequentialize actions. Assumes
+ * callbacks will eventually fire (once).
+ */
+
+
+function TaskQueue$2() {
+  this.promise = new PouchPromise$1(function (fulfill) {fulfill(); });
+}
+TaskQueue$2.prototype.add = function (promiseFactory) {
+  this.promise = this.promise.catch(function () {
+    // just recover
+  }).then(function () {
+    return promiseFactory();
+  });
+  return this.promise;
+};
+TaskQueue$2.prototype.finish = function () {
+  return this.promise;
 };
 
-var callbackify = function (fun) {
-  return getArguments(function (args) {
-    var cb = args.pop();
-    var promise = fun.apply(this, args);
-    if (typeof cb === 'function') {
-      promisedCallback(promise, cb);
+function stringify(input) {
+  if (!input) {
+    return 'undefined'; // backwards compat for empty reduce
+  }
+  // for backwards compat with mapreduce, functions/strings are stringified
+  // as-is. everything else is JSON-stringified.
+  switch (typeof input) {
+    case 'function':
+      // e.g. a mapreduce map
+      return input.toString();
+    case 'string':
+      // e.g. a mapreduce built-in _reduce function
+      return input.toString();
+    default:
+      // e.g. a JSON object in the case of mango queries
+      return JSON.stringify(input);
+  }
+}
+
+/* create a string signature for a view so we can cache it and uniq it */
+function createViewSignature(mapFun, reduceFun) {
+  // the "undefined" part is for backwards compatibility
+  return stringify(mapFun) + stringify(reduceFun) + 'undefined';
+}
+
+function createView(sourceDB, viewName, mapFun, reduceFun, temporary, localDocName) {
+  var viewSignature = createViewSignature(mapFun, reduceFun);
+
+  var cachedViews;
+  if (!temporary) {
+    // cache this to ensure we don't try to update the same view twice
+    cachedViews = sourceDB._cachedViews = sourceDB._cachedViews || {};
+    if (cachedViews[viewSignature]) {
+      return cachedViews[viewSignature];
     }
-    return promise;
-  });
-};
-
-// Promise finally util similar to Q.finally
-var fin = function (promise, finalPromiseFactory) {
-  return promise.then(function (res) {
-    return finalPromiseFactory().then(function () {
-      return res;
-    });
-  }, function (reason) {
-    return finalPromiseFactory().then(function () {
-      throw reason;
-    });
-  });
-};
-
-var sequentialize = function (queue, promiseFactory) {
-  return function () {
-    var args = arguments;
-    var that = this;
-    return queue.add(function () {
-      return promiseFactory.apply(that, args);
-    });
-  };
-};
-
-// uniq an array of strings, order not guaranteed
-// similar to underscore/lodash _.uniq
-var uniq = function (arr) {
-  var map = {};
-
-  for (var i = 0, len = arr.length; i < len; i++) {
-    map['$' + arr[i]] = true;
   }
 
-  var keys = Object.keys(map);
-  var output = new Array(keys.length);
+  var promiseForView = sourceDB.info().then(function (info) {
 
-  for (i = 0, len = keys.length; i < len; i++) {
-    output[i] = keys[i].substring(1);
+    var depDbName = info.db_name + '-mrview-' +
+      (temporary ? 'temp' : stringMd5(viewSignature));
+
+    // save the view name in the source db so it can be cleaned up if necessary
+    // (e.g. when the _design doc is deleted, remove all associated view data)
+    function diffFunction(doc) {
+      doc.views = doc.views || {};
+      var fullViewName = viewName;
+      if (fullViewName.indexOf('/') === -1) {
+        fullViewName = viewName + '/' + viewName;
+      }
+      var depDbs = doc.views[fullViewName] = doc.views[fullViewName] || {};
+      /* istanbul ignore if */
+      if (depDbs[depDbName]) {
+        return; // no update necessary
+      }
+      depDbs[depDbName] = true;
+      return doc;
+    }
+    return upsert(sourceDB, '_local/' + localDocName, diffFunction).then(function () {
+      return sourceDB.registerDependentDatabase(depDbName).then(function (res) {
+        var db = res.db;
+        db.auto_compaction = true;
+        var view = {
+          name: depDbName,
+          db: db,
+          sourceDB: sourceDB,
+          adapter: sourceDB.adapter,
+          mapFun: mapFun,
+          reduceFun: reduceFun
+        };
+        return view.db.get('_local/lastSeq').catch(function (err) {
+          /* istanbul ignore if */
+          if (err.status !== 404) {
+            throw err;
+          }
+        }).then(function (lastSeqDoc) {
+          view.seq = lastSeqDoc ? lastSeqDoc.seq : 0;
+          if (cachedViews) {
+            view.db.once('destroyed', function () {
+              delete cachedViews[viewSignature];
+            });
+          }
+          return view;
+        });
+      });
+    });
+  });
+
+  if (cachedViews) {
+    cachedViews[viewSignature] = promiseForView;
   }
-  return output;
-};
+  return promiseForView;
+}
 
 var persistentQueues = {};
-var tempViewQueue = new TaskQueue$1();
+var tempViewQueue = new TaskQueue$2();
 var CHANGES_BATCH_SIZE$1 = 50;
 
 function parseViewName(name) {
@@ -21294,61 +24065,865 @@ function emitError(db, e) {
   }
 }
 
-function tryCode$1(db, fun, args) {
-  // emit an event if there was an error thrown by a map/reduce function.
-  // putting try/catches in a single function also avoids deoptimizations.
-  try {
-    return {
-      output : fun.apply(null, args)
-    };
-  } catch (e) {
-    emitError(db, e);
-    return {error: e};
-  }
-}
+/**
+ * Returns an "abstract" mapreduce object of the form:
+ *
+ *   {
+ *     query: queryFun,
+ *     viewCleanup: viewCleanupFun
+ *   }
+ *
+ * Arguments are:
+ *
+ * localDoc: string
+ *   This is for the local doc that gets saved in order to track the
+ *   "dependent" DBs and clean them up for viewCleanup. It should be
+ *   unique, so that indexer plugins don't collide with each other.
+ * mapper: function (mapFunDef, emit)
+ *   Returns a map function based on the mapFunDef, which in the case of
+ *   normal map/reduce is just the de-stringified function, but may be
+ *   something else, such as an object in the case of pouchdb-find.
+ * reducer: function (reduceFunDef)
+ *   Ditto, but for reducing. Modules don't have to support reducing
+ *   (e.g. pouchdb-find).
+ * ddocValidator: function (ddoc, viewName)
+ *   Throws an error if the ddoc or viewName is not valid.
+ *   This could be a way to communicate to the user that the configuration for the
+ *   indexer is invalid.
+ */
+function createAbstractMapReduce(localDocName, mapper, reducer, ddocValidator) {
 
-function sortByKeyThenValue(x, y) {
-  var keyCompare = collate(x.key, y.key);
-  return keyCompare !== 0 ? keyCompare : collate(x.value, y.value);
-}
-
-function sliceResults(results, limit, skip) {
-  skip = skip || 0;
-  if (typeof limit === 'number') {
-    return results.slice(skip, limit + skip);
-  } else if (skip > 0) {
-    return results.slice(skip);
-  }
-  return results;
-}
-
-function rowToDocId(row) {
-  var val = row.value;
-  // Users can explicitly specify a joined doc _id, or it
-  // defaults to the doc _id that emitted the key/value.
-  var docId = (val && typeof val === 'object' && val._id) || row.id;
-  return docId;
-}
-
-function readAttachmentsAsBlobOrBuffer$1(res) {
-  res.rows.forEach(function (row) {
-    var atts = row.doc && row.doc._attachments;
-    if (!atts) {
-      return;
+  function tryMap(db, fun, doc) {
+    // emit an event if there was an error thrown by a map function.
+    // putting try/catches in a single function also avoids deoptimizations.
+    try {
+      fun(doc);
+    } catch (e) {
+      emitError(db, e);
     }
-    Object.keys(atts).forEach(function (filename) {
-      var att = atts[filename];
-      atts[filename].data = b64ToBluffer(att.data, att.content_type);
+  }
+
+  function tryReduce(db, fun, keys, values, rereduce) {
+    // same as above, but returning the result or an error. there are two separate
+    // functions to avoid extra memory allocations since the tryCode() case is used
+    // for custom map functions (common) vs this function, which is only used for
+    // custom reduce functions (rare)
+    try {
+      return {output : fun(keys, values, rereduce)};
+    } catch (e) {
+      emitError(db, e);
+      return {error: e};
+    }
+  }
+
+  function sortByKeyThenValue(x, y) {
+    var keyCompare = collate(x.key, y.key);
+    return keyCompare !== 0 ? keyCompare : collate(x.value, y.value);
+  }
+
+  function sliceResults(results, limit, skip) {
+    skip = skip || 0;
+    if (typeof limit === 'number') {
+      return results.slice(skip, limit + skip);
+    } else if (skip > 0) {
+      return results.slice(skip);
+    }
+    return results;
+  }
+
+  function rowToDocId(row) {
+    var val = row.value;
+    // Users can explicitly specify a joined doc _id, or it
+    // defaults to the doc _id that emitted the key/value.
+    var docId = (val && typeof val === 'object' && val._id) || row.id;
+    return docId;
+  }
+
+  function readAttachmentsAsBlobOrBuffer(res) {
+    res.rows.forEach(function (row) {
+      var atts = row.doc && row.doc._attachments;
+      if (!atts) {
+        return;
+      }
+      Object.keys(atts).forEach(function (filename) {
+        var att = atts[filename];
+        atts[filename].data = b64ToBluffer(att.data, att.content_type);
+      });
     });
-  });
-}
+  }
 
-function postprocessAttachments(opts) {
-  return function (res) {
-    if (opts.include_docs && opts.attachments && opts.binary) {
-      readAttachmentsAsBlobOrBuffer$1(res);
+  function postprocessAttachments(opts) {
+    return function (res) {
+      if (opts.include_docs && opts.attachments && opts.binary) {
+        readAttachmentsAsBlobOrBuffer(res);
+      }
+      return res;
+    };
+  }
+
+  function addHttpParam(paramName, opts, params, asJson) {
+    // add an http param from opts to params, optionally json-encoded
+    var val = opts[paramName];
+    if (typeof val !== 'undefined') {
+      if (asJson) {
+        val = encodeURIComponent(JSON.stringify(val));
+      }
+      params.push(paramName + '=' + val);
     }
-    return res;
+  }
+
+  function coerceInteger(integerCandidate) {
+    if (typeof integerCandidate !== 'undefined') {
+      var asNumber = Number(integerCandidate);
+      // prevents e.g. '1foo' or '1.1' being coerced to 1
+      if (!isNaN(asNumber) && asNumber === parseInt(integerCandidate, 10)) {
+        return asNumber;
+      } else {
+        return integerCandidate;
+      }
+    }
+  }
+
+  function coerceOptions(opts) {
+    opts.group_level = coerceInteger(opts.group_level);
+    opts.limit = coerceInteger(opts.limit);
+    opts.skip = coerceInteger(opts.skip);
+    return opts;
+  }
+
+  function checkPositiveInteger(number) {
+    if (number) {
+      if (typeof number !== 'number') {
+        return  new QueryParseError('Invalid value for integer: "' +
+          number + '"');
+      }
+      if (number < 0) {
+        return new QueryParseError('Invalid value for positive integer: ' +
+          '"' + number + '"');
+      }
+    }
+  }
+
+  function checkQueryParseError(options, fun) {
+    var startkeyName = options.descending ? 'endkey' : 'startkey';
+    var endkeyName = options.descending ? 'startkey' : 'endkey';
+
+    if (typeof options[startkeyName] !== 'undefined' &&
+      typeof options[endkeyName] !== 'undefined' &&
+      collate(options[startkeyName], options[endkeyName]) > 0) {
+      throw new QueryParseError('No rows can match your key range, ' +
+        'reverse your start_key and end_key or set {descending : true}');
+    } else if (fun.reduce && options.reduce !== false) {
+      if (options.include_docs) {
+        throw new QueryParseError('{include_docs:true} is invalid for reduce');
+      } else if (options.keys && options.keys.length > 1 &&
+        !options.group && !options.group_level) {
+        throw new QueryParseError('Multi-key fetches for reduce views must use ' +
+          '{group: true}');
+      }
+    }
+    ['group_level', 'limit', 'skip'].forEach(function (optionName) {
+      var error = checkPositiveInteger(options[optionName]);
+      if (error) {
+        throw error;
+      }
+    });
+  }
+
+  function httpQuery(db, fun, opts) {
+    // List of parameters to add to the PUT request
+    var params = [];
+    var body;
+    var method = 'GET';
+
+    // If opts.reduce exists and is defined, then add it to the list
+    // of parameters.
+    // If reduce=false then the results are that of only the map function
+    // not the final result of map and reduce.
+    addHttpParam('reduce', opts, params);
+    addHttpParam('include_docs', opts, params);
+    addHttpParam('attachments', opts, params);
+    addHttpParam('limit', opts, params);
+    addHttpParam('descending', opts, params);
+    addHttpParam('group', opts, params);
+    addHttpParam('group_level', opts, params);
+    addHttpParam('skip', opts, params);
+    addHttpParam('stale', opts, params);
+    addHttpParam('conflicts', opts, params);
+    addHttpParam('startkey', opts, params, true);
+    addHttpParam('start_key', opts, params, true);
+    addHttpParam('endkey', opts, params, true);
+    addHttpParam('end_key', opts, params, true);
+    addHttpParam('inclusive_end', opts, params);
+    addHttpParam('key', opts, params, true);
+
+    // Format the list of parameters into a valid URI query string
+    params = params.join('&');
+    params = params === '' ? '' : '?' + params;
+
+    // If keys are supplied, issue a POST to circumvent GET query string limits
+    // see http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options
+    if (typeof opts.keys !== 'undefined') {
+      var MAX_URL_LENGTH = 2000;
+      // according to http://stackoverflow.com/a/417184/680742,
+      // the de facto URL length limit is 2000 characters
+
+      var keysAsString =
+        'keys=' + encodeURIComponent(JSON.stringify(opts.keys));
+      if (keysAsString.length + params.length + 1 <= MAX_URL_LENGTH) {
+        // If the keys are short enough, do a GET. we do this to work around
+        // Safari not understanding 304s on POSTs (see pouchdb/pouchdb#1239)
+        params += (params[0] === '?' ? '&' : '?') + keysAsString;
+      } else {
+        method = 'POST';
+        if (typeof fun === 'string') {
+          body = {keys: opts.keys};
+        } else { // fun is {map : mapfun}, so append to this
+          fun.keys = opts.keys;
+        }
+      }
+    }
+
+    // We are referencing a query defined in the design doc
+    if (typeof fun === 'string') {
+      var parts = parseViewName(fun);
+      return db.request({
+        method: method,
+        url: '_design/' + parts[0] + '/_view/' + parts[1] + params,
+        body: body
+      }).then(postprocessAttachments(opts));
+    }
+
+    // We are using a temporary view, terrible for performance, good for testing
+    body = body || {};
+    Object.keys(fun).forEach(function (key) {
+      if (Array.isArray(fun[key])) {
+        body[key] = fun[key];
+      } else {
+        body[key] = fun[key].toString();
+      }
+    });
+    return db.request({
+      method: 'POST',
+      url: '_temp_view' + params,
+      body: body
+    }).then(postprocessAttachments(opts));
+  }
+
+  // custom adapters can define their own api._query
+  // and override the default behavior
+  /* istanbul ignore next */
+  function customQuery(db, fun, opts) {
+    return new PouchPromise$1(function (resolve, reject) {
+      db._query(fun, opts, function (err, res) {
+        if (err) {
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+  }
+
+  // custom adapters can define their own api._viewCleanup
+  // and override the default behavior
+  /* istanbul ignore next */
+  function customViewCleanup(db) {
+    return new PouchPromise$1(function (resolve, reject) {
+      db._viewCleanup(function (err, res) {
+        if (err) {
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+  }
+
+  function defaultsTo(value) {
+    return function (reason) {
+      /* istanbul ignore else */
+      if (reason.status === 404) {
+        return value;
+      } else {
+        throw reason;
+      }
+    };
+  }
+
+  // returns a promise for a list of docs to update, based on the input docId.
+  // the order doesn't matter, because post-3.2.0, bulkDocs
+  // is an atomic operation in all three adapters.
+  function getDocsToPersist(docId, view, docIdsToChangesAndEmits) {
+    var metaDocId = '_local/doc_' + docId;
+    var defaultMetaDoc = {_id: metaDocId, keys: []};
+    var docData = docIdsToChangesAndEmits.get(docId);
+    var indexableKeysToKeyValues = docData[0];
+    var changes = docData[1];
+
+    function getMetaDoc() {
+      if (isGenOne(changes)) {
+        // generation 1, so we can safely assume initial state
+        // for performance reasons (avoids unnecessary GETs)
+        return PouchPromise$1.resolve(defaultMetaDoc);
+      }
+      return view.db.get(metaDocId).catch(defaultsTo(defaultMetaDoc));
+    }
+
+    function getKeyValueDocs(metaDoc) {
+      if (!metaDoc.keys.length) {
+        // no keys, no need for a lookup
+        return PouchPromise$1.resolve({rows: []});
+      }
+      return view.db.allDocs({
+        keys: metaDoc.keys,
+        include_docs: true
+      });
+    }
+
+    function processKeyValueDocs(metaDoc, kvDocsRes) {
+      var kvDocs = [];
+      var oldKeys = new ExportedSet();
+
+      for (var i = 0, len = kvDocsRes.rows.length; i < len; i++) {
+        var row = kvDocsRes.rows[i];
+        var doc = row.doc;
+        if (!doc) { // deleted
+          continue;
+        }
+        kvDocs.push(doc);
+        oldKeys.add(doc._id);
+        doc._deleted = !indexableKeysToKeyValues.has(doc._id);
+        if (!doc._deleted) {
+          var keyValue = indexableKeysToKeyValues.get(doc._id);
+          if ('value' in keyValue) {
+            doc.value = keyValue.value;
+          }
+        }
+      }
+      var newKeys = mapToKeysArray(indexableKeysToKeyValues);
+      newKeys.forEach(function (key) {
+        if (!oldKeys.has(key)) {
+          // new doc
+          var kvDoc = {
+            _id: key
+          };
+          var keyValue = indexableKeysToKeyValues.get(key);
+          if ('value' in keyValue) {
+            kvDoc.value = keyValue.value;
+          }
+          kvDocs.push(kvDoc);
+        }
+      });
+      metaDoc.keys = uniq(newKeys.concat(metaDoc.keys));
+      kvDocs.push(metaDoc);
+
+      return kvDocs;
+    }
+
+    return getMetaDoc().then(function (metaDoc) {
+      return getKeyValueDocs(metaDoc).then(function (kvDocsRes) {
+        return processKeyValueDocs(metaDoc, kvDocsRes);
+      });
+    });
+  }
+
+  // updates all emitted key/value docs and metaDocs in the mrview database
+  // for the given batch of documents from the source database
+  function saveKeyValues(view, docIdsToChangesAndEmits, seq) {
+    var seqDocId = '_local/lastSeq';
+    return view.db.get(seqDocId)
+      .catch(defaultsTo({_id: seqDocId, seq: 0}))
+      .then(function (lastSeqDoc) {
+        var docIds = mapToKeysArray(docIdsToChangesAndEmits);
+        return PouchPromise$1.all(docIds.map(function (docId) {
+          return getDocsToPersist(docId, view, docIdsToChangesAndEmits);
+        })).then(function (listOfDocsToPersist) {
+          var docsToPersist = flatten(listOfDocsToPersist);
+          lastSeqDoc.seq = seq;
+          docsToPersist.push(lastSeqDoc);
+          // write all docs in a single operation, update the seq once
+          return view.db.bulkDocs({docs : docsToPersist});
+        });
+      });
+  }
+
+  function getQueue(view) {
+    var viewName = typeof view === 'string' ? view : view.name;
+    var queue = persistentQueues[viewName];
+    if (!queue) {
+      queue = persistentQueues[viewName] = new TaskQueue$2();
+    }
+    return queue;
+  }
+
+  function updateView(view) {
+    return sequentialize(getQueue(view), function () {
+      return updateViewInQueue(view);
+    })();
+  }
+
+  function updateViewInQueue(view) {
+    // bind the emit function once
+    var mapResults;
+    var doc;
+
+    function emit(key, value) {
+      var output = {id: doc._id, key: normalizeKey(key)};
+      // Don't explicitly store the value unless it's defined and non-null.
+      // This saves on storage space, because often people don't use it.
+      if (typeof value !== 'undefined' && value !== null) {
+        output.value = normalizeKey(value);
+      }
+      mapResults.push(output);
+    }
+
+    var mapFun = mapper(view.mapFun, emit);
+
+    var currentSeq = view.seq || 0;
+
+    function processChange(docIdsToChangesAndEmits, seq) {
+      return function () {
+        return saveKeyValues(view, docIdsToChangesAndEmits, seq);
+      };
+    }
+
+    var queue = new TaskQueue$2();
+
+    function processNextBatch() {
+      return view.sourceDB.changes({
+        conflicts: true,
+        include_docs: true,
+        style: 'all_docs',
+        since: currentSeq,
+        limit: CHANGES_BATCH_SIZE$1
+      }).then(processBatch);
+    }
+
+    function processBatch(response) {
+      var results = response.results;
+      if (!results.length) {
+        return;
+      }
+      var docIdsToChangesAndEmits = createDocIdsToChangesAndEmits(results);
+      queue.add(processChange(docIdsToChangesAndEmits, currentSeq));
+      if (results.length < CHANGES_BATCH_SIZE$1) {
+        return;
+      }
+      return processNextBatch();
+    }
+
+    function createDocIdsToChangesAndEmits(results) {
+      var docIdsToChangesAndEmits = new ExportedMap();
+      for (var i = 0, len = results.length; i < len; i++) {
+        var change = results[i];
+        if (change.doc._id[0] !== '_') {
+          mapResults = [];
+          doc = change.doc;
+
+          if (!doc._deleted) {
+            tryMap(view.sourceDB, mapFun, doc);
+          }
+          mapResults.sort(sortByKeyThenValue);
+
+          var indexableKeysToKeyValues = createIndexableKeysToKeyValues(mapResults);
+          docIdsToChangesAndEmits.set(change.doc._id, [
+            indexableKeysToKeyValues,
+            change.changes
+          ]);
+        }
+        currentSeq = change.seq;
+      }
+      return docIdsToChangesAndEmits;
+    }
+
+    function createIndexableKeysToKeyValues(mapResults) {
+      var indexableKeysToKeyValues = new ExportedMap();
+      var lastKey;
+      for (var i = 0, len = mapResults.length; i < len; i++) {
+        var emittedKeyValue = mapResults[i];
+        var complexKey = [emittedKeyValue.key, emittedKeyValue.id];
+        if (i > 0 && collate(emittedKeyValue.key, lastKey) === 0) {
+          complexKey.push(i); // dup key+id, so make it unique
+        }
+        indexableKeysToKeyValues.set(toIndexableString(complexKey), emittedKeyValue);
+        lastKey = emittedKeyValue.key;
+      }
+      return indexableKeysToKeyValues;
+    }
+
+    return processNextBatch().then(function () {
+      return queue.finish();
+    }).then(function () {
+      view.seq = currentSeq;
+    });
+  }
+
+  function reduceView(view, results, options) {
+    if (options.group_level === 0) {
+      delete options.group_level;
+    }
+
+    var shouldGroup = options.group || options.group_level;
+
+    var reduceFun = reducer(view.reduceFun);
+
+    var groups = [];
+    var lvl = isNaN(options.group_level) ? Number.POSITIVE_INFINITY :
+      options.group_level;
+    results.forEach(function (e) {
+      var last = groups[groups.length - 1];
+      var groupKey = shouldGroup ? e.key : null;
+
+      // only set group_level for array keys
+      if (shouldGroup && Array.isArray(groupKey)) {
+        groupKey = groupKey.slice(0, lvl);
+      }
+
+      if (last && collate(last.groupKey, groupKey) === 0) {
+        last.keys.push([e.key, e.id]);
+        last.values.push(e.value);
+        return;
+      }
+      groups.push({
+        keys: [[e.key, e.id]],
+        values: [e.value],
+        groupKey: groupKey
+      });
+    });
+    results = [];
+    for (var i = 0, len = groups.length; i < len; i++) {
+      var e = groups[i];
+      var reduceTry = tryReduce(view.sourceDB, reduceFun, e.keys, e.values, false);
+      if (reduceTry.error && reduceTry.error instanceof BuiltInError) {
+        // CouchDB returns an error if a built-in errors out
+        throw reduceTry.error;
+      }
+      results.push({
+        // CouchDB just sets the value to null if a non-built-in errors out
+        value: reduceTry.error ? null : reduceTry.output,
+        key: e.groupKey
+      });
+    }
+    // no total_rows/offset when reducing
+    return {rows: sliceResults(results, options.limit, options.skip)};
+  }
+
+  function queryView(view, opts) {
+    return sequentialize(getQueue(view), function () {
+      return queryViewInQueue(view, opts);
+    })();
+  }
+
+  function queryViewInQueue(view, opts) {
+    var totalRows;
+    var shouldReduce = view.reduceFun && opts.reduce !== false;
+    var skip = opts.skip || 0;
+    if (typeof opts.keys !== 'undefined' && !opts.keys.length) {
+      // equivalent query
+      opts.limit = 0;
+      delete opts.keys;
+    }
+
+    function fetchFromView(viewOpts) {
+      viewOpts.include_docs = true;
+      return view.db.allDocs(viewOpts).then(function (res) {
+        totalRows = res.total_rows;
+        return res.rows.map(function (result) {
+
+          // implicit migration - in older versions of PouchDB,
+          // we explicitly stored the doc as {id: ..., key: ..., value: ...}
+          // this is tested in a migration test
+          /* istanbul ignore next */
+          if ('value' in result.doc && typeof result.doc.value === 'object' &&
+            result.doc.value !== null) {
+            var keys = Object.keys(result.doc.value).sort();
+            // this detection method is not perfect, but it's unlikely the user
+            // emitted a value which was an object with these 3 exact keys
+            var expectedKeys = ['id', 'key', 'value'];
+            if (!(keys < expectedKeys || keys > expectedKeys)) {
+              return result.doc.value;
+            }
+          }
+
+          var parsedKeyAndDocId = parseIndexableString(result.doc._id);
+          return {
+            key: parsedKeyAndDocId[0],
+            id: parsedKeyAndDocId[1],
+            value: ('value' in result.doc ? result.doc.value : null)
+          };
+        });
+      });
+    }
+
+    function onMapResultsReady(rows) {
+      var finalResults;
+      if (shouldReduce) {
+        finalResults = reduceView(view, rows, opts);
+      } else {
+        finalResults = {
+          total_rows: totalRows,
+          offset: skip,
+          rows: rows
+        };
+      }
+      if (opts.include_docs) {
+        var docIds = uniq(rows.map(rowToDocId));
+
+        return view.sourceDB.allDocs({
+          keys: docIds,
+          include_docs: true,
+          conflicts: opts.conflicts,
+          attachments: opts.attachments,
+          binary: opts.binary
+        }).then(function (allDocsRes) {
+          var docIdsToDocs = new ExportedMap();
+          allDocsRes.rows.forEach(function (row) {
+            docIdsToDocs.set(row.id, row.doc);
+          });
+          rows.forEach(function (row) {
+            var docId = rowToDocId(row);
+            var doc = docIdsToDocs.get(docId);
+            if (doc) {
+              row.doc = doc;
+            }
+          });
+          return finalResults;
+        });
+      } else {
+        return finalResults;
+      }
+    }
+
+    if (typeof opts.keys !== 'undefined') {
+      var keys = opts.keys;
+      var fetchPromises = keys.map(function (key) {
+        var viewOpts = {
+          startkey : toIndexableString([key]),
+          endkey   : toIndexableString([key, {}])
+        };
+        return fetchFromView(viewOpts);
+      });
+      return PouchPromise$1.all(fetchPromises).then(flatten).then(onMapResultsReady);
+    } else { // normal query, no 'keys'
+      var viewOpts = {
+        descending : opts.descending
+      };
+      var startkey;
+      var endkey;
+      if ('start_key' in opts) {
+        startkey = opts.start_key;
+      }
+      if ('startkey' in opts) {
+        startkey = opts.startkey;
+      }
+      if ('end_key' in opts) {
+        endkey = opts.end_key;
+      }
+      if ('endkey' in opts) {
+        endkey = opts.endkey;
+      }
+      if (typeof startkey !== 'undefined') {
+        viewOpts.startkey = opts.descending ?
+          toIndexableString([startkey, {}]) :
+          toIndexableString([startkey]);
+      }
+      if (typeof endkey !== 'undefined') {
+        var inclusiveEnd = opts.inclusive_end !== false;
+        if (opts.descending) {
+          inclusiveEnd = !inclusiveEnd;
+        }
+
+        viewOpts.endkey = toIndexableString(
+          inclusiveEnd ? [endkey, {}] : [endkey]);
+      }
+      if (typeof opts.key !== 'undefined') {
+        var keyStart = toIndexableString([opts.key]);
+        var keyEnd = toIndexableString([opts.key, {}]);
+        if (viewOpts.descending) {
+          viewOpts.endkey = keyStart;
+          viewOpts.startkey = keyEnd;
+        } else {
+          viewOpts.startkey = keyStart;
+          viewOpts.endkey = keyEnd;
+        }
+      }
+      if (!shouldReduce) {
+        if (typeof opts.limit === 'number') {
+          viewOpts.limit = opts.limit;
+        }
+        viewOpts.skip = skip;
+      }
+      return fetchFromView(viewOpts).then(onMapResultsReady);
+    }
+  }
+
+  function httpViewCleanup(db) {
+    return db.request({
+      method: 'POST',
+      url: '_view_cleanup'
+    });
+  }
+
+  function localViewCleanup(db) {
+    return db.get('_local/' + localDocName).then(function (metaDoc) {
+      var docsToViews = new ExportedMap();
+      Object.keys(metaDoc.views).forEach(function (fullViewName) {
+        var parts = parseViewName(fullViewName);
+        var designDocName = '_design/' + parts[0];
+        var viewName = parts[1];
+        var views = docsToViews.get(designDocName);
+        if (!views) {
+          views = new ExportedSet();
+          docsToViews.set(designDocName, views);
+        }
+        views.add(viewName);
+      });
+      var opts = {
+        keys : mapToKeysArray(docsToViews),
+        include_docs : true
+      };
+      return db.allDocs(opts).then(function (res) {
+        var viewsToStatus = {};
+        res.rows.forEach(function (row) {
+          var ddocName = row.key.substring(8); // cuts off '_design/'
+          docsToViews.get(row.key).forEach(function (viewName) {
+            var fullViewName = ddocName + '/' + viewName;
+            /* istanbul ignore if */
+            if (!metaDoc.views[fullViewName]) {
+              // new format, without slashes, to support PouchDB 2.2.0
+              // migration test in pouchdb's browser.migration.js verifies this
+              fullViewName = viewName;
+            }
+            var viewDBNames = Object.keys(metaDoc.views[fullViewName]);
+            // design doc deleted, or view function nonexistent
+            var statusIsGood = row.doc && row.doc.views &&
+              row.doc.views[viewName];
+            viewDBNames.forEach(function (viewDBName) {
+              viewsToStatus[viewDBName] =
+                viewsToStatus[viewDBName] || statusIsGood;
+            });
+          });
+        });
+        var dbsToDelete = Object.keys(viewsToStatus).filter(
+          function (viewDBName) { return !viewsToStatus[viewDBName]; });
+        var destroyPromises = dbsToDelete.map(function (viewDBName) {
+          return sequentialize(getQueue(viewDBName), function () {
+            return new db.constructor(viewDBName, db.__opts).destroy();
+          })();
+        });
+        return PouchPromise$1.all(destroyPromises).then(function () {
+          return {ok: true};
+        });
+      });
+    }, defaultsTo({ok: true}));
+  }
+
+  function queryPromised(db, fun, opts) {
+    /* istanbul ignore next */
+    if (typeof db._query === 'function') {
+      return customQuery(db, fun, opts);
+    }
+    if (isRemote(db)) {
+      return httpQuery(db, fun, opts);
+    }
+
+    if (typeof fun !== 'string') {
+      // temp_view
+      checkQueryParseError(opts, fun);
+
+      tempViewQueue.add(function () {
+        var createViewPromise = createView(
+          /* sourceDB */ db,
+          /* viewName */ 'temp_view/temp_view',
+          /* mapFun */ fun.map,
+          /* reduceFun */ fun.reduce,
+          /* temporary */ true,
+          /* localDocName */ localDocName);
+        return createViewPromise.then(function (view) {
+          return fin(updateView(view).then(function () {
+            return queryView(view, opts);
+          }), function () {
+            return view.db.destroy();
+          });
+        });
+      });
+      return tempViewQueue.finish();
+    } else {
+      // persistent view
+      var fullViewName = fun;
+      var parts = parseViewName(fullViewName);
+      var designDocName = parts[0];
+      var viewName = parts[1];
+      return db.get('_design/' + designDocName).then(function (doc) {
+        var fun = doc.views && doc.views[viewName];
+
+        if (!fun) {
+          // basic validator; it's assumed that every subclass would want this
+          throw new NotFoundError('ddoc ' + doc._id + ' has no view named ' +
+            viewName);
+        }
+
+        ddocValidator(doc, viewName);
+        checkQueryParseError(opts, fun);
+
+        var createViewPromise = createView(
+          /* sourceDB */ db,
+          /* viewName */ fullViewName,
+          /* mapFun */ fun.map,
+          /* reduceFun */ fun.reduce,
+          /* temporary */ false,
+          /* localDocName */ localDocName);
+        return createViewPromise.then(function (view) {
+          if (opts.stale === 'ok' || opts.stale === 'update_after') {
+            if (opts.stale === 'update_after') {
+              nextTick(function () {
+                updateView(view);
+              });
+            }
+            return queryView(view, opts);
+          } else { // stale not ok
+            return updateView(view).then(function () {
+              return queryView(view, opts);
+            });
+          }
+        });
+      });
+    }
+  }
+
+  function abstractQuery(fun, opts, callback) {
+    var db = this;
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    opts = opts ? coerceOptions(opts) : {};
+
+    if (typeof fun === 'function') {
+      fun = {map : fun};
+    }
+
+    var promise = PouchPromise$1.resolve().then(function () {
+      return queryPromised(db, fun, opts);
+    });
+    promisedCallback(promise, callback);
+    return promise;
+  }
+
+  var abstractViewCleanup = callbackify(function () {
+    var db = this;
+    /* istanbul ignore next */
+    if (typeof db._viewCleanup === 'function') {
+      return customViewCleanup(db);
+    }
+    if (isRemote(db)) {
+      return httpViewCleanup(db);
+    }
+    return localViewCleanup(db);
+  });
+
+  return {
+    query: abstractQuery,
+    viewCleanup: abstractViewCleanup
   };
 }
 
@@ -21382,770 +24957,44 @@ var builtInReduce = {
   }
 };
 
-function addHttpParam(paramName, opts, params, asJson) {
-  // add an http param from opts to params, optionally json-encoded
-  var val = opts[paramName];
-  if (typeof val !== 'undefined') {
-    if (asJson) {
-      val = encodeURIComponent(JSON.stringify(val));
-    }
-    params.push(paramName + '=' + val);
-  }
-}
-
-function coerceInteger(integerCandidate) {
-  if (typeof integerCandidate !== 'undefined') {
-    var asNumber = Number(integerCandidate);
-    // prevents e.g. '1foo' or '1.1' being coerced to 1
-    if (!isNaN(asNumber) && asNumber === parseInt(integerCandidate, 10)) {
-      return asNumber;
-    } else {
-      return integerCandidate;
-    }
-  }
-}
-
-function coerceOptions(opts) {
-  opts.group_level = coerceInteger(opts.group_level);
-  opts.limit = coerceInteger(opts.limit);
-  opts.skip = coerceInteger(opts.skip);
-  return opts;
-}
-
-function checkPositiveInteger(number) {
-  if (number) {
-    if (typeof number !== 'number') {
-      return  new QueryParseError('Invalid value for integer: "' +
-      number + '"');
-    }
-    if (number < 0) {
-      return new QueryParseError('Invalid value for positive integer: ' +
-        '"' + number + '"');
-    }
-  }
-}
-
-function checkQueryParseError(options, fun) {
-  var startkeyName = options.descending ? 'endkey' : 'startkey';
-  var endkeyName = options.descending ? 'startkey' : 'endkey';
-
-  if (typeof options[startkeyName] !== 'undefined' &&
-    typeof options[endkeyName] !== 'undefined' &&
-    collate(options[startkeyName], options[endkeyName]) > 0) {
-    throw new QueryParseError('No rows can match your key range, ' +
-    'reverse your start_key and end_key or set {descending : true}');
-  } else if (fun.reduce && options.reduce !== false) {
-    if (options.include_docs) {
-      throw new QueryParseError('{include_docs:true} is invalid for reduce');
-    } else if (options.keys && options.keys.length > 1 &&
-        !options.group && !options.group_level) {
-      throw new QueryParseError('Multi-key fetches for reduce views must use ' +
-      '{group: true}');
-    }
-  }
-  ['group_level', 'limit', 'skip'].forEach(function (optionName) {
-    var error = checkPositiveInteger(options[optionName]);
-    if (error) {
-      throw error;
-    }
-  });
-}
-
-function httpQuery(db, fun, opts) {
-  // List of parameters to add to the PUT request
-  var params = [];
-  var body;
-  var method = 'GET';
-
-  // If opts.reduce exists and is defined, then add it to the list
-  // of parameters.
-  // If reduce=false then the results are that of only the map function
-  // not the final result of map and reduce.
-  addHttpParam('reduce', opts, params);
-  addHttpParam('include_docs', opts, params);
-  addHttpParam('attachments', opts, params);
-  addHttpParam('limit', opts, params);
-  addHttpParam('descending', opts, params);
-  addHttpParam('group', opts, params);
-  addHttpParam('group_level', opts, params);
-  addHttpParam('skip', opts, params);
-  addHttpParam('stale', opts, params);
-  addHttpParam('conflicts', opts, params);
-  addHttpParam('startkey', opts, params, true);
-  addHttpParam('start_key', opts, params, true);
-  addHttpParam('endkey', opts, params, true);
-  addHttpParam('end_key', opts, params, true);
-  addHttpParam('inclusive_end', opts, params);
-  addHttpParam('key', opts, params, true);
-
-  // Format the list of parameters into a valid URI query string
-  params = params.join('&');
-  params = params === '' ? '' : '?' + params;
-
-  // If keys are supplied, issue a POST to circumvent GET query string limits
-  // see http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options
-  if (typeof opts.keys !== 'undefined') {
-    var MAX_URL_LENGTH = 2000;
-    // according to http://stackoverflow.com/a/417184/680742,
-    // the de facto URL length limit is 2000 characters
-
-    var keysAsString =
-      'keys=' + encodeURIComponent(JSON.stringify(opts.keys));
-    if (keysAsString.length + params.length + 1 <= MAX_URL_LENGTH) {
-      // If the keys are short enough, do a GET. we do this to work around
-      // Safari not understanding 304s on POSTs (see pouchdb/pouchdb#1239)
-      params += (params[0] === '?' ? '&' : '?') + keysAsString;
-    } else {
-      method = 'POST';
-      if (typeof fun === 'string') {
-        body = {keys: opts.keys};
-      } else { // fun is {map : mapfun}, so append to this
-        fun.keys = opts.keys;
-      }
-    }
-  }
-
-  // We are referencing a query defined in the design doc
-  if (typeof fun === 'string') {
-    var parts = parseViewName(fun);
-    return db.request({
-      method: method,
-      url: '_design/' + parts[0] + '/_view/' + parts[1] + params,
-      body: body
-    }).then(postprocessAttachments(opts));
-  }
-
-  // We are using a temporary view, terrible for performance, good for testing
-  body = body || {};
-  Object.keys(fun).forEach(function (key) {
-    if (Array.isArray(fun[key])) {
-      body[key] = fun[key];
-    } else {
-      body[key] = fun[key].toString();
-    }
-  });
-  return db.request({
-    method: 'POST',
-    url: '_temp_view' + params,
-    body: body
-  }).then(postprocessAttachments(opts));
-}
-
-// custom adapters can define their own api._query
-// and override the default behavior
-/* istanbul ignore next */
-function customQuery(db, fun, opts) {
-  return new PouchPromise(function (resolve, reject) {
-    db._query(fun, opts, function (err, res) {
-      if (err) {
-        return reject(err);
-      }
-      resolve(res);
-    });
-  });
-}
-
-// custom adapters can define their own api._viewCleanup
-// and override the default behavior
-/* istanbul ignore next */
-function customViewCleanup(db) {
-  return new PouchPromise(function (resolve, reject) {
-    db._viewCleanup(function (err, res) {
-      if (err) {
-        return reject(err);
-      }
-      resolve(res);
-    });
-  });
-}
-
-function defaultsTo(value) {
-  return function (reason) {
-    /* istanbul ignore else */
-    if (reason.status === 404) {
-      return value;
-    } else {
-      throw reason;
-    }
-  };
-}
-
-// returns a promise for a list of docs to update, based on the input docId.
-// the order doesn't matter, because post-3.2.0, bulkDocs
-// is an atomic operation in all three adapters.
-function getDocsToPersist(docId, view, docIdsToChangesAndEmits) {
-  var metaDocId = '_local/doc_' + docId;
-  var defaultMetaDoc = {_id: metaDocId, keys: []};
-  var docData = docIdsToChangesAndEmits[docId];
-  var indexableKeysToKeyValues = docData.indexableKeysToKeyValues;
-  var changes = docData.changes;
-
-  function getMetaDoc() {
-    if (isGenOne(changes)) {
-      // generation 1, so we can safely assume initial state
-      // for performance reasons (avoids unnecessary GETs)
-      return PouchPromise.resolve(defaultMetaDoc);
-    }
-    return view.db.get(metaDocId).catch(defaultsTo(defaultMetaDoc));
-  }
-
-  function getKeyValueDocs(metaDoc) {
-    if (!metaDoc.keys.length) {
-      // no keys, no need for a lookup
-      return PouchPromise.resolve({rows: []});
-    }
-    return view.db.allDocs({
-      keys: metaDoc.keys,
-      include_docs: true
-    });
-  }
-
-  function processKvDocs(metaDoc, kvDocsRes) {
-    var kvDocs = [];
-    var oldKeysMap = {};
-
-    for (var i = 0, len = kvDocsRes.rows.length; i < len; i++) {
-      var row = kvDocsRes.rows[i];
-      var doc = row.doc;
-      if (!doc) { // deleted
-        continue;
-      }
-      kvDocs.push(doc);
-      oldKeysMap[doc._id] = true;
-      doc._deleted = !indexableKeysToKeyValues[doc._id];
-      if (!doc._deleted) {
-        var keyValue = indexableKeysToKeyValues[doc._id];
-        if ('value' in keyValue) {
-          doc.value = keyValue.value;
-        }
-      }
-    }
-
-    var newKeys = Object.keys(indexableKeysToKeyValues);
-    newKeys.forEach(function (key) {
-      if (!oldKeysMap[key]) {
-        // new doc
-        var kvDoc = {
-          _id: key
-        };
-        var keyValue = indexableKeysToKeyValues[key];
-        if ('value' in keyValue) {
-          kvDoc.value = keyValue.value;
-        }
-        kvDocs.push(kvDoc);
-      }
-    });
-    metaDoc.keys = uniq(newKeys.concat(metaDoc.keys));
-    kvDocs.push(metaDoc);
-
-    return kvDocs;
-  }
-
-  return getMetaDoc().then(function (metaDoc) {
-    return getKeyValueDocs(metaDoc).then(function (kvDocsRes) {
-      return processKvDocs(metaDoc, kvDocsRes);
-    });
-  });
-}
-
-// updates all emitted key/value docs and metaDocs in the mrview database
-// for the given batch of documents from the source database
-function saveKeyValues(view, docIdsToChangesAndEmits, seq) {
-  var seqDocId = '_local/lastSeq';
-  return view.db.get(seqDocId)
-  .catch(defaultsTo({_id: seqDocId, seq: 0}))
-  .then(function (lastSeqDoc) {
-    var docIds = Object.keys(docIdsToChangesAndEmits);
-    return PouchPromise.all(docIds.map(function (docId) {
-      return getDocsToPersist(docId, view, docIdsToChangesAndEmits);
-    })).then(function (listOfDocsToPersist) {
-      var docsToPersist = flatten(listOfDocsToPersist);
-      lastSeqDoc.seq = seq;
-      docsToPersist.push(lastSeqDoc);
-      // write all docs in a single operation, update the seq once
-      return view.db.bulkDocs({docs : docsToPersist});
-    });
-  });
-}
-
-function getQueue(view) {
-  var viewName = typeof view === 'string' ? view : view.name;
-  var queue = persistentQueues[viewName];
-  if (!queue) {
-    queue = persistentQueues[viewName] = new TaskQueue$1();
-  }
-  return queue;
-}
-
-function updateView(view) {
-  return sequentialize(getQueue(view), function () {
-    return updateViewInQueue(view);
-  })();
-}
-
-function updateViewInQueue(view) {
-  // bind the emit function once
-  var mapResults;
-  var doc;
-
-  function emit(key, value) {
-    var output = {id: doc._id, key: normalizeKey(key)};
-    // Don't explicitly store the value unless it's defined and non-null.
-    // This saves on storage space, because often people don't use it.
-    if (typeof value !== 'undefined' && value !== null) {
-      output.value = normalizeKey(value);
-    }
-    mapResults.push(output);
-  }
-
-  var mapFun;
+function mapper(mapFun, emit) {
   // for temp_views one can use emit(doc, emit), see #38
-  if (typeof view.mapFun === "function" && view.mapFun.length === 2) {
-    var origMap = view.mapFun;
-    mapFun = function (doc) {
+  if (typeof mapFun === "function" && mapFun.length === 2) {
+    var origMap = mapFun;
+    return function (doc) {
       return origMap(doc, emit);
     };
   } else {
-    mapFun = evalFunctionWithEval(view.mapFun.toString(), emit);
+    return evalFunctionWithEval(mapFun.toString(), emit);
   }
-
-  var currentSeq = view.seq || 0;
-
-  function processChange(docIdsToChangesAndEmits, seq) {
-    return function () {
-      return saveKeyValues(view, docIdsToChangesAndEmits, seq);
-    };
-  }
-
-  var queue = new TaskQueue$1();
-  // TODO(neojski): https://github.com/daleharvey/pouchdb/issues/1521
-
-  return new PouchPromise(function (resolve, reject) {
-
-    function complete() {
-      queue.finish().then(function () {
-        view.seq = currentSeq;
-        resolve();
-      });
-    }
-
-    function processNextBatch() {
-      view.sourceDB.changes({
-        conflicts: true,
-        include_docs: true,
-        style: 'all_docs',
-        since: currentSeq,
-        limit: CHANGES_BATCH_SIZE$1
-      }).on('complete', function (response) {
-        var results = response.results;
-        if (!results.length) {
-          return complete();
-        }
-        var docIdsToChangesAndEmits = {};
-        for (var i = 0, l = results.length; i < l; i++) {
-          var change = results[i];
-          if (change.doc._id[0] !== '_') {
-            mapResults = [];
-            doc = change.doc;
-
-            if (!doc._deleted) {
-              tryCode$1(view.sourceDB, mapFun, [doc]);
-            }
-            mapResults.sort(sortByKeyThenValue);
-
-            var indexableKeysToKeyValues = {};
-            var lastKey;
-            for (var j = 0, jl = mapResults.length; j < jl; j++) {
-              var obj = mapResults[j];
-              var complexKey = [obj.key, obj.id];
-              if (collate(obj.key, lastKey) === 0) {
-                complexKey.push(j); // dup key+id, so make it unique
-              }
-              var indexableKey = toIndexableString(complexKey);
-              indexableKeysToKeyValues[indexableKey] = obj;
-              lastKey = obj.key;
-            }
-            docIdsToChangesAndEmits[change.doc._id] = {
-              indexableKeysToKeyValues: indexableKeysToKeyValues,
-              changes: change.changes
-            };
-          }
-          currentSeq = change.seq;
-        }
-        queue.add(processChange(docIdsToChangesAndEmits, currentSeq));
-        if (results.length < CHANGES_BATCH_SIZE$1) {
-          return complete();
-        }
-        return processNextBatch();
-      }).on('error', onError);
-      /* istanbul ignore next */
-      function onError(err) {
-        reject(err);
-      }
-    }
-
-    processNextBatch();
-  });
 }
 
-function reduceView(view, results, options) {
-  if (options.group_level === 0) {
-    delete options.group_level;
-  }
-
-  var shouldGroup = options.group || options.group_level;
-
-  var reduceFun;
-  if (builtInReduce[view.reduceFun]) {
-    reduceFun = builtInReduce[view.reduceFun];
+function reducer(reduceFun) {
+  if (builtInReduce[reduceFun]) {
+    return builtInReduce[reduceFun];
   } else {
-    reduceFun = evalFunctionWithEval(view.reduceFun.toString());
-  }
-
-  var groups = [];
-  var lvl = isNaN(options.group_level) ? Number.POSITIVE_INFINITY :
-    options.group_level;
-  results.forEach(function (e) {
-    var last = groups[groups.length - 1];
-    var groupKey = shouldGroup ? e.key : null;
-
-    // only set group_level for array keys
-    if (shouldGroup && Array.isArray(groupKey)) {
-      groupKey = groupKey.slice(0, lvl);
-    }
-
-    if (last && collate(last.groupKey, groupKey) === 0) {
-      last.keys.push([e.key, e.id]);
-      last.values.push(e.value);
-      return;
-    }
-    groups.push({
-      keys: [[e.key, e.id]],
-      values: [e.value],
-      groupKey: groupKey
-    });
-  });
-  results = [];
-  for (var i = 0, len = groups.length; i < len; i++) {
-    var e = groups[i];
-    var reduceTry = tryCode$1(view.sourceDB, reduceFun,
-      [e.keys, e.values, false]);
-    if (reduceTry.error && reduceTry.error instanceof BuiltInError) {
-      // CouchDB returns an error if a built-in errors out
-      throw reduceTry.error;
-    }
-    results.push({
-      // CouchDB just sets the value to null if a non-built-in errors out
-      value: reduceTry.error ? null : reduceTry.output,
-      key: e.groupKey
-    });
-  }
-  // no total_rows/offset when reducing
-  return {rows: sliceResults(results, options.limit, options.skip)};
-}
-
-function queryView(view, opts) {
-  return sequentialize(getQueue(view), function () {
-    return queryViewInQueue(view, opts);
-  })();
-}
-
-function queryViewInQueue(view, opts) {
-  var totalRows;
-  var shouldReduce = view.reduceFun && opts.reduce !== false;
-  var skip = opts.skip || 0;
-  if (typeof opts.keys !== 'undefined' && !opts.keys.length) {
-    // equivalent query
-    opts.limit = 0;
-    delete opts.keys;
-  }
-
-  function fetchFromView(viewOpts) {
-    viewOpts.include_docs = true;
-    return view.db.allDocs(viewOpts).then(function (res) {
-      totalRows = res.total_rows;
-      return res.rows.map(function (result) {
-
-        // implicit migration - in older versions of PouchDB,
-        // we explicitly stored the doc as {id: ..., key: ..., value: ...}
-        // this is tested in a migration test
-        /* istanbul ignore next */
-        if ('value' in result.doc && typeof result.doc.value === 'object' &&
-            result.doc.value !== null) {
-          var keys = Object.keys(result.doc.value).sort();
-          // this detection method is not perfect, but it's unlikely the user
-          // emitted a value which was an object with these 3 exact keys
-          var expectedKeys = ['id', 'key', 'value'];
-          if (!(keys < expectedKeys || keys > expectedKeys)) {
-            return result.doc.value;
-          }
-        }
-
-        var parsedKeyAndDocId = parseIndexableString(result.doc._id);
-        return {
-          key: parsedKeyAndDocId[0],
-          id: parsedKeyAndDocId[1],
-          value: ('value' in result.doc ? result.doc.value : null)
-        };
-      });
-    });
-  }
-
-  function onMapResultsReady(rows) {
-    var finalResults;
-    if (shouldReduce) {
-      finalResults = reduceView(view, rows, opts);
-    } else {
-      finalResults = {
-        total_rows: totalRows,
-        offset: skip,
-        rows: rows
-      };
-    }
-    if (opts.include_docs) {
-      var docIds = uniq(rows.map(rowToDocId));
-
-      return view.sourceDB.allDocs({
-        keys: docIds,
-        include_docs: true,
-        conflicts: opts.conflicts,
-        attachments: opts.attachments,
-        binary: opts.binary
-      }).then(function (allDocsRes) {
-        var docIdsToDocs = {};
-        allDocsRes.rows.forEach(function (row) {
-          if (row.doc) {
-            docIdsToDocs['$' + row.id] = row.doc;
-          }
-        });
-        rows.forEach(function (row) {
-          var docId = rowToDocId(row);
-          var doc = docIdsToDocs['$' + docId];
-          if (doc) {
-            row.doc = doc;
-          }
-        });
-        return finalResults;
-      });
-    } else {
-      return finalResults;
-    }
-  }
-
-  if (typeof opts.keys !== 'undefined') {
-    var keys = opts.keys;
-    var fetchPromises = keys.map(function (key) {
-      var viewOpts = {
-        startkey : toIndexableString([key]),
-        endkey   : toIndexableString([key, {}])
-      };
-      return fetchFromView(viewOpts);
-    });
-    return PouchPromise.all(fetchPromises).then(flatten).then(onMapResultsReady);
-  } else { // normal query, no 'keys'
-    var viewOpts = {
-      descending : opts.descending
-    };
-    if (opts.start_key) {
-        opts.startkey = opts.start_key;
-    }
-    if (opts.end_key) {
-        opts.endkey = opts.end_key;
-    }
-    if (typeof opts.startkey !== 'undefined') {
-      viewOpts.startkey = opts.descending ?
-        toIndexableString([opts.startkey, {}]) :
-        toIndexableString([opts.startkey]);
-    }
-    if (typeof opts.endkey !== 'undefined') {
-      var inclusiveEnd = opts.inclusive_end !== false;
-      if (opts.descending) {
-        inclusiveEnd = !inclusiveEnd;
-      }
-
-      viewOpts.endkey = toIndexableString(
-        inclusiveEnd ? [opts.endkey, {}] : [opts.endkey]);
-    }
-    if (typeof opts.key !== 'undefined') {
-      var keyStart = toIndexableString([opts.key]);
-      var keyEnd = toIndexableString([opts.key, {}]);
-      if (viewOpts.descending) {
-        viewOpts.endkey = keyStart;
-        viewOpts.startkey = keyEnd;
-      } else {
-        viewOpts.startkey = keyStart;
-        viewOpts.endkey = keyEnd;
-      }
-    }
-    if (!shouldReduce) {
-      if (typeof opts.limit === 'number') {
-        viewOpts.limit = opts.limit;
-      }
-      viewOpts.skip = skip;
-    }
-    return fetchFromView(viewOpts).then(onMapResultsReady);
+    return evalFunctionWithEval(reduceFun.toString());
   }
 }
 
-function httpViewCleanup(db) {
-  return db.request({
-    method: 'POST',
-    url: '_view_cleanup'
-  });
-}
-
-function localViewCleanup(db) {
-  return db.get('_local/mrviews').then(function (metaDoc) {
-    var docsToViews = {};
-    Object.keys(metaDoc.views).forEach(function (fullViewName) {
-      var parts = parseViewName(fullViewName);
-      var designDocName = '_design/' + parts[0];
-      var viewName = parts[1];
-      docsToViews[designDocName] = docsToViews[designDocName] || {};
-      docsToViews[designDocName][viewName] = true;
-    });
-    var opts = {
-      keys : Object.keys(docsToViews),
-      include_docs : true
-    };
-    return db.allDocs(opts).then(function (res) {
-      var viewsToStatus = {};
-      res.rows.forEach(function (row) {
-        var ddocName = row.key.substring(8);
-        Object.keys(docsToViews[row.key]).forEach(function (viewName) {
-          var fullViewName = ddocName + '/' + viewName;
-          /* istanbul ignore if */
-          if (!metaDoc.views[fullViewName]) {
-            // new format, without slashes, to support PouchDB 2.2.0
-            // migration test in pouchdb's browser.migration.js verifies this
-            fullViewName = viewName;
-          }
-          var viewDBNames = Object.keys(metaDoc.views[fullViewName]);
-          // design doc deleted, or view function nonexistent
-          var statusIsGood = row.doc && row.doc.views &&
-            row.doc.views[viewName];
-          viewDBNames.forEach(function (viewDBName) {
-            viewsToStatus[viewDBName] =
-              viewsToStatus[viewDBName] || statusIsGood;
-          });
-        });
-      });
-      var dbsToDelete = Object.keys(viewsToStatus).filter(
-        function (viewDBName) { return !viewsToStatus[viewDBName]; });
-      var destroyPromises = dbsToDelete.map(function (viewDBName) {
-        return sequentialize(getQueue(viewDBName), function () {
-          return new db.constructor(viewDBName, db.__opts).destroy();
-        })();
-      });
-      return PouchPromise.all(destroyPromises).then(function () {
-        return {ok: true};
-      });
-    });
-  }, defaultsTo({ok: true}));
-}
-
-var viewCleanup = callbackify(function () {
-  var db = this;
-  if (db.type() === 'http') {
-    return httpViewCleanup(db);
-  }
-  /* istanbul ignore next */
-  if (typeof db._viewCleanup === 'function') {
-    return customViewCleanup(db);
-  }
-  return localViewCleanup(db);
-});
-
-function queryPromised(db, fun, opts) {
-  if (db.type() === 'http') {
-    return httpQuery(db, fun, opts);
-  }
-
-  /* istanbul ignore next */
-  if (typeof db._query === 'function') {
-    return customQuery(db, fun, opts);
-  }
-
-  if (typeof fun !== 'string') {
-    // temp_view
-    checkQueryParseError(opts, fun);
-
-    var createViewOpts = {
-      db : db,
-      viewName : 'temp_view/temp_view',
-      map : fun.map,
-      reduce : fun.reduce,
-      temporary : true
-    };
-    tempViewQueue.add(function () {
-      return createView(createViewOpts).then(function (view) {
-        function cleanup() {
-          return view.db.destroy();
-        }
-        return fin(updateView(view).then(function () {
-          return queryView(view, opts);
-        }), cleanup);
-      });
-    });
-    return tempViewQueue.finish();
-  } else {
-    // persistent view
-    var fullViewName = fun;
-    var parts = parseViewName(fullViewName);
-    var designDocName = parts[0];
-    var viewName = parts[1];
-    return db.get('_design/' + designDocName).then(function (doc) {
-      var fun = doc.views && doc.views[viewName];
-
-      if (!fun || typeof fun.map !== 'string') {
-        throw new NotFoundError('ddoc ' + designDocName +
-        ' has no view named ' + viewName);
-      }
-      checkQueryParseError(opts, fun);
-
-      var createViewOpts = {
-        db : db,
-        viewName : fullViewName,
-        map : fun.map,
-        reduce : fun.reduce
-      };
-      return createView(createViewOpts).then(function (view) {
-        if (opts.stale === 'ok' || opts.stale === 'update_after') {
-          if (opts.stale === 'update_after') {
-            immediate(function () {
-              updateView(view);
-            });
-          }
-          return queryView(view, opts);
-        } else { // stale not ok
-          return updateView(view).then(function () {
-            return queryView(view, opts);
-          });
-        }
-      });
-    });
+function ddocValidator(ddoc, viewName) {
+  var fun = ddoc.views && ddoc.views[viewName];
+  if (typeof fun.map !== 'string') {
+    throw new NotFoundError('ddoc ' + ddoc._id + ' has no string view named ' +
+      viewName + ', instead found object of type: ' + typeof fun.map);
   }
 }
 
-var query = function (fun, opts, callback) {
-  if (typeof opts === 'function') {
-    callback = opts;
-    opts = {};
-  }
-  opts = opts ? coerceOptions(opts) : {};
+var localDocName = 'mrviews';
+var abstract = createAbstractMapReduce(localDocName, mapper, reducer, ddocValidator);
 
-  if (typeof fun === 'function') {
-    fun = {map : fun};
-  }
+function query(fun, opts, callback) {
+  return abstract.query.call(this, fun, opts, callback);
+}
 
-  var db = this;
-  var promise = PouchPromise.resolve().then(function () {
-    return queryPromised(db, fun, opts);
-  });
-  promisedCallback(promise, callback);
-  return promise;
-};
-
+function viewCleanup(callback) {
+  return abstract.viewCleanup.call(this, callback);
+}
 
 var mapreduce = {
   query: query,
@@ -22164,13 +25013,13 @@ function fileHasChanged(localDoc, remoteDoc, filename) {
 
 function getDocAttachments(db, doc) {
   var filenames = Object.keys(doc._attachments);
-  return PouchPromise.all(filenames.map(function (filename) {
+  return PouchPromise$1.all(filenames.map(function (filename) {
     return db.getAttachment(doc._id, filename, {rev: doc._rev});
   }));
 }
 
 function getDocAttachmentsFromTargetOrSource(target, src, doc) {
-  var doCheckForLocalAttachments = src.type() === 'http' && target.type() !== 'http';
+  var doCheckForLocalAttachments = isRemote(src) && !isRemote(target);
   var filenames = Object.keys(doc._attachments);
 
   if (!doCheckForLocalAttachments) {
@@ -22178,7 +25027,7 @@ function getDocAttachmentsFromTargetOrSource(target, src, doc) {
   }
 
   return target.get(doc._id).then(function (localDoc) {
-    return PouchPromise.all(filenames.map(function (filename) {
+    return PouchPromise$1.all(filenames.map(function (filename) {
       if (fileHasChanged(localDoc, doc, filename)) {
         return src.getAttachment(doc._id, filename);
       }
@@ -22239,8 +25088,8 @@ function getDocs(src, target, diffs, state) {
       if (state.cancelled) {
         throw new Error('cancelled');
       }
-      return PouchPromise.all(bulkGetResponse.results.map(function (bulkGetInfo) {
-        return PouchPromise.all(bulkGetInfo.docs.map(function (doc) {
+      return PouchPromise$1.all(bulkGetResponse.results.map(function (bulkGetInfo) {
+        return PouchPromise$1.all(bulkGetInfo.docs.map(function (doc) {
           var remoteDoc = doc.ok;
 
           if (doc.error) {
@@ -22253,17 +25102,19 @@ function getDocs(src, target, diffs, state) {
             return remoteDoc;
           }
 
-          return getDocAttachmentsFromTargetOrSource(target, src, remoteDoc).then(function (attachments) {
-            var filenames = Object.keys(remoteDoc._attachments);
-            attachments.forEach(function (attachment, i) {
-              var att = remoteDoc._attachments[filenames[i]];
-              delete att.stub;
-              delete att.length;
-              att.data = attachment;
-            });
+          return getDocAttachmentsFromTargetOrSource(target, src, remoteDoc)
+                   .then(function (attachments) {
+                           var filenames = Object.keys(remoteDoc._attachments);
+                           attachments
+                             .forEach(function (attachment, i) {
+                                        var att = remoteDoc._attachments[filenames[i]];
+                                        delete att.stub;
+                                        delete att.length;
+                                        att.data = attachment;
+                                      });
 
-            return remoteDoc;
-          });
+                                      return remoteDoc;
+                                    });
         }));
       }))
 
@@ -22328,7 +25179,7 @@ function getDocs(src, target, diffs, state) {
     return { ok:ok, docs:resultDocs };
   }
 
-  return PouchPromise.resolve()
+  return PouchPromise$1.resolve()
     .then(getRevisionOneDocs)
     .then(getAllDocs)
     .then(returnResult);
@@ -22349,7 +25200,7 @@ var LOWEST_SEQ = 0;
 function updateCheckpoint(db, id, checkpoint, session, returnValue) {
   return db.get(id).catch(function (err) {
     if (err.status === 404) {
-      if (db.type() === 'http') {
+      if (db.adapter === 'http' || db.adapter === 'https') {
         explainError(
           404, 'PouchDB is just checking if a remote checkpoint exists.'
         );
@@ -22427,7 +25278,7 @@ Checkpointer.prototype.updateTarget = function (checkpoint, session) {
 Checkpointer.prototype.updateSource = function (checkpoint, session) {
   var self = this;
   if (this.readOnlySource) {
-    return PouchPromise.resolve(true);
+    return PouchPromise$1.resolve(true);
   }
   return updateCheckpoint(this.src, this.id, checkpoint,
     session, this.returnValue)
@@ -22459,7 +25310,7 @@ Checkpointer.prototype.getCheckpoint = function () {
   var self = this;
   return self.target.get(self.id).then(function (targetDoc) {
     if (self.readOnlySource) {
-      return PouchPromise.resolve(targetDoc.last_seq);
+      return PouchPromise$1.resolve(targetDoc.last_seq);
     }
 
     return self.src.get(self.id).then(function (sourceDoc) {
@@ -22620,6 +25471,14 @@ function generateReplicationId(src, target, opts) {
   var filterFun = opts.filter ? opts.filter.toString() : '';
   var queryParams = '';
   var filterViewName =  '';
+  var selector = '';
+
+  // possibility for checkpoints to be lost here as behaviour of
+  // JSON.stringify is not stable (see #6226)
+  /* istanbul ignore if */
+  if (opts.selector) {
+    selector = JSON.stringify(opts.selector);
+  }
 
   if (opts.filter && opts.query_params) {
     queryParams = JSON.stringify(sortObjectPropertiesByKey(opts.query_params));
@@ -22629,10 +25488,10 @@ function generateReplicationId(src, target, opts) {
     filterViewName = opts.view.toString();
   }
 
-  return PouchPromise.all([src.id(), target.id()]).then(function (res) {
+  return PouchPromise$1.all([src.id(), target.id()]).then(function (res) {
     var queryData = res[0] + res[1] + filterFun + filterViewName +
-      queryParams + docIds;
-    return new PouchPromise(function (resolve) {
+      queryParams + docIds + selector;
+    return new PouchPromise$1(function (resolve) {
       binaryMd5(queryData, resolve);
     });
   }).then(function (md5sum) {
@@ -22644,7 +25503,7 @@ function generateReplicationId(src, target, opts) {
   });
 }
 
-function replicate$1(src, target, opts, returnValue, result) {
+function replicate(src, target, opts, returnValue, result) {
   var batches = [];               // list of batches to be processed
   var currentBatch;               // the batch currently being processed
   var pendingBatch = {
@@ -22661,6 +25520,7 @@ function replicate$1(src, target, opts, returnValue, result) {
   var batches_limit = opts.batches_limit || 10;
   var changesPending = false;     // true while src.changes is running
   var doc_ids = opts.doc_ids;
+  var selector = opts.selector;
   var repId;
   var checkpointer;
   var changedDocs = [];
@@ -22681,7 +25541,7 @@ function replicate$1(src, target, opts, returnValue, result) {
 
   function initCheckpointer() {
     if (checkpointer) {
-      return PouchPromise.resolve();
+      return PouchPromise$1.resolve();
     }
     return generateReplicationId(src, target, opts).then(function (res) {
       repId = res;
@@ -22887,6 +25747,8 @@ function replicate$1(src, target, opts, returnValue, result) {
     replicationCompleted = true;
 
     if (fatalError) {
+      // need to extend the error because Firefox considers ".result" read-only
+      fatalError = createError(fatalError);
       fatalError.result = result;
 
       if (fatalError.name === 'unauthorized' || fatalError.name === 'forbidden') {
@@ -22894,7 +25756,7 @@ function replicate$1(src, target, opts, returnValue, result) {
         returnValue.removeAllListeners();
       } else {
         backOff(opts, returnValue, fatalError, function () {
-          replicate$1(src, target, opts, returnValue);
+          replicate(src, target, opts, returnValue);
         });
       }
     } else {
@@ -23022,6 +25884,7 @@ function replicate$1(src, target, opts, returnValue, result) {
           batch_size: batch_size,
           style: 'all_docs',
           doc_ids: doc_ids,
+          selector: selector,
           return_docs: true // required so we know when we're done
         };
         if (opts.filter) {
@@ -23102,7 +25965,7 @@ function Replication() {
   this.cancelled = false;
   this.state = 'pending';
   var self = this;
-  var promise = new PouchPromise(function (fulfill, reject) {
+  var promise = new PouchPromise$1(function (fulfill, reject) {
     self.once('complete', fulfill);
     self.once('error', reject);
   });
@@ -23151,7 +26014,7 @@ function toPouch(db, opts) {
   }
 }
 
-function replicate(src, target, opts, callback) {
+function replicateWrapper(src, target, opts, callback) {
 
   if (typeof opts === 'function') {
     callback = opts;
@@ -23175,12 +26038,12 @@ function replicate(src, target, opts, callback) {
   var replicateRet = new Replication(opts);
   var srcPouch = toPouch(src, opts);
   var targetPouch = toPouch(target, opts);
-  replicate$1(srcPouch, targetPouch, opts, replicateRet);
+  replicate(srcPouch, targetPouch, opts, replicateRet);
   return replicateRet;
 }
 
 inherits(Sync, events.EventEmitter);
-function sync(src, target, opts, callback) {
+function sync$1(src, target, opts, callback) {
   if (typeof opts === 'function') {
     callback = opts;
     opts = {};
@@ -23200,11 +26063,11 @@ function Sync(src, target, opts, callback) {
   var self = this;
   this.canceled = false;
 
-  var optsPush = opts.push ? extend$1({}, opts, opts.push) : opts;
-  var optsPull = opts.pull ? extend$1({}, opts, opts.pull) : opts;
+  var optsPush = opts.push ? $inject_Object_assign({}, opts, opts.push) : opts;
+  var optsPull = opts.pull ? $inject_Object_assign({}, opts, opts.pull) : opts;
 
-  this.push = replicate(src, target, optsPush);
-  this.pull = replicate(target, src, optsPull);
+  this.push = replicateWrapper(src, target, optsPush);
+  this.pull = replicateWrapper(target, src, optsPull);
 
   this.pushPaused = true;
   this.pullPaused = true;
@@ -23338,7 +26201,7 @@ function Sync(src, target, opts, callback) {
   this.pull.on('removeListener', removeAll('pull'));
   this.push.on('removeListener', removeAll('push'));
 
-  var promise = PouchPromise.all([
+  var promise = PouchPromise$1.all([
     this.push,
     this.pull
   ]).then(function (resp) {
@@ -23389,8 +26252,8 @@ Sync.prototype.cancel = function () {
 };
 
 function replication(PouchDB) {
-  PouchDB.replicate = replicate;
-  PouchDB.sync = sync;
+  PouchDB.replicate = replicateWrapper;
+  PouchDB.sync = sync$1;
 
   Object.defineProperty(PouchDB.prototype, 'replicate', {
     get: function () {
@@ -23411,7 +26274,7 @@ function replication(PouchDB) {
   };
 }
 
-PouchDB.plugin(IDBPouch)
+PouchDB$5.plugin(IDBPouch)
   .plugin(WebSqlPouch)
   .plugin(HttpPouch$1)
   .plugin(mapreduce)
@@ -23421,400 +26284,13 @@ PouchDB.plugin(IDBPouch)
 // are aggressively optimized and jsnext:main would normally give us this
 // aggressive bundle.
 
-module.exports = PouchDB;
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+module.exports = PouchDB$5;
 
-/***/ },
-/* 37 */
-/***/ function(module, exports, __webpack_require__) {
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
-/* WEBPACK VAR INJECTION */(function(process) {
-/**
- * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = __webpack_require__(38);
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome
-               && 'undefined' != typeof chrome.storage
-                  ? chrome.storage.local
-                  : localstorage();
-
-/**
- * Colors.
- */
-
-exports.colors = [
-  'lightseagreen',
-  'forestgreen',
-  'goldenrod',
-  'dodgerblue',
-  'darkorchid',
-  'crimson'
-];
-
-/**
- * Currently only WebKit-based Web Inspectors, Firefox >= v31,
- * and the Firebug extension (any Firefox version) are known
- * to support "%c" CSS customizations.
- *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
- */
-
-function useColors() {
-  // is webkit? http://stackoverflow.com/a/16459606/376773
-  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-  return (typeof document !== 'undefined' && 'WebkitAppearance' in document.documentElement.style) ||
-    // is firebug? http://stackoverflow.com/a/398120/376773
-    (window.console && (console.firebug || (console.exception && console.table))) ||
-    // is firefox >= v31?
-    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-    (navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31);
-}
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function(v) {
-  return JSON.stringify(v);
-};
-
-
-/**
- * Colorize log arguments if enabled.
- *
- * @api public
- */
-
-function formatArgs() {
-  var args = arguments;
-  var useColors = this.useColors;
-
-  args[0] = (useColors ? '%c' : '')
-    + this.namespace
-    + (useColors ? ' %c' : ' ')
-    + args[0]
-    + (useColors ? '%c ' : ' ')
-    + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return args;
-
-  var c = 'color: ' + this.color;
-  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));
-
-  // the final "%c" is somewhat tricky, because there could be other
-  // arguments passed either before or after the %c, so we need to
-  // figure out the correct index to insert the CSS into
-  var index = 0;
-  var lastC = 0;
-  args[0].replace(/%[a-z%]/g, function(match) {
-    if ('%%' === match) return;
-    index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
-      // (the user may have provided their own)
-      lastC = index;
-    }
-  });
-
-  args.splice(lastC, 0, c);
-  return args;
-}
-
-/**
- * Invokes `console.log()` when available.
- * No-op when `console.log` is not a "function".
- *
- * @api public
- */
-
-function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === typeof console
-    && console.log
-    && Function.prototype.apply.call(console.log, console, arguments);
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
-    } else {
-      exports.storage.debug = namespaces;
-    }
-  } catch(e) {}
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  var r;
-  try {
-    r = exports.storage.debug;
-  } catch(e) {}
-
-  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
-  if ('env' in (typeof process === 'undefined' ? {} : process)) {
-    r = {"NODE_ENV":"production"}.DEBUG;
-  }
-  
-  return r;
-}
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
-/**
- * Localstorage attempts to return the localstorage.
- *
- * This is necessary because safari throws
- * when a user disables cookies/localstorage
- * and you attempt to access it.
- *
- * @return {LocalStorage}
- * @api private
- */
-
-function localstorage(){
-  try {
-    return window.localStorage;
-  } catch (e) {}
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(39)))
-
-/***/ },
-/* 38 */
-/***/ function(module, exports, __webpack_require__) {
-
-
-/**
- * This is the common logic for both the Node.js and web browser
- * implementations of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = debug.debug = debug;
-exports.coerce = coerce;
-exports.disable = disable;
-exports.enable = enable;
-exports.enabled = enabled;
-exports.humanize = __webpack_require__(35);
-
-/**
- * The currently active debug mode names, and names to skip.
- */
-
-exports.names = [];
-exports.skips = [];
-
-/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lowercased letter, i.e. "n".
- */
-
-exports.formatters = {};
-
-/**
- * Previously assigned color.
- */
-
-var prevColor = 0;
-
-/**
- * Previous log timestamp.
- */
-
-var prevTime;
-
-/**
- * Select a color.
- *
- * @return {Number}
- * @api private
- */
-
-function selectColor() {
-  return exports.colors[prevColor++ % exports.colors.length];
-}
-
-/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
-
-function debug(namespace) {
-
-  // define the `disabled` version
-  function disabled() {
-  }
-  disabled.enabled = false;
-
-  // define the `enabled` version
-  function enabled() {
-
-    var self = enabled;
-
-    // set `diff` timestamp
-    var curr = +new Date();
-    var ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
-
-    // add the `color` if not set
-    if (null == self.useColors) self.useColors = exports.useColors();
-    if (null == self.color && self.useColors) self.color = selectColor();
-
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i];
-    }
-
-    args[0] = exports.coerce(args[0]);
-
-    if ('string' !== typeof args[0]) {
-      // anything else let's inspect with %o
-      args = ['%o'].concat(args);
-    }
-
-    // apply any `formatters` transformations
-    var index = 0;
-    args[0] = args[0].replace(/%([a-z%])/g, function(match, format) {
-      // if we encounter an escaped % then don't increase the array index
-      if (match === '%%') return match;
-      index++;
-      var formatter = exports.formatters[format];
-      if ('function' === typeof formatter) {
-        var val = args[index];
-        match = formatter.call(self, val);
-
-        // now we need to remove `args[index]` since it's inlined in the `format`
-        args.splice(index, 1);
-        index--;
-      }
-      return match;
-    });
-
-    // apply env-specific formatting
-    args = exports.formatArgs.apply(self, args);
-
-    var logFn = enabled.log || exports.log || console.log.bind(console);
-    logFn.apply(self, args);
-  }
-  enabled.enabled = true;
-
-  var fn = exports.enabled(namespace) ? enabled : disabled;
-
-  fn.namespace = namespace;
-
-  return fn;
-}
-
-/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
-
-function enable(namespaces) {
-  exports.save(namespaces);
-
-  var split = (namespaces || '').split(/[\s,]+/);
-  var len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    if (!split[i]) continue; // ignore empty strings
-    namespaces = split[i].replace(/[\\^$+?.()|[\]{}]/g, '\\$&').replace(/\*/g, '.*?');
-    if (namespaces[0] === '-') {
-      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-    } else {
-      exports.names.push(new RegExp('^' + namespaces + '$'));
-    }
-  }
-}
-
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-function disable() {
-  exports.enable('');
-}
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-function enabled(name) {
-  var i, len;
-  for (i = 0, len = exports.skips.length; i < len; i++) {
-    if (exports.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (i = 0, len = exports.names.length; i < len; i++) {
-    if (exports.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-
-/***/ },
-/* 39 */
-/***/ function(module, exports) {
+/***/ }),
+/* 41 */
+/***/ (function(module, exports) {
 
 // shim for using process in browser
 var process = module.exports = {};
@@ -23986,6 +26462,10 @@ process.off = noop;
 process.removeListener = noop;
 process.removeAllListeners = noop;
 process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
@@ -23998,37 +26478,9 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 
-/***/ },
-/* 40 */
-/***/ function(module, exports) {
-
-// Generated by CoffeeScript 1.9.2
-(function() {
-  var hasProp = {}.hasOwnProperty,
-    slice = [].slice;
-
-  module.exports = function(source, scope) {
-    var key, keys, value, values;
-    keys = [];
-    values = [];
-    for (key in scope) {
-      if (!hasProp.call(scope, key)) continue;
-      value = scope[key];
-      if (key === 'this') {
-        continue;
-      }
-      keys.push(key);
-      values.push(value);
-    }
-    return Function.apply(null, slice.call(keys).concat([source])).apply(scope["this"], values);
-  };
-
-}).call(this);
-
-
-/***/ },
-/* 41 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
 
 (function (factory) {
     if (true) {
@@ -24783,359 +27235,211 @@ process.umask = function() { return 0; };
 }));
 
 
-/***/ },
-/* 42 */
-/***/ function(module, exports, __webpack_require__) {
-
-var __vue_exports__, __vue_options__
-var __vue_styles__ = {}
-
-/* script */
-__vue_exports__ = __webpack_require__(10)
-
-/* template */
-var __vue_template__ = __webpack_require__(60)
-__vue_options__ = __vue_exports__ = __vue_exports__ || {}
-if (
-  typeof __vue_exports__.default === "object" ||
-  typeof __vue_exports__.default === "function"
-) {
-__vue_options__ = __vue_exports__ = __vue_exports__.default
-}
-if (typeof __vue_options__ === "function") {
-  __vue_options__ = __vue_options__.options
-}
-
-__vue_options__.render = __vue_template__.render
-__vue_options__.staticRenderFns = __vue_template__.staticRenderFns
-
-module.exports = __vue_exports__
-
-
-/***/ },
+/***/ }),
 /* 43 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-var __vue_exports__, __vue_options__
-var __vue_styles__ = {}
+var Component = __webpack_require__(0)(
+  /* script */
+  __webpack_require__(11),
+  /* template */
+  __webpack_require__(60),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
 
-/* script */
-__vue_exports__ = __webpack_require__(11)
-
-/* template */
-var __vue_template__ = __webpack_require__(62)
-__vue_options__ = __vue_exports__ = __vue_exports__ || {}
-if (
-  typeof __vue_exports__.default === "object" ||
-  typeof __vue_exports__.default === "function"
-) {
-__vue_options__ = __vue_exports__ = __vue_exports__.default
-}
-if (typeof __vue_options__ === "function") {
-  __vue_options__ = __vue_options__.options
-}
-
-__vue_options__.render = __vue_template__.render
-__vue_options__.staticRenderFns = __vue_template__.staticRenderFns
-
-module.exports = __vue_exports__
+module.exports = Component.exports
 
 
-/***/ },
+/***/ }),
 /* 44 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-var __vue_exports__, __vue_options__
-var __vue_styles__ = {}
+var Component = __webpack_require__(0)(
+  /* script */
+  __webpack_require__(12),
+  /* template */
+  __webpack_require__(61),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
 
-/* styles */
-__webpack_require__(63)
-
-/* script */
-__vue_exports__ = __webpack_require__(12)
-
-/* template */
-var __vue_template__ = __webpack_require__(53)
-__vue_options__ = __vue_exports__ = __vue_exports__ || {}
-if (
-  typeof __vue_exports__.default === "object" ||
-  typeof __vue_exports__.default === "function"
-) {
-__vue_options__ = __vue_exports__ = __vue_exports__.default
-}
-if (typeof __vue_options__ === "function") {
-  __vue_options__ = __vue_options__.options
-}
-
-__vue_options__.render = __vue_template__.render
-__vue_options__.staticRenderFns = __vue_template__.staticRenderFns
-
-module.exports = __vue_exports__
+module.exports = Component.exports
 
 
-/***/ },
+/***/ }),
 /* 45 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-var __vue_exports__, __vue_options__
-var __vue_styles__ = {}
-
-/* styles */
-__webpack_require__(66)
-
-/* script */
-__vue_exports__ = __webpack_require__(13)
-
-/* template */
-var __vue_template__ = __webpack_require__(56)
-__vue_options__ = __vue_exports__ = __vue_exports__ || {}
-if (
-  typeof __vue_exports__.default === "object" ||
-  typeof __vue_exports__.default === "function"
-) {
-__vue_options__ = __vue_exports__ = __vue_exports__.default
-}
-if (typeof __vue_options__ === "function") {
-  __vue_options__ = __vue_options__.options
-}
-
-__vue_options__.render = __vue_template__.render
-__vue_options__.staticRenderFns = __vue_template__.staticRenderFns
-
-module.exports = __vue_exports__
-
-
-/***/ },
-/* 46 */
-/***/ function(module, exports, __webpack_require__) {
-
-var __vue_exports__, __vue_options__
-var __vue_styles__ = {}
-
-/* styles */
-__webpack_require__(67)
-
-/* script */
-__vue_exports__ = __webpack_require__(14)
-
-/* template */
-var __vue_template__ = __webpack_require__(57)
-__vue_options__ = __vue_exports__ = __vue_exports__ || {}
-if (
-  typeof __vue_exports__.default === "object" ||
-  typeof __vue_exports__.default === "function"
-) {
-__vue_options__ = __vue_exports__ = __vue_exports__.default
-}
-if (typeof __vue_options__ === "function") {
-  __vue_options__ = __vue_options__.options
-}
-
-__vue_options__.render = __vue_template__.render
-__vue_options__.staticRenderFns = __vue_template__.staticRenderFns
-
-module.exports = __vue_exports__
-
-
-/***/ },
-/* 47 */
-/***/ function(module, exports, __webpack_require__) {
-
-var __vue_exports__, __vue_options__
-var __vue_styles__ = {}
 
 /* styles */
 __webpack_require__(68)
 
-/* script */
-__vue_exports__ = __webpack_require__(15)
+var Component = __webpack_require__(0)(
+  /* script */
+  __webpack_require__(13),
+  /* template */
+  __webpack_require__(62),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
 
-/* template */
-var __vue_template__ = __webpack_require__(59)
-__vue_options__ = __vue_exports__ = __vue_exports__ || {}
-if (
-  typeof __vue_exports__.default === "object" ||
-  typeof __vue_exports__.default === "function"
-) {
-__vue_options__ = __vue_exports__ = __vue_exports__.default
-}
-if (typeof __vue_options__ === "function") {
-  __vue_options__ = __vue_options__.options
-}
-
-__vue_options__.render = __vue_template__.render
-__vue_options__.staticRenderFns = __vue_template__.staticRenderFns
-
-module.exports = __vue_exports__
+module.exports = Component.exports
 
 
-/***/ },
-/* 48 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 46 */
+/***/ (function(module, exports, __webpack_require__) {
 
-var __vue_exports__, __vue_options__
-var __vue_styles__ = {}
+
+/* styles */
+__webpack_require__(69)
+
+var Component = __webpack_require__(0)(
+  /* script */
+  __webpack_require__(14),
+  /* template */
+  __webpack_require__(63),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports, __webpack_require__) {
+
 
 /* styles */
 __webpack_require__(65)
 
-/* script */
-__vue_exports__ = __webpack_require__(16)
+var Component = __webpack_require__(0)(
+  /* script */
+  __webpack_require__(15),
+  /* template */
+  __webpack_require__(54),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
 
-/* template */
-var __vue_template__ = __webpack_require__(55)
-__vue_options__ = __vue_exports__ = __vue_exports__ || {}
-if (
-  typeof __vue_exports__.default === "object" ||
-  typeof __vue_exports__.default === "function"
-) {
-__vue_options__ = __vue_exports__ = __vue_exports__.default
-}
-if (typeof __vue_options__ === "function") {
-  __vue_options__ = __vue_options__.options
-}
-
-__vue_options__.render = __vue_template__.render
-__vue_options__.staticRenderFns = __vue_template__.staticRenderFns
-__vue_options__._scopeId = "data-v-208daeb5"
-
-module.exports = __vue_exports__
+module.exports = Component.exports
 
 
-/***/ },
+/***/ }),
+/* 48 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/* styles */
+__webpack_require__(67)
+
+var Component = __webpack_require__(0)(
+  /* script */
+  __webpack_require__(16),
+  /* template */
+  __webpack_require__(59),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
+
+module.exports = Component.exports
+
+
+/***/ }),
 /* 49 */
-/***/ function(module, exports, __webpack_require__) {
-
-var __vue_exports__, __vue_options__
-var __vue_styles__ = {}
-
-/* script */
-__vue_exports__ = __webpack_require__(17)
-
-/* template */
-var __vue_template__ = __webpack_require__(52)
-__vue_options__ = __vue_exports__ = __vue_exports__ || {}
-if (
-  typeof __vue_exports__.default === "object" ||
-  typeof __vue_exports__.default === "function"
-) {
-__vue_options__ = __vue_exports__ = __vue_exports__.default
-}
-if (typeof __vue_options__ === "function") {
-  __vue_options__ = __vue_options__.options
-}
-
-__vue_options__.render = __vue_template__.render
-__vue_options__.staticRenderFns = __vue_template__.staticRenderFns
-
-module.exports = __vue_exports__
+/***/ (function(module, exports, __webpack_require__) {
 
 
-/***/ },
+/* styles */
+__webpack_require__(66)
+
+var Component = __webpack_require__(0)(
+  /* script */
+  __webpack_require__(17),
+  /* template */
+  __webpack_require__(57),
+  /* scopeId */
+  "data-v-54cb82b4",
+  /* cssModules */
+  null
+)
+
+module.exports = Component.exports
+
+
+/***/ }),
 /* 50 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-var __vue_exports__, __vue_options__
-var __vue_styles__ = {}
+var Component = __webpack_require__(0)(
+  /* script */
+  __webpack_require__(18),
+  /* template */
+  __webpack_require__(56),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
 
-/* script */
-__vue_exports__ = __webpack_require__(18)
-
-/* template */
-var __vue_template__ = __webpack_require__(58)
-__vue_options__ = __vue_exports__ = __vue_exports__ || {}
-if (
-  typeof __vue_exports__.default === "object" ||
-  typeof __vue_exports__.default === "function"
-) {
-__vue_options__ = __vue_exports__ = __vue_exports__.default
-}
-if (typeof __vue_options__ === "function") {
-  __vue_options__ = __vue_options__.options
-}
-
-__vue_options__.render = __vue_template__.render
-__vue_options__.staticRenderFns = __vue_template__.staticRenderFns
-
-module.exports = __vue_exports__
+module.exports = Component.exports
 
 
-/***/ },
+/***/ }),
 /* 51 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-var __vue_exports__, __vue_options__
-var __vue_styles__ = {}
+var Component = __webpack_require__(0)(
+  /* script */
+  __webpack_require__(19),
+  /* template */
+  __webpack_require__(58),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
 
-/* script */
-__vue_exports__ = __webpack_require__(19)
-
-/* template */
-var __vue_template__ = __webpack_require__(61)
-__vue_options__ = __vue_exports__ = __vue_exports__ || {}
-if (
-  typeof __vue_exports__.default === "object" ||
-  typeof __vue_exports__.default === "function"
-) {
-__vue_options__ = __vue_exports__ = __vue_exports__.default
-}
-if (typeof __vue_options__ === "function") {
-  __vue_options__ = __vue_options__.options
-}
-
-__vue_options__.render = __vue_template__.render
-__vue_options__.staticRenderFns = __vue_template__.staticRenderFns
-
-module.exports = __vue_exports__
+module.exports = Component.exports
 
 
-/***/ },
+/***/ }),
 /* 52 */
-/***/ function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
-  return _c('span', {
-    staticClass: "paste-box mousetrap",
-    attrs: {
-      "title": _vm.title,
-      "contenteditable": "true"
-    },
-    on: {
-      "paste": _vm.pasteHandler
-    }
-  })
-},staticRenderFns: []}
+var Component = __webpack_require__(0)(
+  /* script */
+  __webpack_require__(20),
+  /* template */
+  __webpack_require__(55),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
 
-/***/ },
+module.exports = Component.exports
+
+
+/***/ }),
 /* 53 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
-  return _c('div', {
-    class: ['pixelParallel-overlay', {
-      'pixelParallel-overlay-enabled': _vm.config.visible
-    }]
-  }, [_c('overlayGrids', {
-    attrs: {
-      "config": _vm.config
-    }
-  }), _vm._v(" "), _c('overlayImage', {
-    attrs: {
-      "config": _vm.config,
-      "image": _vm.image
-    }
-  }), _vm._v(" "), _c('overlayRulers', {
-    attrs: {
-      "config": _vm.config
-    }
-  })])
-},staticRenderFns: []}
-
-/***/ },
-/* 54 */
-/***/ function(module, exports) {
-
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _c('div', {
     attrs: {
       "id": "pixelParallel"
@@ -25151,14 +27455,81 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "config": _vm.config,
       "image": _vm.image
     }
+  })], 1)
+},staticRenderFns: []}
+
+/***/ }),
+/* 54 */
+/***/ (function(module, exports) {
+
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('div', {
+    class: _vm.imageOuterClasses,
+    style: ({
+      'height': (_vm.imageOuterHeight + "px")
+    })
+  }, [_c('div', {
+    directives: [{
+      name: "draggable",
+      rawName: "v-draggable",
+      value: ({
+        x: true,
+        y: true,
+        onDragEnd: _vm.handleDragEnd
+      }),
+      expression: "{x: true, y: true, onDragEnd: handleDragEnd}"
+    }],
+    staticClass: "pixelParallel-image-inner",
+    style: (_vm.imageInnerStyles)
+  }, [_c('img', {
+    staticClass: "pixelParallel-image",
+    style: (_vm.imageStyles),
+    attrs: {
+      "alt": "PixelParallel Image",
+      "src": _vm.image.base64string
+    }
+  })])])
+},staticRenderFns: []}
+
+/***/ }),
+/* 55 */
+/***/ (function(module, exports) {
+
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('span', {
+    staticClass: "btn btn-block btn-file"
+  }, [_vm._v("\n  " + _vm._s(_vm.title) + "\n\n  "), _c('input', {
+    attrs: {
+      "type": "file"
+    },
+    on: {
+      "change": _vm.changeHandler
+    }
   })])
 },staticRenderFns: []}
 
-/***/ },
-/* 55 */
-/***/ function(module, exports) {
+/***/ }),
+/* 56 */
+/***/ (function(module, exports) {
 
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('span', {
+    staticClass: "paste-box mousetrap",
+    attrs: {
+      "title": _vm.title,
+      "contenteditable": "true"
+    },
+    on: {
+      "paste": _vm.pasteHandler
+    }
+  })
+},staticRenderFns: []}
+
+/***/ }),
+/* 57 */
+/***/ (function(module, exports) {
+
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _c('div', {
     directives: [{
       name: "draggable",
@@ -25287,64 +27658,44 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "title": "Upload Image",
       "on-upload": _vm.handleImageChange
     }
-  })]), _vm._v(" "), _vm._m(0), _vm._v(" "), _c('div', {
+  })], 1), _vm._v(" "), _vm._m(0), _vm._v(" "), _c('div', {
     staticClass: "col col-2-of-5"
   }, [_c('paste-box', {
     attrs: {
       "title": "Paste Here",
       "on-paste": _vm.handleImageChange
     }
-  })])]), _vm._v(" "), _c('div', {
+  })], 1)]), _vm._v(" "), _c('div', {
     staticClass: "row"
   }, [_c('div', {
     staticClass: "col col-1-of-4"
   }, [_c('number', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.image.top),
-      expression: "config.image.top"
-    }],
     attrs: {
       "title": "Top"
     },
-    domProps: {
-      "value": (_vm.config.image.top)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.image.top = $event
-      }
+    model: {
+      value: (_vm.config.image.top),
+      callback: function($$v) {
+        _vm.config.image.top = $$v
+      },
+      expression: "config.image.top"
     }
-  })]), _vm._v(" "), _c('div', {
+  })], 1), _vm._v(" "), _c('div', {
     staticClass: "col col-1-of-4"
   }, [_c('number', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.image.left),
-      expression: "config.image.left"
-    }],
     attrs: {
       "title": "Left"
     },
-    domProps: {
-      "value": (_vm.config.image.left)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.image.left = $event
-      }
+    model: {
+      value: (_vm.config.image.left),
+      callback: function($$v) {
+        _vm.config.image.left = $$v
+      },
+      expression: "config.image.left"
     }
-  })]), _vm._v(" "), _c('div', {
+  })], 1), _vm._v(" "), _c('div', {
     staticClass: "col col-1-of-4"
   }, [_c('number', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.image.opacity),
-      expression: "config.image.opacity"
-    }],
     attrs: {
       "title": "Opacity",
       "arrows": true,
@@ -25352,38 +27703,30 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "min": 0,
       "max": 1
     },
-    domProps: {
-      "value": (_vm.config.image.opacity)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.image.opacity = $event
-      }
+    model: {
+      value: (_vm.config.image.opacity),
+      callback: function($$v) {
+        _vm.config.image.opacity = $$v
+      },
+      expression: "config.image.opacity"
     }
-  })]), _vm._v(" "), _c('div', {
+  })], 1), _vm._v(" "), _c('div', {
     staticClass: "col col-1-of-4"
   }, [_c('number', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.image.scale),
-      expression: "config.image.scale"
-    }],
     attrs: {
       "title": "Scale",
       "min": 0,
       "max": 3,
       "step": .05
     },
-    domProps: {
-      "value": (_vm.config.image.scale)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.image.scale = $event
-      }
+    model: {
+      value: (_vm.config.image.scale),
+      callback: function($$v) {
+        _vm.config.image.scale = $$v
+      },
+      expression: "config.image.scale"
     }
-  })])]), _vm._v(" "), _c('div', {
+  })], 1)]), _vm._v(" "), _c('div', {
     staticClass: "row"
   }, [_c('div', {
     staticClass: "col"
@@ -25450,52 +27793,32 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
   }, [_c('div', {
     staticClass: "col col-1-of-3"
   }, [_c('toggle', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.horizontalGrid.enabled),
-      expression: "config.horizontalGrid.enabled"
-    }],
     attrs: {
       "title": "Horizontal Grid"
     },
-    domProps: {
-      "value": (_vm.config.horizontalGrid.enabled)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.horizontalGrid.enabled = $event
-      }
+    model: {
+      value: (_vm.config.horizontalGrid.enabled),
+      callback: function($$v) {
+        _vm.config.horizontalGrid.enabled = $$v
+      },
+      expression: "config.horizontalGrid.enabled"
     }
-  })]), _vm._v(" "), _c('div', {
+  })], 1), _vm._v(" "), _c('div', {
     staticClass: "col col-1-of-3"
   }, [_c('toggle', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.verticalGrid.enabled),
-      expression: "config.verticalGrid.enabled"
-    }],
     attrs: {
       "title": "Vertical Grid"
     },
-    domProps: {
-      "value": (_vm.config.verticalGrid.enabled)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.verticalGrid.enabled = $event
-      }
+    model: {
+      value: (_vm.config.verticalGrid.enabled),
+      callback: function($$v) {
+        _vm.config.verticalGrid.enabled = $$v
+      },
+      expression: "config.verticalGrid.enabled"
     }
-  })]), _vm._v(" "), _c('div', {
+  })], 1), _vm._v(" "), _c('div', {
     staticClass: "col col-1-of-3"
   }, [_c('toggle', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.rulers.enabled),
-      expression: "config.rulers.enabled"
-    }],
     attrs: {
       "title": "Rulers",
       "action": {
@@ -25503,88 +27826,60 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         handler: this.handleRulersReset
       }
     },
-    domProps: {
-      "value": (_vm.config.rulers.enabled)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.rulers.enabled = $event
-      }
+    model: {
+      value: (_vm.config.rulers.enabled),
+      callback: function($$v) {
+        _vm.config.rulers.enabled = $$v
+      },
+      expression: "config.rulers.enabled"
     }
-  })])]), _vm._v(" "), _c('div', {
+  })], 1)]), _vm._v(" "), _c('div', {
     staticClass: "row"
   }, [_c('div', {
     staticClass: "col col-1-of-4"
   }, [_c('number', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.horizontalGrid.width),
-      expression: "config.horizontalGrid.width"
-    }],
     attrs: {
       "title": "Width",
       "min": 0
     },
-    domProps: {
-      "value": (_vm.config.horizontalGrid.width)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.horizontalGrid.width = $event
-      }
+    model: {
+      value: (_vm.config.horizontalGrid.width),
+      callback: function($$v) {
+        _vm.config.horizontalGrid.width = $$v
+      },
+      expression: "config.horizontalGrid.width"
     }
-  })]), _vm._v(" "), _c('div', {
+  })], 1), _vm._v(" "), _c('div', {
     staticClass: "col col-1-of-4"
   }, [_c('number', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.horizontalGrid.columns),
-      expression: "config.horizontalGrid.columns"
-    }],
     attrs: {
       "title": "Columns",
       "min": 0
     },
-    domProps: {
-      "value": (_vm.config.horizontalGrid.columns)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.horizontalGrid.columns = $event
-      }
+    model: {
+      value: (_vm.config.horizontalGrid.columns),
+      callback: function($$v) {
+        _vm.config.horizontalGrid.columns = $$v
+      },
+      expression: "config.horizontalGrid.columns"
     }
-  })]), _vm._v(" "), _c('div', {
+  })], 1), _vm._v(" "), _c('div', {
     staticClass: "col col-1-of-4"
   }, [_c('number', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.horizontalGrid.gutter),
-      expression: "config.horizontalGrid.gutter"
-    }],
     attrs: {
       "title": "Gutter",
       "min": 0
     },
-    domProps: {
-      "value": (_vm.config.horizontalGrid.gutter)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.horizontalGrid.gutter = $event
-      }
+    model: {
+      value: (_vm.config.horizontalGrid.gutter),
+      callback: function($$v) {
+        _vm.config.horizontalGrid.gutter = $$v
+      },
+      expression: "config.horizontalGrid.gutter"
     }
-  })]), _vm._v(" "), _c('div', {
+  })], 1), _vm._v(" "), _c('div', {
     staticClass: "col col-1-of-4"
   }, [_c('number', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.horizontalGrid.opacity),
-      expression: "config.horizontalGrid.opacity"
-    }],
     attrs: {
       "title": "Opacity",
       "arrows": true,
@@ -25592,46 +27887,32 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "min": 0,
       "max": 1
     },
-    domProps: {
-      "value": (_vm.config.horizontalGrid.opacity)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.horizontalGrid.opacity = $event
-      }
+    model: {
+      value: (_vm.config.horizontalGrid.opacity),
+      callback: function($$v) {
+        _vm.config.horizontalGrid.opacity = $$v
+      },
+      expression: "config.horizontalGrid.opacity"
     }
-  })])]), _vm._v(" "), _c('div', {
+  })], 1)]), _vm._v(" "), _c('div', {
     staticClass: "row"
   }, [_c('div', {
     staticClass: "col col-1-of-4"
   }, [_c('number', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.verticalGrid.gutter),
-      expression: "config.verticalGrid.gutter"
-    }],
     attrs: {
       "title": "Height",
       "min": 0
     },
-    domProps: {
-      "value": (_vm.config.verticalGrid.gutter)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.verticalGrid.gutter = $event
-      }
+    model: {
+      value: (_vm.config.verticalGrid.gutter),
+      callback: function($$v) {
+        _vm.config.verticalGrid.gutter = $$v
+      },
+      expression: "config.verticalGrid.gutter"
     }
-  })]), _vm._v(" "), _c('div', {
+  })], 1), _vm._v(" "), _c('div', {
     staticClass: "col col-1-of-4"
   }, [_c('number', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.config.verticalGrid.opacity),
-      expression: "config.verticalGrid.opacity"
-    }],
     attrs: {
       "title": "Opacity",
       "arrows": true,
@@ -25639,16 +27920,15 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "min": 0,
       "max": 1
     },
-    domProps: {
-      "value": (_vm.config.verticalGrid.opacity)
-    },
-    on: {
-      "input": function($event) {
-        _vm.config.verticalGrid.opacity = $event
-      }
+    model: {
+      value: (_vm.config.verticalGrid.opacity),
+      callback: function($$v) {
+        _vm.config.verticalGrid.opacity = $$v
+      },
+      expression: "config.verticalGrid.opacity"
     }
-  })])])]) : _vm._e()])])])])])
-},staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
+  })], 1)])]) : _vm._e()])])], 1)], 1)])
+},staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _c('div', {
     staticClass: "col col-1-of-5"
   }, [_c('span', {
@@ -25656,66 +27936,11 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
   }, [_vm._v("or")])])
 }]}
 
-/***/ },
-/* 56 */
-/***/ function(module, exports) {
-
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
-  return _c('div', {
-    staticClass: "pixelParallel-grids"
-  }, [_c('div', {
-    class: ['pixelParallel-grid-horizontal', {
-      'pixelParallel-grid-horizontal-enabled': _vm.config.horizontalGrid.enabled
-    }],
-    style: (_vm.horizontalGridStyles)
-  }, _vm._l((_vm.config.horizontalGrid.columns), function(val) {
-    return _c('span')
-  })), _vm._v(" "), _c('div', {
-    class: ['pixelParallel-grid-vertical', {
-      'pixelParallel-grid-vertical-enabled': _vm.config.verticalGrid.enabled
-    }],
-    style: (_vm.verticalGridStyles)
-  })])
-},staticRenderFns: []}
-
-/***/ },
-/* 57 */
-/***/ function(module, exports) {
-
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
-  return _c('div', {
-    class: _vm.imageOuterClasses,
-    style: ({
-      'height': (_vm.imageOuterHeight + "px")
-    })
-  }, [_c('div', {
-    directives: [{
-      name: "draggable",
-      rawName: "v-draggable",
-      value: ({
-        x: true,
-        y: true,
-        onDragEnd: _vm.handleDragEnd
-      }),
-      expression: "{x: true, y: true, onDragEnd: handleDragEnd}"
-    }],
-    staticClass: "pixelParallel-image-inner",
-    style: (_vm.imageInnerStyles)
-  }, [_c('img', {
-    staticClass: "pixelParallel-image",
-    style: (_vm.imageStyles),
-    attrs: {
-      "alt": "PixelParallel Image",
-      "src": _vm.image.base64string
-    }
-  })])])
-},staticRenderFns: []}
-
-/***/ },
+/***/ }),
 /* 58 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _c('label', {
     class: ['toggle', {
       'toggle-checked': _vm.checked
@@ -25744,10 +27969,10 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "type": "checkbox"
     },
     domProps: {
-      "checked": Array.isArray(_vm.checked) ? _vm._i(_vm.checked, null) > -1 : _vm._q(_vm.checked, true)
+      "checked": Array.isArray(_vm.checked) ? _vm._i(_vm.checked, null) > -1 : (_vm.checked)
     },
     on: {
-      "change": function($event) {
+      "__c": function($event) {
         var $$a = _vm.checked,
           $$el = $event.target,
           $$c = $$el.checked ? (true) : (false);
@@ -25765,7 +27990,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       }
     }
   }), _vm._v(" "), _vm._m(0)])
-},staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
+},staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _c('span', {
     staticClass: "toggle-main"
   }, [_c('span', {
@@ -25773,11 +27998,11 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
   })])
 }]}
 
-/***/ },
+/***/ }),
 /* 59 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _c('div', {
     class: ['pixelParallel-rulers', {
       'pixelParallel-rulers-enabled': _vm.config.rulers.enabled
@@ -25813,11 +28038,11 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
   })])
 },staticRenderFns: []}
 
-/***/ },
+/***/ }),
 /* 60 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _c('div', {
     class: ['droparea', {
       'enabled': _vm.enabled
@@ -25834,28 +28059,11 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
   })])
 },staticRenderFns: []}
 
-/***/ },
+/***/ }),
 /* 61 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
-  return _c('span', {
-    staticClass: "btn btn-block btn-file"
-  }, [_vm._v("\n  " + _vm._s(_vm.title) + "\n\n  "), _c('input', {
-    attrs: {
-      "type": "file"
-    },
-    on: {
-      "change": _vm.changeHandler
-    }
-  })])
-},staticRenderFns: []}
-
-/***/ },
-/* 62 */
-/***/ function(module, exports) {
-
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._c;
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _c('label', {
     staticClass: "number"
   }, [_c('span', {
@@ -25895,12 +28103,12 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "max": _vm.max
     },
     domProps: {
-      "value": _vm._s(_vm.inputVal)
+      "value": (_vm.inputVal)
     },
     on: {
       "input": function($event) {
         if ($event.target.composing) { return; }
-        _vm.inputVal = _vm._n($event.target.value)
+        _vm.inputVal = $event.target.value
       },
       "blur": function($event) {
         _vm.$forceUpdate()
@@ -25909,168 +28117,170 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
   })])])
 },staticRenderFns: []}
 
-/***/ },
+/***/ }),
+/* 62 */
+/***/ (function(module, exports) {
+
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('div', {
+    class: ['pixelParallel-overlay', {
+      'pixelParallel-overlay-enabled': _vm.config.visible
+    }]
+  }, [_c('overlayGrids', {
+    attrs: {
+      "config": _vm.config
+    }
+  }), _vm._v(" "), _c('overlayImage', {
+    attrs: {
+      "config": _vm.config,
+      "image": _vm.image
+    }
+  }), _vm._v(" "), _c('overlayRulers', {
+    attrs: {
+      "config": _vm.config
+    }
+  })], 1)
+},staticRenderFns: []}
+
+/***/ }),
 /* 63 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-// style-loader: Adds some css to the DOM by adding a <style> tag
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('div', {
+    staticClass: "pixelParallel-grids"
+  }, [_c('div', {
+    class: ['pixelParallel-grid-horizontal', {
+      'pixelParallel-grid-horizontal-enabled': _vm.config.horizontalGrid.enabled
+    }],
+    style: (_vm.horizontalGridStyles)
+  }, _vm._l((_vm.config.horizontalGrid.columns), function(val) {
+    return _c('span')
+  })), _vm._v(" "), _c('div', {
+    class: ['pixelParallel-grid-vertical', {
+      'pixelParallel-grid-vertical-enabled': _vm.config.verticalGrid.enabled
+    }],
+    style: (_vm.verticalGridStyles)
+  })])
+},staticRenderFns: []}
 
-// load the styles
-var content = __webpack_require__(24);
-if(typeof content === 'string') content = [[module.i, content, '']];
-// add the styles to the DOM
-var update = __webpack_require__(1)(content, {});
-if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
-if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-101740c1!./../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./Overlay.vue", function() {
-			var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-101740c1!./../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./Overlay.vue");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
-	module.hot.dispose(function() { update(); });
-}
-
-/***/ },
+/***/ }),
 /* 64 */
-/***/ function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(25);
-if(typeof content === 'string') content = [[module.i, content, '']];
-// add the styles to the DOM
-var update = __webpack_require__(1)(content, {});
-if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
-if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!./../node_modules/css-loader/index.js!./../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-159217f3!./../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./PixelParallel.vue", function() {
-			var newContent = require("!!./../node_modules/css-loader/index.js!./../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-159217f3!./../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./PixelParallel.vue");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
-	module.hot.dispose(function() { update(); });
-}
-
-/***/ },
-/* 65 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
 var content = __webpack_require__(26);
 if(typeof content === 'string') content = [[module.i, content, '']];
-// add the styles to the DOM
-var update = __webpack_require__(1)(content, {});
 if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
-if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-208daeb5&scoped=true!./../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./Panel.vue", function() {
-			var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-208daeb5&scoped=true!./../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./Panel.vue");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
-	module.hot.dispose(function() { update(); });
-}
+// add the styles to the DOM
+var update = __webpack_require__(2)("0a9ac382", content, true);
 
-/***/ },
-/* 66 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 65 */
+/***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
 var content = __webpack_require__(27);
 if(typeof content === 'string') content = [[module.i, content, '']];
-// add the styles to the DOM
-var update = __webpack_require__(1)(content, {});
 if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
-if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-4addd55c!./../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./OverlayGrids.vue", function() {
-			var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-4addd55c!./../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./OverlayGrids.vue");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
-	module.hot.dispose(function() { update(); });
-}
+// add the styles to the DOM
+var update = __webpack_require__(2)("65692d52", content, true);
 
-/***/ },
-/* 67 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 66 */
+/***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
 var content = __webpack_require__(28);
 if(typeof content === 'string') content = [[module.i, content, '']];
-// add the styles to the DOM
-var update = __webpack_require__(1)(content, {});
 if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
-if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-6daf8c6c!./../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./OverlayImage.vue", function() {
-			var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-6daf8c6c!./../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./OverlayImage.vue");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
-	module.hot.dispose(function() { update(); });
-}
+// add the styles to the DOM
+var update = __webpack_require__(2)("50d13449", content, true);
 
-/***/ },
-/* 68 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 67 */
+/***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
 var content = __webpack_require__(29);
 if(typeof content === 'string') content = [[module.i, content, '']];
-// add the styles to the DOM
-var update = __webpack_require__(1)(content, {});
 if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
-if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-895aec44!./../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./OverlayRulers.vue", function() {
-			var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/vue-loader/lib/style-rewriter.js?id=data-v-895aec44!./../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./OverlayRulers.vue");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
-	module.hot.dispose(function() { update(); });
+// add the styles to the DOM
+var update = __webpack_require__(2)("41341762", content, true);
+
+/***/ }),
+/* 68 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(30);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(2)("454c1251", content, true);
+
+/***/ }),
+/* 69 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(31);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(2)("aa5febfc", content, true);
+
+/***/ }),
+/* 70 */
+/***/ (function(module, exports) {
+
+/**
+ * Translates the list format produced by css-loader into something
+ * easier to manipulate.
+ */
+module.exports = function listToStyles (parentId, list) {
+  var styles = []
+  var newStyles = {}
+  for (var i = 0; i < list.length; i++) {
+    var item = list[i]
+    var id = item[0]
+    var css = item[1]
+    var media = item[2]
+    var sourceMap = item[3]
+    var part = {
+      id: parentId + ':' + i,
+      css: css,
+      media: media,
+      sourceMap: sourceMap
+    }
+    if (!newStyles[id]) {
+      styles.push(newStyles[id] = { id: id, parts: [part] })
+    } else {
+      newStyles[id].parts.push(part)
+    }
+  }
+  return styles
 }
 
-/***/ },
-/* 69 */
-/***/ function(module, exports) {
+
+/***/ }),
+/* 71 */
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-'use strict';
+
 
 /**
  * Stringify/parse functions that don't operate
@@ -26245,34 +28455,5 @@ exports.parse = function (str) {
 };
 
 
-/***/ },
-/* 70 */
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__PixelParallel_vue__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__PixelParallel_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__PixelParallel_vue__);
-
-
-
-var pixelParallelContainer = document.querySelector('#pixel-parallel-container');
-
-if (pixelParallelContainer === null) {
-
-  pixelParallelContainer = document.createElement('div');
-  pixelParallelContainer.id = 'pixel-parallel-container';
-
-  document.body.appendChild(pixelParallelContainer);
-
-  new __WEBPACK_IMPORTED_MODULE_0_vue___default.a({
-    el: pixelParallelContainer,
-    render: function render(h) {
-      return h(__WEBPACK_IMPORTED_MODULE_1__PixelParallel_vue___default.a);
-    }
-  });
-}
-
-/***/ }
+/***/ })
 /******/ ]);

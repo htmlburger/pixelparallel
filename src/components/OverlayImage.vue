@@ -17,7 +17,7 @@ export default {
 
   data () {
     return {
-      imageOuterHeight: document.body.clientHeight
+      imageOuterHeight: this.getDocumentHeight()
     }
   },
 
@@ -51,9 +51,15 @@ export default {
       this.config.image.top = newPosition.top;
       this.config.image.left = newPosition.left;
     },
+    getDocumentHeight() {
+      var body = document.body;
+      var html = document.documentElement;
+
+      return Math.max(document.documentElement.offsetHeight, body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight);
+    },
     resizeOverlay () {
       this.imageOuterHeight = 0;
-      this.imageOuterHeight = document.body.clientHeight;
+      this.imageOuterHeight = this.getDocumentHeight();
     }
   },
   mounted () {
