@@ -11037,16 +11037,23 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
   computed: {
     horizontalGridStyles: function horizontalGridStyles() {
+      var opacity = this.config.horizontalGrid.opacity;
+      var width = parseInt(this.config.horizontalGrid.width) || 0;
+      var gutter = parseInt(this.config.horizontalGrid.gutter) || 0;
+
       return {
-        'opacity': this.config.horizontalGrid.opacity,
-        'border-spacing': this.config.horizontalGrid.gutter + 'px',
-        'width': '' + (this.config.horizontalGrid.width ? this.config.horizontalGrid.width + this.config.horizontalGrid.gutter * 2 + 'px' : 'calc(100% + ' + this.config.horizontalGrid.gutter * 2 + 'px)')
+        'opacity': opacity,
+        'border-spacing': gutter + 'px',
+        'width': '' + (width ? width + gutter * 2 + 'px' : 'calc(100% + ' + gutter * 2 + 'px)')
       };
     },
     verticalGridStyles: function verticalGridStyles() {
+      var opacity = this.config.verticalGrid.opacity;
+      var gutter = parseInt(this.config.verticalGrid.gutter) || 0;
+
       return {
-        'opacity': this.config.verticalGrid.opacity,
-        'background-size': '100% ' + this.config.verticalGrid.gutter + 'px'
+        'opacity': opacity,
+        'background-size': '100% ' + gutter + 'px'
       };
     }
   }
@@ -28154,7 +28161,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       'pixelParallel-grid-horizontal-enabled': _vm.config.horizontalGrid.enabled
     }],
     style: (_vm.horizontalGridStyles)
-  }, _vm._l((_vm.config.horizontalGrid.columns), function(val) {
+  }, _vm._l(((parseInt(_vm.config.horizontalGrid.columns) || 1)), function(val) {
     return _c('span')
   })), _vm._v(" "), _c('div', {
     class: ['pixelParallel-grid-vertical', {

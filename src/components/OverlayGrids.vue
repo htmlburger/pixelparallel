@@ -1,7 +1,7 @@
 <template>
   <div class="pixelParallel-grids">
     <div :class="['pixelParallel-grid-horizontal', {'pixelParallel-grid-horizontal-enabled': config.horizontalGrid.enabled}]" :style="horizontalGridStyles">
-      <span v-for="val in config.horizontalGrid.columns" />
+      <span v-for="val in (parseInt(config.horizontalGrid.columns) || 1)" />
     </div>
 
     <div :class="['pixelParallel-grid-vertical', {'pixelParallel-grid-vertical-enabled': config.verticalGrid.enabled}]" :style="verticalGridStyles"></div>
@@ -17,16 +17,23 @@ export default {
 
   computed: {
     horizontalGridStyles () {
+      const opacity = this.config.horizontalGrid.opacity;
+      const width = parseInt(this.config.horizontalGrid.width) || 0;
+      const gutter = parseInt(this.config.horizontalGrid.gutter) || 0;
+
       return {
-        'opacity': this.config.horizontalGrid.opacity,
-        'border-spacing': `${this.config.horizontalGrid.gutter}px`,
-        'width': `${this.config.horizontalGrid.width ? `${this.config.horizontalGrid.width + this.config.horizontalGrid.gutter * 2}px` : `calc(100% + ${this.config.horizontalGrid.gutter * 2}px)`}`
+        'opacity': opacity,
+        'border-spacing': `${gutter}px`,
+        'width': `${width ? `${width + gutter * 2}px` : `calc(100% + ${gutter * 2}px)`}`
       };
     },
     verticalGridStyles() {
+      const opacity = this.config.verticalGrid.opacity;
+      const gutter = parseInt(this.config.verticalGrid.gutter) || 0;
+
       return {
-        'opacity': this.config.verticalGrid.opacity,
-        'background-size': `100% ${this.config.verticalGrid.gutter}px`
+        'opacity': opacity,
+        'background-size': `100% ${gutter}px`
       }
     }
   }
