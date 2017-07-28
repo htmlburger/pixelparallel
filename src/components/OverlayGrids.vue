@@ -29,10 +29,12 @@ export default {
     },
     verticalGridStyles() {
       const opacity = this.config.verticalGrid.opacity;
-      const gutter = parseInt(this.config.verticalGrid.gutter) || 0;
+      const gutter = Math.max(3, parseInt(this.config.verticalGrid.gutter) || 0);
+      const gradientStop = 100 - (1 / gutter * 100);
 
       return {
         'opacity': opacity,
+        'background': `linear-gradient(to bottom, transparent, transparent ${gradientStop}%, blue ${gradientStop}%, blue)`,
         'background-size': `100% ${gutter}px`
       }
     }

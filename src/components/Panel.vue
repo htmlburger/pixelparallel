@@ -13,7 +13,7 @@
           <div class="panel-control">
             <ul>
               <li>
-                <a href="#" :class="{'active': !config.visible}" @click.prevent="config.visible = !config.visible"><i class="ico ico-eye-slash-small"></i></a>
+                <a href="#" :class="{'active': !config.visible}" @click.prevent="config.visible = !config.visible" title="Hide All Elements"><i class="ico ico-eye-slash-small"></i></a>
               </li>
 
               <li>
@@ -61,7 +61,7 @@
                 </div><!-- /.col col-2-of-5 -->
               </div><!-- /.row -->
 
-              <div class="row">
+              <div class="row row-head">
                 <div class="col col-1-of-4">
                   <number v-model="config.image.top" title="Top" />
                 </div><!-- /.col col-1-of-4 -->
@@ -107,11 +107,11 @@
             <div class="pane" v-if="config.currentPane === 'grid'">
               <div class="row row-head">
                 <div class="col col-1-of-3">
-                  <toggle v-model="config.horizontalGrid.enabled" title="Horizontal Grid" />
+                  <toggle v-model="config.horizontalGrid.enabled" title="Layout Grid" />
                 </div><!-- /.col col-1-of-3 -->
 
                 <div class="col col-1-of-3">
-                  <toggle v-model="config.verticalGrid.enabled" title="Vertical Grid" />
+                  <toggle v-model="config.verticalGrid.enabled" title="Baseline Grid" />
                 </div><!-- /.col col-1-of-3 -->
 
                 <div class="col col-1-of-3">
@@ -119,7 +119,7 @@
                 </div><!-- /.col col-1-of-3 -->
               </div><!-- /.row -->
 
-              <div class="row">
+              <div class="row row-head">
                 <div class="col col-1-of-4">
                   <number v-model="config.horizontalGrid.width" title="Width" :min="0" />
                 </div><!-- /.col col-1-of-4 -->
@@ -139,7 +139,7 @@
 
               <div class="row">
                 <div class="col col-1-of-4">
-                  <number v-model="config.verticalGrid.gutter" title="Height" :min="0" />
+                  <number v-model="config.verticalGrid.gutter" title="Baseline" :min="1" />
                 </div><!-- /.col col-1-of-4 -->
 
                 <div class="col col-1-of-4">

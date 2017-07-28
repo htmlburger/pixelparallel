@@ -35,7 +35,7 @@ export default `
   .row { padding: 10px 15px; }
   .row:after { content: ''; line-height: 0; display: table; clear: both; }
 
-  .row-head { border-bottom: 1px solid #ebebeb; padding-top: 18px; padding-bottom: 18px; margin-bottom: 10px; }
+  .row-head { border-bottom: 1px solid #ebebeb; padding-top: 10px; padding-bottom: 10px; margin-bottom: 10px; }
   .row-head-large-gutter { padding-top: 21px; padding-bottom: 21px; }
 
   .col { float: left; padding: 0 5px; display: table; width: 100%; }
