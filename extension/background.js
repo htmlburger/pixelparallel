@@ -25,8 +25,6 @@ chrome.extension.onMessage.addListener(function(message, sender, sendResponse) {
     getActiveTab(function(tabId) {
       enableForTab(tabId);
 
-      console.log(tabId);
-
       chrome.tabs.sendMessage(tabId, 'enable');
     });
   }
@@ -34,8 +32,6 @@ chrome.extension.onMessage.addListener(function(message, sender, sendResponse) {
   if (message === 'disablePanel') {
     getActiveTab(function(tabId) {
       disableForTab(tabId);
-
-      console.log(tabId);
 
       chrome.tabs.sendMessage(tabId, 'disable');
     });
@@ -78,7 +74,6 @@ var injectIntoTab = function (tab) {
     var scripts = chrome.manifest.content_scripts[0].js;
     var i = 0, s = scripts.length;
     for( ; i < s; i++ ) {
-    console.log(tab.id, scripts[i]);
         chrome.tabs.executeScript(tab.id, {
             file: scripts[i]
         });
@@ -97,7 +92,6 @@ chrome.windows.getAll({
             currentTab = currentWindow.tabs[j];
 
             if (currentTab.url && !currentTab.url.match(/(chrome):\/\//gi) ) {
-              console.log('here');
                 injectIntoTab(currentTab);
             }
         }
