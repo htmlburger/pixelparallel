@@ -1,6 +1,6 @@
 var enabledTabs = [];
 
-chrome.extension.onMessage.addListener(function(message, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   if (message === 'bindingsUpdated') {
     chrome.tabs.query({}, function(tabs) {
       for (var i = 0; i < tabs.length; i++) {
@@ -67,15 +67,15 @@ function getActiveTab(cb) {
 }
 
 
-chrome.manifest = chrome.app.getDetails();
+chrome.manifest = chrome.runtime.getManifest();
 
 var injectIntoTab = function (tab) {
     // You could iterate through the content scripts here
     var scripts = chrome.manifest.content_scripts[0].js;
-    var i = 0, s = scripts.length;
-    for( ; i < s; i++ ) {
-        chrome.tabs.executeScript(tab.id, {
-            file: scripts[i]
+    for( let i = 0; i < scripts.length; i++ ) {
+        chrome.scripting.executeScript({
+          target: {tabId: tab.id},
+          files: [scripts[i]]
         });
     }
 }
@@ -97,32 +97,3 @@ chrome.windows.getAll({
         }
     }
 });
-
-var port;
-
-// Attempt to reconnect
-var reconnectToExtension = function () {
-    // Reset port
-    port = null;
-    // Attempt to reconnect after 1 second
-    setTimeout(connectToExtension, 1000 * 1);
-};
-
-// Attempt to connect
-var connectToExtension = function () {
-
-    // Make the connection
-    port = chrome.extension.connect({name: "my-port"});
-
-    // When extension is upgraded or disabled and renabled, the content scripts
-    // will still be injected, so we have to reconnect them.
-    // We listen for an onDisconnect event, and then wait for a second before
-    // trying to connect again. Becuase chrome.extension.connect fires an onDisconnect
-    // event if it does not connect, an unsuccessful connection should trigger
-    // another attempt, 1 second later.
-    port.onDisconnect.addListener(reconnectToExtension);
-
-};
-
-// Connect for the first time
-connectToExtension();
