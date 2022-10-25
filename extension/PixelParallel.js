@@ -2240,7 +2240,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 var pixelParallelContainer = document.querySelector('#pixel-parallel-container');
 
-if (pixelParallelContainer === null) {
+if (document.querySelector('#pixel-parallel-container') === null) {
 
   pixelParallelContainer = document.createElement('div');
   pixelParallelContainer.id = 'pixel-parallel-container';

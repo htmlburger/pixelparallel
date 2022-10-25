@@ -3,7 +3,7 @@ import PixelParallel from './PixelParallel.vue';
 
 var pixelParallelContainer = document.querySelector('#pixel-parallel-container');
 
-if (pixelParallelContainer === null) {
+if (document.querySelector('#pixel-parallel-container') === null) {
 
   pixelParallelContainer = document.createElement('div');
   pixelParallelContainer.id = 'pixel-parallel-container';
