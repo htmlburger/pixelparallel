@@ -26,6 +26,7 @@
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
+	  "match_origin_as_fallback": true,
       "js": ["PixelParallel.js"]
     }
   ],
