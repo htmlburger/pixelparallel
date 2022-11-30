@@ -88,8 +88,8 @@ export default {
       this.image = imageObject;
     }).catch(() => {});
 
-    if ('chrome' in window && 'extension' in chrome) {
-      chrome.extension.onMessage.addListener((msg, sender, sendResponse) => {
+    if ('chrome' in window && 'runtime' in chrome) {
+      chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
         switch (msg) {
           case 'enable':
@@ -108,7 +108,7 @@ export default {
     }
   },
   mounted() {
-    if ('chrome' in window && 'extension' in chrome) {
+    if ('chrome' in window && 'runtime' in chrome) {
       this.disable();
       chrome.runtime.sendMessage('isEnabled', (response) => {
         if (response === true) {
